@@ -172,7 +172,7 @@ unsigned int vect_pop(void *vect) {
     errno_t = INVALID_VAL;
     return vector->size;
   }
-  return (vector->size)--;
+  return --(vector->size);
 }
 
 err_t vect_remove(void *vect, unsigned int index) {

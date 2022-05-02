@@ -18,7 +18,7 @@
   }                                                                            \
                                                                                \
   TYPE *vect_##NAME##_data(struct Vector_##NAME *vector) {                     \
-    return vect_data((void *)vector);                                          \
+    return (TYPE *)vect_data((void *)vector);                                  \
   }                                                                            \
                                                                                \
   TYPE vect_##NAME##_at(struct Vector_##NAME *vector, unsigned int index) {    \
@@ -38,9 +38,10 @@
     vector->data[vect_at((void *)vector, index)] = value;                      \
   }                                                                            \
                                                                                \
-  long int vect_##NAME##_index_of(struct Vector_##NAME *vector, TYPE element,  \
-                                  int (*comparator)(void *, void *)) {         \
-    TYPE *data = vect_data((void *)vector);                                    \
+  long int vect_##NAME##_index_of(                                             \
+      struct Vector_##NAME *vector, TYPE element,                              \
+      int (*comparator)(const void *, const void *)) {                         \
+    TYPE *data = (TYPE *)vect_data((void *)vector);                            \
     for (size_t pos = 0; pos < vector->size; pos++) {                          \
       if (!(*comparator)(&data[pos], &element)) return pos;                    \
     }                                                                          \
@@ -49,7 +50,7 @@
                                                                                \
   void vect_##NAME##_sort(struct Vector_##NAME *vector,                        \
                           int (*comparator)(const void *, const void *)) {     \
-    TYPE *data = vect_data((void *)vector);                                    \
+    TYPE *data = (TYPE *)vect_data((void *)vector);                            \
     qsort(data, vector->size, vector->data_size, comparator);                  \
   }
 #endif
