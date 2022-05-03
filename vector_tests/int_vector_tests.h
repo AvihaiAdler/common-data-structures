@@ -12,9 +12,4 @@ void vect_int_at_test(void);
 void vect_int_replace_test(void);
 
 void vect_int_index_of_test(void);
-
-struct Vector_int *before(void);
-
-void after(struct Vector_int *vect_int);
-
 #endif
