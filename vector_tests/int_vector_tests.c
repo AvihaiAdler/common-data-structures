@@ -12,7 +12,7 @@ int int_comparator(const void *a, const void *b) {
   return (i_a > i_b) - (i_a < i_b);
 }
 
-struct vector_int *before(void) {
+static struct vector_int *before(void) {
   struct vector_int *vect_int = vect_int_init();
   for (int i = NUM_OF_ELEMENTS; i > 0; i--) {
     vect_int_push(vect_int, i);
@@ -20,7 +20,7 @@ struct vector_int *before(void) {
   return vect_int;
 }
 
-void after(struct vector_int *vect_int) { vect_destroy(vect_int); }
+static void after(struct vector_int *vect_int) { vect_destroy(vect_int); }
 
 void vect_int_push_test() {
   // given
