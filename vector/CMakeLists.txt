@@ -1,9 +1,3 @@
-# configure the directories which include include files (.h)
-# include_directories(
-#   # src
-#   include 
-# )
-
 # create a library called vector from src/vector_abstract.c
 add_library(
   vector_lib
