@@ -41,7 +41,7 @@
   /* destroy a linked list 'object'. expects a destroy function which suppose  \
    * to destroy node::data. pass in NULL if node::data is stack allocated */   \
   void NAME##_ll_destroy(struct NAME##_linked_list *ll,                        \
-                         void (*NAME##_destroy)(void *data)) {                 \
+                         void (*NAME##_destroy)(TYPE data)) {                  \
     if (!ll) return;                                                           \
     for (struct NAME##_node *tmp = ll->head; tmp; tmp = ll->head) {            \
       ll->head = ll->head->next;                                               \
@@ -74,7 +74,7 @@
                                                                                \
   /* add a node to the end of the list. return true on success, false          \
    * otherwise */                                                              \
-  bool append(struct linked_list *ll, TYPE data) {                             \
+  bool NAME##_ll_append(struct NAME##_linked_list *ll, TYPE data) {            \
     if (!ll) return false;                                                     \
                                                                                \
     struct NAME##_node *node = NAME##_node_init(data);                         \
@@ -88,14 +88,14 @@
       ll->tail = node;                                                         \
     }                                                                          \
     ll->size++;                                                                \
-    return true                                                                \
+    return true;                                                               \
   }                                                                            \
                                                                                \
   /* create a new node which hold data and insert it based on a comparator     \
    * function. the new node will be inserted after all the elements below      \
    * (less than) him. return true on success, false otherwise */               \
   bool NAME##_ll_insert_higher(struct NAME##_linked_list *ll, TYPE data,       \
-                               int (*comparator)(TYPE * a, TYPE * b)) {        \
+                               int (*comparator)(TYPE a, TYPE b)) {            \
     if (!ll) return false;                                                     \
     if (!comparator) return false;                                             \
                                                                                \
@@ -118,7 +118,7 @@
    * removed node (which has to be freed), or NULL if no such node found */    \
   struct NAME##_node *NAME##_ll_remove(struct NAME##_linked_list *ll,          \
                                        TYPE data,                              \
-                                       bool (*equal_to)(TYPE * a, TYPE * b)) { \
+                                       bool (*equal_to)(TYPE a, TYPE b)) {     \
     if (!ll) return NULL;                                                      \
     if (!equal_to) return NULL;                                                \
                                                                                \
@@ -146,8 +146,9 @@
    * which contains new_data. the function expects an equal_to function which  \
    * then use to deteremine which node contains old_data. retunrs the old node \
    * on success (which has to be freed), or NULL on failure */                 \
-  struct NAME##_node *NAME##_ll_replace(                                       \
-      TYPE old_data, TYPE new_data, bool (*equal_to)(TYPE * a, TYPE * b)) {    \
+  struct NAME##_node *NAME##_ll_replace(struct NAME##_linked_list *ll,         \
+                                        TYPE old_data, TYPE new_data,          \
+                                        bool (*equal_to)(TYPE a, TYPE b)) {    \
     if (!ll) return NULL;                                                      \
     if (!equal_to) return NULL;                                                \
                                                                                \
