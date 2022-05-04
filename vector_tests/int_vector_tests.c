@@ -1,10 +1,13 @@
 #include "int_vector_tests.h"
 
 #include <assert.h>
-#include <include/vector.h>
+
+#include "vector.h"
 
 GENERATE_VECT(int, int)
 #define NUM_OF_ELEMENTS 15
+
+bool equals(int a, int b) { return a == b; }
 
 int int_comparator(const void *a, const void *b) {
   int i_a = *(int *)a;
@@ -12,103 +15,105 @@ int int_comparator(const void *a, const void *b) {
   return (i_a > i_b) - (i_a < i_b);
 }
 
-static struct vector_int *before(void) {
-  struct vector_int *vect_int = vect_int_init();
+static struct int_vector *before(void) {
+  struct int_vector *int_vect = int_vect_init();
   for (int i = NUM_OF_ELEMENTS; i > 0; i--) {
-    vect_int_push(vect_int, i);
+    int_vect_push(int_vect, i);
   }
-  return vect_int;
+  return int_vect;
 }
 
-static void after(struct vector_int *vect_int) { vect_destroy(vect_int); }
-
-void vect_int_push_test() {
-  // given
-  // when
-  struct vector_int *vect_int = before();
-
-  // then
-  assert(vect_int->size == NUM_OF_ELEMENTS);
-
-  after(vect_int);
+static void after(struct int_vector *int_vect) {
+  int_vect_destroy(int_vect, NULL);
 }
 
-void vect_int_pop_test() {
+void int_vect_push_test() {
   // given
-  struct vector_int *vect_int = before();
-
-  assert(vect_int_at(vect_int, vect_int->size - 1) == 1);
-
   // when
-  int returned = vect_int_pop(vect_int);
+  struct int_vector *int_vect = before();
 
   // then
-  assert(vect_int->size == NUM_OF_ELEMENTS - 1);
+  assert(int_vect->size == NUM_OF_ELEMENTS);
+
+  after(int_vect);
+}
+
+void int_vect_pop_test() {
+  // given
+  struct int_vector *int_vect = before();
+
+  assert(int_vect_at(int_vect, int_vect->size - 1) == 1);
+
+  // when
+  int returned = int_vect_pop(int_vect);
+
+  // then
+  assert(int_vect->size == NUM_OF_ELEMENTS - 1);
   assert(returned == 1);
-  assert(vect_int_at(vect_int, vect_int->size - 1) == returned + 1);
+  assert(int_vect_at(int_vect, int_vect->size - 1) == returned + 1);
 
-  after(vect_int);
+  after(int_vect);
 }
 
-void vect_int_at_test() {
+void int_vect_at_test() {
   // given
-  struct vector_int *vect_int = before();
+  struct int_vector *int_vect = before();
 
   // when
-  int first = vect_int_at(vect_int, 0);
-  int last = vect_int_at(vect_int, NUM_OF_ELEMENTS - 1);
+  int first = int_vect_at(int_vect, 0);
+  int last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
 
   // then
   assert(first == NUM_OF_ELEMENTS);
   assert(last == 1);
 
-  after(vect_int);
+  after(int_vect);
 }
 
-void vect_int_replace_test() {
+void int_vect_replace_test() {
   // given
-  struct vector_int *vect_int = before();
+  struct int_vector *int_vect = before();
 
   // when
-  vect_int_replace(vect_int, 3, 100);
+  int_vect_replace(int_vect, 3, 100);
 
   // then
-  int new_val = vect_int_at(vect_int, 3);
+  int new_val = int_vect_at(int_vect, 3);
   assert(new_val == 100);
 
-  after(vect_int);
+  after(int_vect);
 }
 
-void vect_int_index_of_test() {
+void int_vect_index_of_test() {
   // given
-  struct vector_int *vect_int = before();
+  struct int_vector *int_vect = before();
 
   // when
-  long val = vect_int_index_of(vect_int, NUM_OF_ELEMENTS - 1, int_comparator);
+  long val = int_vect_index_of(int_vect, NUM_OF_ELEMENTS - 1, equals);
 
   // then
   assert(val == 1);
 
-  after(vect_int);
+  after(int_vect);
 }
 
-void vect_int_sort_test() {
+void int_vect_sort_test() {
   // given
-  struct vector_int *vect_int = before();
+  struct int_vector *int_vect = before();
 
-  int first = vect_int_at(vect_int, 0);
-  int last = vect_int_at(vect_int, NUM_OF_ELEMENTS - 1);
+  int first = int_vect_at(int_vect, 0);
+  int last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
   assert(first == NUM_OF_ELEMENTS);
   assert(last == 1);
 
   // when
-  vect_int_sort(vect_int, int_comparator);
+  int_vect_sort(int_vect, int_comparator);
 
   // then
-  first = vect_int_at(vect_int, 0);
-  last = vect_int_at(vect_int, NUM_OF_ELEMENTS - 1);
+  first = int_vect_at(int_vect, 0);
+  last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
   assert(first == 1);
   assert(last == NUM_OF_ELEMENTS);
 
-  after(vect_int);
+  after(int_vect);
 }
