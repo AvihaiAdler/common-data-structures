@@ -52,6 +52,7 @@ static int errno_t = 0;
       }                                                                        \
     }                                                                          \
     free(vect->data);                                                          \
+    free(vect);                                                                \
   }                                                                            \
                                                                                \
   /* returns true if the vector is empty. false otherwise */                   \
