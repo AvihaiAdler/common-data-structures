@@ -100,17 +100,31 @@
     if (!ll) return false;                                                     \
     if (!comparator) return false;                                             \
                                                                                \
+    if (!ll->head) {                                                           \
+      if (NAME##_ll_prepend(ll, data)) return true;                            \
+      return false;                                                            \
+    }                                                                          \
+                                                                               \
     struct NAME##_node *node = NAME##_node_init(data);                         \
     if (!node) return false;                                                   \
                                                                                \
     struct NAME##_node *tmp = ll->head;                                        \
-    for (; tmp && comparator(tmp->data, data) <= 0; tmp = tmp->next) {         \
-      continue;                                                                \
+    for (; tmp->next; tmp = tmp->next) {                                       \
+      if (comparator(data, tmp->data) > 0) break;                              \
     }                                                                          \
-    if (tmp->next) tmp->next->prev = node;                                     \
-    if (tmp->prev) tmp->prev->next = node;                                     \
-    if (tmp == ll->head) ll->head = node;                                      \
-    if (tmp == ll->tail) ll->tail = node;                                      \
+                                                                               \
+    if (comparator(data, tmp->data) > 0) {                                     \
+      if (tmp->prev) tmp->prev->next = node;                                   \
+      node->next = tmp;                                                        \
+      node->prev = tmp->prev;                                                  \
+      tmp->prev = node;                                                        \
+      if (tmp == ll->head) ll->head = node;                                    \
+    } else {                                                                   \
+      node->prev = ll->tail;                                                   \
+      ll->tail->next = node;                                                   \
+      ll->tail = node;                                                         \
+    }                                                                          \
+                                                                               \
     ll->size++;                                                                \
     return true;                                                               \
   }                                                                            \
