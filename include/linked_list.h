@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* generate a linked list header based on the TYPE and the NAME you pass in. a
  * TYPE must be a c type (int, char, struct some_struct, etc), NAME can be any
@@ -27,7 +28,7 @@
   struct NAME##_node *NAME##_node_init(TYPE data) {                            \
     struct NAME##_node *node = calloc(1, sizeof *node);                        \
     if (!node) return NULL;                                                    \
-    node->data = data;                                                         \
+    memmove(&node->data, &data, sizeof(TYPE));                                 \
     return node;                                                               \
   }                                                                            \
                                                                                \
