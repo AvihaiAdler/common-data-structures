@@ -136,10 +136,10 @@
     if (!ll->head) return NULL;                                                \
                                                                                \
     struct NAME##_node *removed = ll->head;                                    \
-    removed->next = NULL;                                                      \
                                                                                \
     ll->head = ll->head->next;                                                 \
     ll->head->prev = NULL;                                                     \
+    removed->next = NULL;                                                      \
     ll->size--;                                                                \
     return removed;                                                            \
   }                                                                            \
@@ -151,10 +151,10 @@
     if (!ll->tail) return NULL;                                                \
                                                                                \
     struct NAME##_node *removed = ll->tail;                                    \
-    removed->prev = NULL;                                                      \
                                                                                \
     ll->tail = ll->tail->prev;                                                 \
     ll->tail->next = NULL;                                                     \
+    removed->prev = NULL;                                                      \
     ll->size--;                                                                \
     return removed;                                                            \
   }                                                                            \
