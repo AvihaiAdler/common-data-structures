@@ -101,10 +101,87 @@ void point_ll_insert_higher_test(void) {
   after(ll);
 }
 
-// void point_ll_remove_first_test(void);
+void point_ll_remove_first_test(void) {
+  // given
+  struct point_linked_list *ll = before();
 
-// void point_ll_remove_last_test(void);
+  // when
+  struct point_node *p_n = point_ll_remove_first(ll);
 
-// void point_ll_replace_test(void);
+  // then
+  assert(p_n);
+  assert(equal_to(p_n->data, points[0]));
+  free(p_n);
+
+  assert(equal_to(ll->head->data, points[1]));
+  assert(equal_to(ll->head->next->data, points[2]));
+  after(ll);
+}
+
+void point_ll_remove_last_test(void) {
+  // given
+  struct point_linked_list *ll = before();
+
+  // when
+  struct point_node *p_n = point_ll_remove_last(ll);
+
+  // then
+  size_t size = sizeof points / sizeof *points;
+  assert(p_n);
+  assert(equal_to(p_n->data, points[size - 1]));
+  free(p_n);
+
+  assert(equal_to(ll->tail->data, points[size - 2]));
+  assert(equal_to(ll->tail->prev->data, points[size - 3]));
+  after(ll);
+}
+
+void point_ll_replace_head_test(void) {
+  // given
+  struct point_linked_list *ll = before();
+
+  // when
+  struct point_node *p = point_ll_replace(ll, points[0], points[1], equal_to);
+
+  // then
+  assert(p);
+  assert(equal_to(p->data, points[0]));
+  assert(equal_to(ll->head->data, points[1]));
+  free(p);
+  after(ll);
+}
+
+void point_ll_replace_tail_test(void) {
+  // given
+  struct point_linked_list *ll = before();
+
+  // when
+  size_t size = sizeof points / sizeof *points;
+  struct point_node *p =
+      point_ll_replace(ll, points[size - 1], points[1], equal_to);
+
+  // then
+  assert(p);
+  assert(equal_to(p->data, points[size - 1]));
+  assert(equal_to(ll->tail->data, points[1]));
+  free(p);
+  after(ll);
+}
+
+void point_ll_replace_test(void) {
+  // given
+  struct point_linked_list *ll = before();
+
+  // when
+  struct point_node *p = point_ll_replace(ll, points[1], points[0], equal_to);
+
+  // then
+  assert(p);
+  assert(equal_to(p->data, points[1]));
+  assert(equal_to(ll->head->next->data, points[0]));
+  print_ll(ll);
+  free(p);
+  after(ll);
+}
 
 // void point_ll_remove_test(void);
