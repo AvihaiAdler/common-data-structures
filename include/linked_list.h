@@ -115,6 +115,36 @@
     return true;                                                               \
   }                                                                            \
                                                                                \
+  /* remove the first node from the list. returns the first node on success    \
+   * (which has to be free'd), or NULL on failure */                           \
+  struct NAME##_node *NAME##_ll_remove_first(struct NAME##_linked_list *ll) {  \
+    if (!ll) return NULL;                                                      \
+    if (!ll->head) return NULL;                                                \
+                                                                               \
+    struct NAME##_node *removed = ll->head;                                    \
+    removed->next = NULL;                                                      \
+                                                                               \
+    ll->head = ll->head->next;                                                 \
+    ll->head->prev = NULL;                                                     \
+    ll->size--;                                                                \
+    return removed;                                                            \
+  }                                                                            \
+                                                                               \
+  /* remove the last node from the list. returns the last node on success      \
+   * (which has to be free'd), or NULL on failure */                           \
+  struct NAME##_node *NAME##_ll_remove_last(struct NAME##_linked_list *ll) {   \
+    if (!ll) return NULL;                                                      \
+    if (!ll->tail) return NULL;                                                \
+                                                                               \
+    struct NAME##_node *removed = ll->tail;                                    \
+    removed->prev = NULL;                                                      \
+                                                                               \
+    ll->tail = ll->tail->prev;                                                 \
+    ll->tail->next = NULL;                                                     \
+    ll->size--;                                                                \
+    return removed;                                                            \
+  }                                                                            \
+                                                                               \
   /* remove the first node which contains data from the list. return the       \
    * removed node (which has to be freed), or NULL if no such node found */    \
   struct NAME##_node *NAME##_ll_remove(struct NAME##_linked_list *ll,          \
