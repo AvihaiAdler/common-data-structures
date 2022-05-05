@@ -7,6 +7,10 @@ void point_ll_append_test(void);
 
 void point_ll_insert_higher_test(void);
 
+void point_ll_remove_first_test(void);
+
+void point_ll_remove_last_test(void);
+
 void point_ll_replace_test(void);
 
 void point_ll_remove_test(void);
