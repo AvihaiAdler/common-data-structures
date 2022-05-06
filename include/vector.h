@@ -193,9 +193,9 @@
   }                                                                            \
                                                                                \
   /* sort the vector according to the comparator passed in. the comparator     \
-   * must return 0 if both elements are equal, any value bigger than 0 if the                                         \
-   * first element if bigger than the second or any value less than 0 if the                                        \
-   * first elrment if smaller than the second */                                                                     \
+   * must return 0 if both elements are equal, any value bigger than 0 if the  \
+   * first element if bigger than the second or any value less than 0 if the   \
+   * first element if smaller than the second */                               \
   void NAME##_vect_sort(struct NAME##_vector *vect,                            \
                         int (*comparator)(const void *, const void *)) {       \
     if (!vect) return;                                                         \
