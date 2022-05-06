@@ -10,9 +10,9 @@ GENERATE_VECT(int, int)
 bool equals(int a, int b) { return a == b; }
 
 int int_comparator(const void *a, const void *b) {
-  int i_a = *(int *)a;
-  int i_b = *(int *)b;
-  return (i_a > i_b) - (i_a < i_b);
+  const struct int_wrapper *w_a = a;
+  const struct int_wrapper *w_b = b;
+  return (w_a->value > w_b->value) - (w_a->value < w_b->value);
 }
 
 static struct int_vector *before(void) {
@@ -42,15 +42,20 @@ void int_vect_pop_test() {
   // given
   struct int_vector *int_vect = before();
 
-  assert(int_vect_at(int_vect, int_vect->size - 1) == 1);
+  struct int_wrapper *tmp = int_vect_at(int_vect, int_vect->size - 1);
+  assert(tmp);
+  assert(tmp->value == 1);
 
   // when
-  int returned = int_vect_pop(int_vect);
+  tmp = int_vect_pop(int_vect);
+  assert(tmp);
+  free(tmp);
 
   // then
   assert(int_vect->size == NUM_OF_ELEMENTS - 1);
-  assert(returned == 1);
-  assert(int_vect_at(int_vect, int_vect->size - 1) == returned + 1);
+  tmp = int_vect_at(int_vect, int_vect->size - 1);
+  assert(tmp);
+  assert(tmp->value == 2);
 
   after(int_vect);
 }
@@ -60,12 +65,14 @@ void int_vect_at_test() {
   struct int_vector *int_vect = before();
 
   // when
-  int first = int_vect_at(int_vect, 0);
-  int last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
+  struct int_wrapper *first = int_vect_at(int_vect, 0);
+  struct int_wrapper *last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
 
   // then
-  assert(first == NUM_OF_ELEMENTS);
-  assert(last == 1);
+  assert(first);
+  assert(last);
+  assert(first->value == NUM_OF_ELEMENTS);
+  assert(last->value == 1);
 
   after(int_vect);
 }
@@ -75,11 +82,13 @@ void int_vect_replace_test() {
   struct int_vector *int_vect = before();
 
   // when
-  int_vect_replace(int_vect, 3, 100);
+  struct int_wrapper *old_val = int_vect_replace(int_vect, 3, 100);
+  free(old_val);
 
   // then
-  int new_val = int_vect_at(int_vect, 3);
-  assert(new_val == 100);
+  struct int_wrapper *new_val = int_vect_at(int_vect, 3);
+  assert(new_val);
+  assert(new_val->value == 100);
 
   after(int_vect);
 }
@@ -89,7 +98,7 @@ void int_vect_index_of_test() {
   struct int_vector *int_vect = before();
 
   // when
-  long val = int_vect_index_of(int_vect, NUM_OF_ELEMENTS - 1, equals);
+  int64_t val = int_vect_index_of(int_vect, NUM_OF_ELEMENTS - 1, equals);
 
   // then
   assert(val == 1);
@@ -101,10 +110,12 @@ void int_vect_sort_test() {
   // given
   struct int_vector *int_vect = before();
 
-  int first = int_vect_at(int_vect, 0);
-  int last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
-  assert(first == NUM_OF_ELEMENTS);
-  assert(last == 1);
+  struct int_wrapper *first = int_vect_at(int_vect, 0);
+  struct int_wrapper *last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
+  assert(first);
+  assert(last);
+  assert(first->value == NUM_OF_ELEMENTS);
+  assert(last->value == 1);
 
   // when
   int_vect_sort(int_vect, int_comparator);
@@ -112,8 +123,10 @@ void int_vect_sort_test() {
   // then
   first = int_vect_at(int_vect, 0);
   last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
-  assert(first == 1);
-  assert(last == NUM_OF_ELEMENTS);
+  assert(first);
+  assert(last);
+  assert(first->value == 1);
+  assert(last->value == NUM_OF_ELEMENTS);
 
   after(int_vect);
 }
