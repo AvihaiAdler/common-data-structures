@@ -1,12 +1,14 @@
 #include "str_vector_tests.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "vector.h"
 
-#define NUM_OF_ELEMENTS 4
 GENERATE_VECT(const char *, str)
+
+static const char *arr[] = {"simple", "example", "using", "strings"};
 
 static bool equals(const char *a, const char *b) { return strcmp(a, b) == 0; }
 
@@ -19,10 +21,10 @@ int str_comparator(const void *a, const void *b) {
 static struct str_vector *before(void) {
   struct str_vector *str_vect = str_vect_init();
 
-  str_vect_push(str_vect, "simple");
-  str_vect_push(str_vect, "example");
-  str_vect_push(str_vect, "using");
-  str_vect_push(str_vect, "strings");
+  size_t size = sizeof arr / sizeof *arr;
+  for (size_t i = 0; i < size; i++) {
+    str_vect_push(str_vect, arr[i]);
+  }
 
   return str_vect;
 }
@@ -37,7 +39,8 @@ void str_vect_push_test() {
   struct str_vector *str_vect = before();
 
   // then
-  assert(str_vect->size == NUM_OF_ELEMENTS);
+  size_t size = sizeof arr / sizeof *arr;
+  assert(str_vect->size == size);
 
   after(str_vect);
 }
@@ -46,16 +49,21 @@ void str_vect_pop_test() {
   // given
   struct str_vector *str_vect = before();
 
-  assert(strcmp(str_vect_at(str_vect, str_vect->size - 1), "strings") == 0);
+  size_t size = sizeof arr / sizeof *arr;
+  struct str_wrapper *at = str_vect_at(str_vect, str_vect->size - 1);
+  assert(strcmp(at->value, arr[size - 1]) == 0);
 
   // when
-  const char *returned = str_vect_pop(str_vect);
+  struct str_wrapper *returned = str_vect_pop(str_vect);
 
   // then
-  assert(str_vect->size == NUM_OF_ELEMENTS - 1);
-  assert(strcmp(returned, "strings") == 0);
-  assert(strcmp(str_vect_at(str_vect, str_vect->size - 1), "using") == 0);
+  assert(str_vect->size == size - 1);
+  assert(strcmp(returned->value, arr[size - 1]) == 0);
 
+  at = str_vect_at(str_vect, str_vect->size - 1);
+  assert(strcmp(at->value, arr[size - 2]) == 0);
+
+  free(returned);
   after(str_vect);
 }
 
@@ -64,12 +72,13 @@ void str_vect_at_test() {
   struct str_vector *str_vect = before();
 
   // when
-  const char *first = str_vect_at(str_vect, 0);
-  const char *last = str_vect_at(str_vect, NUM_OF_ELEMENTS - 1);
+  size_t size = sizeof arr / sizeof *arr;
+  struct str_wrapper *first = str_vect_at(str_vect, 0);
+  struct str_wrapper *last = str_vect_at(str_vect, size - 1);
 
   // then
-  assert(strcmp(first, "simple") == 0);
-  assert(strcmp(last, "strings") == 0);
+  assert(strcmp(first->value, arr[0]) == 0);
+  assert(strcmp(last->value, arr[size - 1]) == 0);
 
   after(str_vect);
 }
@@ -79,12 +88,16 @@ void str_vect_replace_test() {
   struct str_vector *str_vect = before();
 
   // when
-  str_vect_replace(str_vect, 3, "another");
+  const char *replacement = "another";
+  unsigned int index = 3;
+  struct str_wrapper *replaced = str_vect_replace(str_vect, index, replacement);
 
   // then
-  const char *new_val = str_vect_at(str_vect, 3);
-  assert(strcmp(new_val, "another") == 0);
+  struct str_wrapper *new_val = str_vect_at(str_vect, index);
+  assert(strcmp(new_val->value, replacement) == 0);
+  assert(strcmp(replaced->value, arr[index]) == 0);
 
+  free(replaced);
   after(str_vect);
 }
 
@@ -105,17 +118,18 @@ void str_vect_sort_test() {
   // given
   struct str_vector *str_vect = before();
 
-  const char *first = str_vect_at(str_vect, 0);
-  const char *last = str_vect_at(str_vect, NUM_OF_ELEMENTS - 1);
+  size_t size = sizeof arr / sizeof *arr;
+  struct str_wrapper *first = str_vect_at(str_vect, 0);
+  struct str_wrapper *last = str_vect_at(str_vect, size - 1);
 
   // when
   str_vect_sort(str_vect, str_comparator);
 
   // then
   first = str_vect_at(str_vect, 0);
-  last = str_vect_at(str_vect, NUM_OF_ELEMENTS - 1);
-  assert(strcmp(first, "example") == 0);
-  assert(strcmp(last, "using") == 0);
+  last = str_vect_at(str_vect, size - 1);
+  assert(strcmp(first->value, "example") == 0);
+  assert(strcmp(last->value, "using") == 0);
 
   after(str_vect);
 }

@@ -179,7 +179,7 @@ void point_ll_replace_test(void) {
   assert(p);
   assert(equal_to(p->data, points[1]));
   assert(equal_to(ll->head->next->data, points[0]));
-  print_ll(ll);
+
   free(p);
   after(ll);
 }

@@ -17,22 +17,22 @@ void int_vect_unit_tests(void) {
   puts("int_vector tests passed successfully");
 }
 
-// void str_vect_unit_tests(void) {
-//   puts("starting str_vector (const char *) unit tests...");
+void str_vect_unit_tests(void) {
+  puts("starting str_vector (const char *) unit tests...");
 
-//   str_vect_push_test();
-//   str_vect_pop_test();
-//   str_vect_at_test();
-//   str_vect_replace_test();
-//   str_vect_index_of_test();
-//   str_vect_sort_test();
+  str_vect_push_test();
+  str_vect_pop_test();
+  str_vect_at_test();
+  str_vect_replace_test();
+  str_vect_index_of_test();
+  str_vect_sort_test();
 
-//   puts("str_vector tests passed successfully");
-// }
+  puts("str_vector tests passed successfully");
+}
 
 int main(void) {
   int_vect_unit_tests();
 
-  // str_vect_unit_tests();
+  str_vect_unit_tests();
   return 0;
 }

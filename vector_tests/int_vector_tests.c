@@ -7,6 +7,8 @@
 GENERATE_VECT(int, int)
 #define NUM_OF_ELEMENTS 15
 
+static int arr[NUM_OF_ELEMENTS];
+
 bool equals(int a, int b) { return a == b; }
 
 int int_comparator(const void *a, const void *b) {
@@ -18,6 +20,7 @@ int int_comparator(const void *a, const void *b) {
 static struct int_vector *before(void) {
   struct int_vector *int_vect = int_vect_init();
   for (int i = NUM_OF_ELEMENTS; i > 0; i--) {
+    arr[NUM_OF_ELEMENTS - i] = i;
     int_vect_push(int_vect, i);
   }
   return int_vect;
@@ -44,7 +47,7 @@ void int_vect_pop_test() {
 
   struct int_wrapper *tmp = int_vect_at(int_vect, int_vect->size - 1);
   assert(tmp);
-  assert(tmp->value == 1);
+  assert(tmp->value == arr[NUM_OF_ELEMENTS - 1]);
 
   // when
   tmp = int_vect_pop(int_vect);
@@ -55,7 +58,7 @@ void int_vect_pop_test() {
   assert(int_vect->size == NUM_OF_ELEMENTS - 1);
   tmp = int_vect_at(int_vect, int_vect->size - 1);
   assert(tmp);
-  assert(tmp->value == 2);
+  assert(tmp->value == arr[NUM_OF_ELEMENTS - 2]);
 
   after(int_vect);
 }
@@ -71,8 +74,8 @@ void int_vect_at_test() {
   // then
   assert(first);
   assert(last);
-  assert(first->value == NUM_OF_ELEMENTS);
-  assert(last->value == 1);
+  assert(first->value == arr[0]);
+  assert(last->value == arr[NUM_OF_ELEMENTS - 1]);
 
   after(int_vect);
 }
@@ -82,13 +85,14 @@ void int_vect_replace_test() {
   struct int_vector *int_vect = before();
 
   // when
-  struct int_wrapper *old_val = int_vect_replace(int_vect, 3, 100);
+  int num = 100;
+  struct int_wrapper *old_val = int_vect_replace(int_vect, 3, num);
   free(old_val);
 
   // then
   struct int_wrapper *new_val = int_vect_at(int_vect, 3);
   assert(new_val);
-  assert(new_val->value == 100);
+  assert(new_val->value == num);
 
   after(int_vect);
 }
@@ -101,7 +105,7 @@ void int_vect_index_of_test() {
   int64_t val = int_vect_index_of(int_vect, NUM_OF_ELEMENTS - 1, equals);
 
   // then
-  assert(val == 1);
+  assert(val == arr[NUM_OF_ELEMENTS - 1]);
 
   after(int_vect);
 }
@@ -115,7 +119,7 @@ void int_vect_sort_test() {
   assert(first);
   assert(last);
   assert(first->value == NUM_OF_ELEMENTS);
-  assert(last->value == 1);
+  assert(last->value == arr[NUM_OF_ELEMENTS - 1]);
 
   // when
   int_vect_sort(int_vect, int_comparator);
@@ -125,8 +129,8 @@ void int_vect_sort_test() {
   last = int_vect_at(int_vect, NUM_OF_ELEMENTS - 1);
   assert(first);
   assert(last);
-  assert(first->value == 1);
-  assert(last->value == NUM_OF_ELEMENTS);
+  assert(first->value == arr[NUM_OF_ELEMENTS - 1]);
+  assert(last->value == arr[0]);
 
   after(int_vect);
 }
