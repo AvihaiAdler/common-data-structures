@@ -12,9 +12,9 @@
 #define GENERATE_HASH_TABLE(KEY_TYPE, VALUE_TYPE, NAME)                        \
   struct NAME##_bucket {                                                       \
     KEY_TYPE key;                                                              \
-    VALUE_TYPE value;                                                          \
-    enum type key_type;                                                        \
     size_t key_size;                                                           \
+    enum type key_type;                                                        \
+    VALUE_TYPE value;                                                          \
     struct NAME##_bucket *next;                                                \
   };                                                                           \
                                                                                \
