@@ -176,4 +176,25 @@ void point_ll_replace_test(void) {
   after(ll);
 }
 
-// void point_ll_remove_test(void);
+void point_ll_remove_test(void) {
+  // given
+  struct point_linked_list *ll = before();
+
+  size_t num_of_points = sizeof points / sizeof *points;
+  assert(ll->size == num_of_points);
+
+  // when
+  struct point_node *removed =
+      point_ll_remove(ll, (struct point){.x = 2, .y = 1}, equal_to);
+
+  assert(removed);
+  assert(equal_to(removed->data, (struct point){.x = 2, .y = 1}));
+  assert(ll->size == num_of_points - 1);
+
+  free(removed);
+
+  removed = point_ll_remove(ll, (struct point){.x = 2, .y = 1}, equal_to);
+  assert(!removed);
+
+  after(ll);
+}
