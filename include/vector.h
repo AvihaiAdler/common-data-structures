@@ -65,10 +65,10 @@
     return vect->size == 0;                                                    \
   }                                                                            \
                                                                                \
-  /* returns the address wrapper of the element at position pos. if pos >      \
-   * vector->size - returns NULL. NOTE: the pointer returned is the pointer to \
-   * the undelying data, any changes to it will change the data in the vector  \
-   * itself. the pointer shouldn't be free'd */                                \
+  /* returns the address of the wrapper of the element at position pos. if pos \
+   * > vector->size - returns NULL. NOTE: the pointer returned is the pointer  \
+   * to the undelying data, any changes to it will change the data in the      \
+   * vector itself. the pointer shouldn't be free'd */                         \
   struct NAME##_wrapper *NAME##_vect_at(struct NAME##_vector *vect,            \
                                         unsigned int pos) {                    \
     if (!vect) return NULL;                                                    \
