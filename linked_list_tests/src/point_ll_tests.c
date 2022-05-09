@@ -38,14 +38,6 @@ int comparator(struct point a, struct point b) {
   return (a.x > b.x) - (a.x < b.x);
 }
 
-static void print_ll(struct point_linked_list *ll) {
-  printf("size: %zu\n", ll->size);
-
-  for (struct point_node *head = ll->head; head; head = head->next) {
-    printf("{ x = %d, y = %d }\n", head->data.x, head->data.y);
-  }
-}
-
 void point_ll_prepend_test(void) {
   // given
   struct point_linked_list *ll = point_ll_init();
