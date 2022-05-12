@@ -1,5 +1,8 @@
 #include "include/list.h"
 
+#include <limits.h>
+#include <stdlib.h>
+
 struct list *list_init() {
   return calloc(1, sizeof(struct list));
 }
@@ -27,13 +30,14 @@ struct node *init_node(void *data) {
   return node;
 }
 
-int64_t list_size(struct list *list) {
+unsigned long long list_size(struct list *list) {
   if (!list) return 0;
   return list->size;
 }
 
 bool list_prepend(struct list *list, void *data) {
   if (!list) return false;
+  if (list->size == LLONG_MAX) return false;
 
   struct node *tmp = init_node(data);
   if (!tmp) return false;
@@ -50,6 +54,7 @@ bool list_prepend(struct list *list, void *data) {
 
 bool list_append(struct list *list, void *data) {
   if (!list) return false;
+  if (list->size == LLONG_MAX) return false;
 
   struct node *tmp = init_node(data);
   if (!tmp) return false;
@@ -64,10 +69,10 @@ bool list_append(struct list *list, void *data) {
   return true;
 }
 
-bool list_insert_at(struct list *list, void *data, int64_t pos) {
+bool list_insert_at(struct list *list, void *data, unsigned long long pos) {
   if (!list) return false;
-  if (pos < 0) return false;
   if (pos > list->size) return false;
+  if (list->size == LLONG_MAX) return false;
 
   if (pos == 0) return list_prepend(list, data);
   if (pos == list->size) return list_append(list, data);
@@ -76,7 +81,7 @@ bool list_insert_at(struct list *list, void *data, int64_t pos) {
   if (!new_node) return false;
 
   struct node *tmp = list->head;
-  for (int64_t i = 0; i < pos - 1; i++) {
+  for (unsigned long i = 0; i < pos - 1; i++) {
     tmp = tmp->next;
   }
 
@@ -91,7 +96,9 @@ bool list_insert_at(struct list *list, void *data, int64_t pos) {
 bool list_insert_priority(struct list *list, void *data,
                           int (*cmpr)(const void *, const void *)) {
   if (!list) return false;
-  if (!list->head) return list_prepend(list, data);
+  if (list->size == LLONG_MAX) return false;
+
+  if (!list->head) return list_prepend(list, data);  // list is empty
 
   if (!cmpr) return false;
 
@@ -156,16 +163,15 @@ void *list_remove_last(struct list *list) {
   return data;
 }
 
-void *list_remove_at(struct list *list, int64_t pos) {
+void *list_remove_at(struct list *list, unsigned long long pos) {
   if (!list) return NULL;
-  if (pos < 0) return NULL;
   if (pos >= list->size) return NULL;
 
   if (pos == 0) return list_remove_first(list);
   if (pos == list->size - 1) return list_remove_last(list);
 
   struct node *tmp = list->head;
-  for (int64_t i = 0; i < pos; i++) {
+  for (unsigned long i = 0; i < pos; i++) {
     tmp = tmp->next;
   }
 
@@ -178,27 +184,27 @@ void *list_remove_at(struct list *list, int64_t pos) {
   return data;
 }
 
-int64_t list_index_of(struct list *list, void *data,
-                      bool (*equals)(const void *, const void *)) {
+long long list_index_of(struct list *list, void *data,
+                        bool (*equals)(const void *, const void *)) {
   if (!list) return INVALID_POS;
   if (!equals) return INVALID_POS;
   if (!list->head) return INVALID_POS;
 
-  int64_t pos = 0;
+  long long pos = 0;
   for (struct node *tmp = list->head; tmp; tmp = tmp->next, pos++) {
     if (equals(tmp->data, data)) return pos;
   }
   return INVALID_POS;
 }
 
-void *list_replace_at(struct list *list, void *data, int64_t pos) {
+void *list_replace_at(struct list *list, void *data, unsigned long long pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
   if (pos < 0) return NULL;
   if (pos >= list->size) return NULL;
 
   struct node *tmp = list->head;
-  for (int64_t i = 0; i < pos; i++) {
+  for (unsigned long i = 0; i < pos; i++) {
     tmp = tmp->next;
   }
 
@@ -211,10 +217,10 @@ void *list_replace_at(struct list *list, void *data, int64_t pos) {
  * old_data on success, NULL otherwise */
 void *list_replace(struct list *list, void *old_data, void *new_data,
                    bool (*equals)(const void *, const void *)) {
-  int64_t pos = list_index_of(list, old_data, equals);
+  long long pos = list_index_of(list, old_data, equals);
   if (pos < 0) return NULL;
 
-  return list_replace_at(list, new_data, pos);
+  return list_replace_at(list, new_data, (unsigned long long)pos);
 }
 
 /* sorts the list */

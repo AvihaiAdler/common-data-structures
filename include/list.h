@@ -1,19 +1,19 @@
 #pragma once
 
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 #define INVALID_POS -1
 
+/* node object */
 struct node {
   void *data;
   struct node *next;
   struct node *prev;
 };
 
+/* doubly linked list object */
 struct list {
-  int64_t size;
+  unsigned long long size;  // can never exceeds LLONG_MAX
   struct node *head;
   struct node *tail;
 };
@@ -33,7 +33,7 @@ static struct node *init_node(void *data);
 
 /* returns the number of elements on the list. avoid acceessing list::size
  * directly. use this method instead */
-int64_t list_size(struct list *list);
+unsigned long long list_size(struct list *list);
 
 /* add a node to the start of the list. returns true on success, false otherwise
  */
@@ -45,7 +45,7 @@ bool list_append(struct list *list, void *data);
 
 /* constructs and inserts a node at position pos. the position is calculated
  * from the head of the list. returns true on success, false otherwise */
-bool list_insert_at(struct list *list, void *data, int64_t pos);
+bool list_insert_at(struct list *list, void *data, unsigned long long pos);
 
 /* constructs and inserts a node at a position determined by the comparator.
  * inserts the new node at the first location where new_node::data >
@@ -64,18 +64,18 @@ void *list_remove_last(struct list *list);
 /* removes the node at position pos. the position is caluclated from the head of
  * the list. returns a pointer to the removed element on success, NULL otherwise
  */
-void *list_remove_at(struct list *list, int64_t pos);
+void *list_remove_at(struct list *list, unsigned long long pos);
 
 /* finds the first occurence of data and returns its index. the index is
  * calculated for the list's head. returns a positive number as the index on
  * success, negative number on failure */
-int64_t list_index_of(struct list *list, void *data,
-                      bool (*equals)(const void *, const void *));
+long long list_index_of(struct list *list, void *data,
+                        bool (*equals)(const void *, const void *));
 
 /* replaces an element at position pos. the position is calculated from the
  * list's head. returns a pointer to the replcaed data on success, NULL
  * otherwise */
-void *list_replace_at(struct list *list, void *data, int64_t pos);
+void *list_replace_at(struct list *list, void *data, unsigned long long pos);
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success, NULL otherwise */
