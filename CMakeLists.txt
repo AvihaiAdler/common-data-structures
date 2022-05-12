@@ -7,16 +7,16 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 # add_subdirectory(linked_list_tests)
 add_library(
   generics
-  src/vector2.c
+  src/vector.c
   src/list.c
 )
 set_target_properties(
   generics PROPERTIES 
   VERSION ${PROJECT_VERSION}
-  PUBLIC_HEADER include/vector2.h 
+  PUBLIC_HEADER include/vector.h 
   PUBLIC_HEADER include/list.h
 )
 target_include_directories(generics PRIVATE .)
-# add_subdirectory(dev)
+add_subdirectory(dev)
 # add_compile_options(-Wall -Wextra -pedantic -fsanitize=address,undefined)
 # add_link_options(-fsanitize=address,undefined)
