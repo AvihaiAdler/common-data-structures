@@ -35,6 +35,11 @@ unsigned long long list_size(struct list *list) {
   return list->size;
 }
 
+bool list_empty(struct list *list) {
+  if (!list) return true;
+  return list->size == 0;
+}
+
 bool list_prepend(struct list *list, void *data) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;

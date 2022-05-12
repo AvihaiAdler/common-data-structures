@@ -35,6 +35,9 @@ static struct node *init_node(void *data);
  * directly. use this method instead */
 unsigned long long list_size(struct list *list);
 
+/* returns whether vector is emtpy or not. if list is NULL - returns true */
+bool list_empty(struct list *list);
+
 /* add a node to the start of the list. returns true on success, false otherwise
  */
 bool list_prepend(struct list *list, void *data);
