@@ -22,7 +22,15 @@ struct vector *vector_init();
  * call it for every element in the underlying array */
 void vector_destroy(struct vector *vector, void (*destroy)(void *element));
 
-/* returns whether vector is emtpy or not */
+/* returns the number of elements in the vector. avoid acceessing vector::size
+ * directly. use this method instead */
+unsigned long long vector_size(struct vector *vector);
+
+/* returns the number of elements you can fit in the vector. avoid acceessing
+ * vector::capacity directly. use this method instead */
+unsigned long long vector_capacity(struct vector *vector);
+
+/* returns whether vector is emtpy or not. if vector is NULL - returns true */
 bool vector_empty(struct vector *vector);
 
 /* returns the element at position pos. any changes to the element will change

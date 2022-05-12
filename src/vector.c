@@ -32,8 +32,14 @@ void vector_destroy(struct vector *vector, void (*destroy)(void *element)) {
   free(vector);
 }
 
+unsigned long long vector_size(struct vector *vector) { return vector->size; }
+
+unsigned long long vector_capacity(struct vector *vector) {
+  return vector->capacity;
+}
+
 bool vector_empty(struct vector *vector) {
-  if (!vector) return false;
+  if (!vector) return true;
   return vector->size == 0;
 }
 
