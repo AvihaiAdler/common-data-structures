@@ -64,7 +64,7 @@ void *vector_find(struct vector *vector, void *element,
 
 bool vector_resize(struct vector *vector) {
   // limit check. vector:capacity cannot exceed LLONG_MAX
-  if (LLONG_MAX >> GROWTH_FACTOR >= vector->capacity) return false;
+  if (LLONG_MAX >> GROWTH_FACTOR < vector->capacity) return false;
   unsigned long long new_capacity = vector->capacity << GROWTH_FACTOR;
 
   void **tmp = realloc(vector->data, new_capacity);
