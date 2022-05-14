@@ -1,0 +1,13 @@
+set(VECTOR_UNIT_TESTS sanity)
+
+foreach(TEST ${VECTOR_UNIT_TESTS})
+  
+add_executable(${TEST} ${TEST}.c)
+
+target_compile_options(${TEST} PUBLIC -Wall -Wextra -pedantic -fsanitize=address,undefined)
+target_link_options(${TEST} PUBLIC -fsanitize=address,undefined)
+
+target_include_directories(${TEST} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+target_link_libraries(${TEST} PRIVATE generics)
+
+endforeach(TEST)
