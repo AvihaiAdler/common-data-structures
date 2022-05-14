@@ -5,7 +5,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 # add_subdirectory(vector_tests)    # the rest of the directories
 # add_subdirectory(linked_list_tests)
-add_subdirectory(dev)
+# add_subdirectory(dev)
+add_subdirectory(tests/vector)
 add_library(
   generics
   src/vector.c
