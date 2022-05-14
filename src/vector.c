@@ -138,12 +138,12 @@ unsigned long long vector_shrink(struct vector *vector) {
 }
 
 long long vector_index_of(struct vector *vector, void *element,
-                          bool (*equals)(const void *, const void *)) {
+                          int (*cmpr)(const void *, const void *)) {
   if (!vector) return -1;
   if (!vector->data) return -1;
 
   for (unsigned long long i = 0; i < vector->size; i++) {
-    if (equals(element, vector->data[i])) return i;
+    if (cmpr(element, vector->data[i]) == 0) return i;
   }
 
   return -1;
