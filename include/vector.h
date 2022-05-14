@@ -38,12 +38,10 @@ bool vector_empty(struct vector *vector);
 void *vector_at(struct vector *vector, unsigned long long pos);
 
 /* sorts the vector and finds an element on the vector and returns it. returns
- * NULL on failure */
+ * NULL on failure. the cmpr function expects 2 const void ** pointers catsted
+ * into const void *. make sure you do the appropriate casts */
 void *vector_find(struct vector *vector, void *element,
                   int (*cmpr)(const void *, const void *));
-
-/* used internally to resize the vector by GROWTH_FACTOR */
-static bool vector_resize(struct vector *vector);
 
 /* reservse space for size elements. returns the new reserved space
  * (vector::capacity) */
@@ -76,10 +74,12 @@ unsigned long long vector_shrink(struct vector *vector);
 /* finds and returns the index of the first occurence of an element on the
  * vector. returns its position on success, or -1 if no such element found */
 long long vector_index_of(struct vector *vector, void *element,
-                          int (*cmpr)(const void *, const void *));
+                          bool (*equals)(const void *, const void *));
 
 /* sort the vector. the compr function should returns an int bigger than 0 if
  * the first element if bigger the second, 0 if both elements are equals or an
- * int smaller than 0 if the first element is smaller than the second */
+ * int smaller than 0 if the first element is smaller than the second. the cmpr
+ * function expects 2 const void ** pointers catsted into const void *. make
+ * sure you do the appropriate casts */
 void vector_sort(struct vector *vector,
                  int (*cmpr)(const void *, const void *));

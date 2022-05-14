@@ -58,16 +58,19 @@ void *vector_find(struct vector *vector, void *element,
   if (!cmpr) return NULL;
 
   vector_sort(vector, cmpr);
-  return bsearch(element, vector->data, vector->size, sizeof *vector->data,
-                 cmpr);
+  void *elem =
+      bsearch(&element, vector->data, vector->size, sizeof *vector->data, cmpr);
+  if (!elem) return NULL;
+  return *(void **)elem;
 }
 
+/* used internally to resize the vector by GROWTH_FACTOR */
 bool vector_resize(struct vector *vector) {
   // limit check. vector:capacity cannot exceed LLONG_MAX
   if (LLONG_MAX >> GROWTH_FACTOR < vector->capacity) return false;
   unsigned long long new_capacity = vector->capacity << GROWTH_FACTOR;
 
-  void **tmp = realloc(vector->data, new_capacity);
+  void **tmp = realloc(vector->data, new_capacity * sizeof *vector->data);
   if (!tmp) return false;
 
   vector->capacity = new_capacity;
@@ -81,11 +84,12 @@ unsigned long long vector_reserve(struct vector *vector,
   if (size > LLONG_MAX) return vector->capacity;
   if (size <= vector->capacity) return vector->capacity;
 
-  void **tmp = realloc(vector->data, size);
+  void **tmp = realloc(vector->data, size * sizeof *vector->data);
   if (!tmp) return vector->capacity;
 
   vector->capacity = size;
   vector->data = tmp;
+  return vector->capacity;
 }
 
 bool vector_push(struct vector *vector, void *element) {
@@ -128,8 +132,8 @@ unsigned long long vector_shrink(struct vector *vector) {
   if (!vector) return 0;
   if (!vector->data) return 0;
 
-  unsigned long long new_capacity = vector->size + 1;
-  void **tmp = realloc(vector->data, new_capacity);
+  unsigned long long new_capacity = vector->size;
+  void **tmp = realloc(vector->data, new_capacity * sizeof *vector->data);
   if (!tmp) return vector->capacity;
 
   vector->capacity = new_capacity;
@@ -138,12 +142,12 @@ unsigned long long vector_shrink(struct vector *vector) {
 }
 
 long long vector_index_of(struct vector *vector, void *element,
-                          int (*cmpr)(const void *, const void *)) {
+                          bool (*equals)(const void *, const void *)) {
   if (!vector) return -1;
   if (!vector->data) return -1;
 
   for (unsigned long long i = 0; i < vector->size; i++) {
-    if (cmpr(element, vector->data[i]) == 0) return i;
+    if (equals(element, vector->data[i])) return i;
   }
 
   return -1;
