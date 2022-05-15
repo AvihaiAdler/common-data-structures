@@ -251,6 +251,24 @@ void list_remove_at_test(struct point **points, size_t arr_size) {
   after(list);
 }
 
+void list_index_of_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+
+  // when
+  long long int first = list_index_of(list, points[0], equals);
+  long long int last = list_index_of(list, points[arr_size - 1], equals);
+  long long int mid = list_index_of(list, points[arr_size / 2], equals);
+
+  // then
+  assert(first == 0);
+  assert((size_t)last == arr_size - 1);
+  assert((size_t)mid == arr_size / 2);
+
+  // cleanup
+  after(list);
+}
+
 int main(void) {
   srand(time(NULL));
 
@@ -266,6 +284,7 @@ int main(void) {
   list_remove_first_test(points, arr_size);
   list_remove_last_test(points, arr_size);
   list_remove_at_test(points, arr_size);
+  list_index_of_test(points, arr_size);
 
   destroy_points(points, arr_size);
 
