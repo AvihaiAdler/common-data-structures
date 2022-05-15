@@ -5,6 +5,8 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 
 # add_subdirectory(dev)
+include(CTest)
+enable_testing()
 add_subdirectory(tests/vector)
 
 add_library(
@@ -19,5 +21,5 @@ set_target_properties(
   PUBLIC_HEADER include/list.h
 )
 target_include_directories(generics PRIVATE .)
-add_compile_options(-Wall -Wextra -pedantic -fsanitize=address,undefined)
-add_link_options(-fsanitize=address,undefined)
+# add_compile_options(-Wall -Wextra -pedantic -fsanitize=address,undefined)
+# add_link_options(-fsanitize=address,undefined)
