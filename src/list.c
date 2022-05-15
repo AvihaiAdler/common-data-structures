@@ -173,6 +173,7 @@ void *list_remove_first(struct list *list) {
     list->tail = list->head = NULL;
   } else {
     list->head = list->head->next;
+    list->head->prev = NULL;
   }
   list->size--;
 
@@ -192,6 +193,7 @@ void *list_remove_last(struct list *list) {
     list->head = list->tail = NULL;
   } else {
     list->tail = list->tail->prev;
+    list->tail->next = NULL;
   }
   list->size--;
 
