@@ -27,10 +27,6 @@ struct list *list_init();
  */
 void list_destroy(struct list *list, void (*destroy)(void *data));
 
-/* construct a node with the data passed in. returns a heap allocated node on
- * success, NULL on failure. internal use only */
-static struct node *init_node(void *data);
-
 /* returns the number of elements on the list. avoid acceessing list::size
  * directly. use this method instead */
 unsigned long long list_size(struct list *list);
@@ -97,11 +93,3 @@ void *list_replace(struct list *list, void *old_data, void *new_data,
 
 /* sorts the list */
 void list_sort(struct list *list, int (*cmpr)(const void *, const void *));
-
-static void list_split(struct node *src, struct node **front,
-                       struct node **back);
-
-static struct node *list_merge(struct node *front, struct node *back,
-                               int (*cmpr)(const void *, const void *));
-
-static void sort(struct node **src, int (*cmpr)(const void *, const void *));

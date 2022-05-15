@@ -22,6 +22,8 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
   free(list);
 }
 
+/* construct a node with the data passed in. returns a heap allocated node on
+ * success, NULL on failure. internal use only */
 struct node *init_node(void *data) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
@@ -254,30 +256,28 @@ void *list_replace(struct list *list, void *old_data, void *new_data,
   return list_replace_at(list, new_data, (unsigned long long)pos);
 }
 
-/* sorts the list */
-void list_sort(struct list *list, int (*cmpr)(const void *, const void *)) {
-  if (!list) return;
-  if (!cmpr) return;
-  if (!list->head) return;
+static struct node *list_merge(struct node *front, struct node *back,
+                               int (*cmpr)(const void *, const void *)) {
+  struct node *merged = NULL;
 
-  sort(&list->head, cmpr);
+  // base
+  if (!front) return back;
+  if (!back) return front;
+
+  if (cmpr(front->data, back->data) <= 0) {
+    merged = front;
+    merged->next = list_merge(front->next, back, cmpr);
+  } else {
+    merged = back;
+    merged->next = list_merge(front, back->next, cmpr);
+  }
+
+  merged->prev = merged->next->prev;
+  return merged;
 }
 
-void sort(struct node **src, int (*cmpr)(const void *, const void *)) {
-  struct node *head = *src;
-  struct node *front;
-  struct node *back;
-  if (!head || !head->next) return;
-
-  list_split(head, &front, &back);
-
-  sort(&front, cmpr);
-  sort(&back, cmpr);
-
-  *src = list_merge(front, back, cmpr);
-}
-
-void list_split(struct node *src, struct node **front, struct node **back) {
+static void list_split(struct node *src, struct node **front,
+                       struct node **back) {
   struct node *slow = src;
   struct node *fast = slow->next;
 
@@ -299,22 +299,25 @@ void list_split(struct node *src, struct node **front, struct node **back) {
   slow->next = NULL;
 }
 
-static struct node *list_merge(struct node *front, struct node *back,
-                               int (*cmpr)(const void *, const void *)) {
-  struct node *merged = NULL;
+static void sort(struct node **src, int (*cmpr)(const void *, const void *)) {
+  struct node *head = *src;
+  struct node *front;
+  struct node *back;
+  if (!head || !head->next) return;
 
-  // base
-  if (!front) return back;
-  if (!back) return front;
+  list_split(head, &front, &back);
 
-  if (cmpr(front->data, back->data) <= 0) {
-    merged = front;
-    merged->next = list_merge(front->next, back, cmpr);
-  } else {
-    merged = back;
-    merged->next = list_merge(front, back->next, cmpr);
-  }
+  sort(&front, cmpr);
+  sort(&back, cmpr);
 
-  merged->prev = merged->next->prev;
-  return merged;
+  *src = list_merge(front, back, cmpr);
+}
+
+/* sorts the list */
+void list_sort(struct list *list, int (*cmpr)(const void *, const void *)) {
+  if (!list) return;
+  if (!cmpr) return;
+  if (!list->head) return;
+
+  sort(&list->head, cmpr);
 }
