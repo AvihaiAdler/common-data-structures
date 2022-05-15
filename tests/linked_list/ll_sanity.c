@@ -211,6 +211,41 @@ void list_remove_first_test(struct point **points, size_t arr_size) {
   assert(list_size(list) == arr_size - 1);
   assert(equals(removed, points[0]));
   assert(equals(list_peek_first(list), points[1]));
+  assert(list_index_of(list, removed, equals) < 0);
+
+  // cleanup
+  after(list);
+}
+
+void list_remove_last_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+
+  // when
+  struct point *removed = list_remove_last(list);
+
+  // then
+  assert(list_size(list) == arr_size - 1);
+  assert(equals(list_peek_last(list), points[arr_size - 2]));
+  assert(equals(removed, points[arr_size - 1]));
+  assert(list_index_of(list, removed, equals) < 0);
+
+  // cleaup
+  after(list);
+}
+
+void list_remove_at_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+
+  // when
+  struct point *removed = list_remove_at(list, arr_size / 2);
+
+  // then
+  assert(removed);
+  assert(list_size(list) == arr_size - 1);
+  assert(equals(removed, points[arr_size / 2]));
+  assert(list_index_of(list, removed, equals) < 0);
 
   // cleanup
   after(list);
@@ -229,6 +264,8 @@ int main(void) {
   list_insert_priority_test(points, arr_size);
   list_at_test(points, arr_size);
   list_remove_first_test(points, arr_size);
+  list_remove_last_test(points, arr_size);
+  list_remove_at_test(points, arr_size);
 
   destroy_points(points, arr_size);
 
