@@ -1,4 +1,4 @@
-set(VECTOR_UNIT_TESTS sanity)
+set(VECTOR_UNIT_TESTS vect_sanity)
 
 foreach(TEST ${VECTOR_UNIT_TESTS})
   
