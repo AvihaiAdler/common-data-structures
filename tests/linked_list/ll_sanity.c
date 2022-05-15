@@ -70,8 +70,9 @@ bool equals(const void *a, const void *b) {
 }
 
 int cmpr(const void *a, const void *b) {
-  const struct point *p_a = a;
-  const struct point *p_b = b;
+  const struct point *p_a = *(void **)a;
+  const struct point *p_b = *(void **)b;
+  if (p_a->x == p_b->x) return (p_a->y > p_b->y) - (p_a->y < p_b->y);
   return (p_a->x > p_b->x) - (p_a->x < p_b->x);
 }
 
@@ -88,7 +89,7 @@ void destroy(void *data) {
   if (point) free(point);
 }
 
-void after(struct list *list) { list_destroy(list, destroy); }
+void after(struct list *list) { list_destroy(list, NULL); }
 
 void list_prepend_and_peek_test(struct point **points, size_t arr_size) {
   // given
@@ -158,15 +159,26 @@ void list_insert_at_test(struct point **points, size_t arr_size) {
 
 void list_insert_priority_test(struct point **points, size_t arr_size) {
   // given
-  struct list *list = before(points, arr_size);
+  struct list *list = list_init();
 
   // when
   for (size_t i = 0; i < arr_size; i++) {
     list_insert_priority(list, points[i], cmpr);
   }
 
-  // sort the original array
-  qsort(points, arr_size, sizeof *points, cmpr);
+  // create aduplicate of the original array and sort it
+  struct point **sorted = copy_points(points, arr_size);
+  qsort(sorted, arr_size, sizeof *sorted, cmpr);
+
+  // then
+  assert(list_size(list) == arr_size);
+  for (size_t i = arr_size; i > 0; i--) {
+    assert(equals(list_at(list, arr_size - i), sorted[i - 1]));
+  }
+
+  // cleanup
+  destroy_points(sorted, arr_size);
+  after(list);
 }
 
 void list_at_test(struct point **points, size_t arr_size) {
@@ -188,9 +200,37 @@ void list_at_test(struct point **points, size_t arr_size) {
   after(list);
 }
 
-void list_remove_first_test(struct point **points, size_t arr_size) {}
+void list_remove_first_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+
+  // when
+  struct point *removed = list_remove_first(list);
+
+  // then
+  assert(list_size(list) == arr_size - 1);
+  assert(equals(removed, points[0]));
+  assert(equals(list_peek_first(list), points[1]));
+
+  // cleanup
+  after(list);
+}
 
 int main(void) {
   srand(time(NULL));
+
+  size_t arr_size = 20;
+  struct point **points = create_points(arr_size, 1, 100);
+  if (!points) return 1;
+
+  list_prepend_and_peek_test(points, arr_size);
+  list_append_and_peek_test(points, arr_size);
+  list_insert_at_test(points, arr_size);
+  list_insert_priority_test(points, arr_size);
+  list_at_test(points, arr_size);
+  list_remove_first_test(points, arr_size);
+
+  destroy_points(points, arr_size);
+
   return 0;
 }
