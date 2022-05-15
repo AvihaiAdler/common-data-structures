@@ -51,6 +51,8 @@ bool list_prepend(struct list *list, void *data) {
 
   if (!list->head) {
     list->tail = tmp;
+  } else {
+    list->head->prev = tmp;
   }
 
   tmp->next = list->head;
@@ -68,6 +70,8 @@ bool list_append(struct list *list, void *data) {
 
   if (!list->tail) {
     list->head = tmp;
+  } else {
+    list->tail->next = tmp;
   }
 
   tmp->prev = list->tail;
@@ -112,7 +116,7 @@ bool list_insert_priority(struct list *list, void *data,
   // find the node where data > node::data
   struct node *tmp = list->head;
   for (; tmp; tmp = tmp->next) {
-    if (cmpr(data, tmp->data) <= 0) continue;
+    if (cmpr(&data, &tmp->data) > 0) break;
   }
 
   // reached the end. all elements are bigger than the new data
