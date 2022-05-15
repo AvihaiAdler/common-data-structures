@@ -149,7 +149,7 @@ void *list_peek_last(struct list *list) {
 void *list_at(struct list *list, unsigned long long pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
-  if (pos > list->size) return NULL;
+  if (pos >= list->size) return NULL;
 
   struct node *tmp = list->head;
   for (unsigned long long counter = 0; counter < pos; counter++) {
