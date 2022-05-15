@@ -130,6 +130,32 @@ bool list_insert_priority(struct list *list, void *data,
   return true;
 }
 
+void *list_peek_first(struct list *list) {
+  if (!list) return NULL;
+  if (!list->head) return NULL;
+
+  return list->head->data;
+}
+
+void *list_peek_last(struct list *list) {
+  if (!list) return NULL;
+  if (!list->tail) return NULL;
+
+  return list->tail->data;
+}
+
+void *list_at(struct list *list, unsigned long long pos) {
+  if (!list) return NULL;
+  if (!list->head) return NULL;
+  if (pos > list->size) return NULL;
+
+  struct node *tmp = list->head;
+  for (unsigned long long counter = 0; counter < pos; counter++) {
+    tmp = tmp->next;
+  }
+  return tmp->data;
+}
+
 void *list_remove_first(struct list *list) {
   if (!list) return NULL;
   if (!list->head) return NULL;

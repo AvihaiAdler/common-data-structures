@@ -56,6 +56,16 @@ bool list_insert_at(struct list *list, void *data, unsigned long long pos);
 bool list_insert_priority(struct list *list, void *data,
                           int (*cmpr)(const void *, const void *));
 
+/* returns a pointer to the first element on the list. returns NULL on failure
+ */
+void *list_peek_first(struct list *list);
+
+/* returns a pointer to the last element on the list. returns NULL on failure */
+void *list_peek_last(struct list *list);
+
+/* returns a pointer to the element at position pos. returns NULL on failure. */
+void *list_at(struct list *list, unsigned long long pos);
+
 /* removes the first node from the list. returns a pointer to the removed
  * element on success, NULL on failure */
 void *list_remove_first(struct list *list);
