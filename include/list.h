@@ -48,7 +48,8 @@ bool list_insert_at(struct list *list, void *data, unsigned long long pos);
 
 /* constructs and inserts a node at a position determined by the comparator.
  * inserts the new node at the first location where new_node::data >
- * another_node::data */
+ * another_node::data. the cmpr function expects 2 const void * pointers passed
+ * in as const void **. make sure you do the appropriate casts */
 bool list_insert_priority(struct list *list, void *data,
                           int (*cmpr)(const void *, const void *));
 
@@ -77,7 +78,9 @@ void *list_remove_at(struct list *list, unsigned long long pos);
 
 /* finds the first occurence of data and returns its index. the index is
  * calculated for the list's head. returns a positive number as the index on
- * success, negative number on failure */
+ * success, negative number on failure. the cmpr function expects 2 const void *
+ * pointers passed in as const void **. make sure you do the appropriate casts
+ */
 long long list_index_of(struct list *list, void *data,
                         bool (*equals)(const void *, const void *));
 
@@ -87,7 +90,9 @@ long long list_index_of(struct list *list, void *data,
 void *list_replace_at(struct list *list, void *data, unsigned long long pos);
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
- * old_data on success, NULL otherwise */
+ * old_data on success, NULL otherwise. the cmpr function expects 2 const void *
+ * pointers passed in as const void **. make sure you do the appropriate casts
+ */
 void *list_replace(struct list *list, void *old_data, void *new_data,
                    bool (*equals)(const void *, const void *));
 
