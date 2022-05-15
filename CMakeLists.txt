@@ -8,6 +8,7 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 include(CTest)
 enable_testing()
 add_subdirectory(tests/vector)
+add_subdirectory(tests/linked_list)
 
 add_library(
   generics
