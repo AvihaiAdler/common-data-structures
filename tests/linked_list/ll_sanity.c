@@ -302,6 +302,7 @@ void list_replace_at_test(struct point **points, size_t arr_size) {
 
   // then
   assert(replaced_first && replaced_mid && replaced_last);
+  assert(list_size(list) == arr_size);
   assert(equals(replaced_first, points[0]));
   assert(equals(replaced_mid, points[arr_size / 2]));
   assert(equals(replaced_last, points[arr_size - 1]));
@@ -310,6 +311,42 @@ void list_replace_at_test(struct point **points, size_t arr_size) {
   assert(equals(list_at(list, arr_size - 1), &p));
 
   // cleanup
+  after(list);
+}
+
+void list_replace_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+  struct point p = {.x = -1, .y = -1};
+
+  // when
+  struct point *replaced = list_replace(list, points[arr_size / 2], &p, equals);
+
+  // then
+  assert(replaced);
+  assert(list_size(list) == arr_size);
+  assert((size_t)list_index_of(list, &p, equals) == arr_size / 2);
+
+  // cleanup
+  after(list);
+}
+
+void list_sort_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+  struct point **copy = copy_points(points, arr_size);
+  qsort(copy, arr_size, sizeof *copy, cmpr_points);
+
+  // when
+  list_sort(list, cmpr);
+
+  // then
+  for (unsigned long long i = 0; i < arr_size; i++) {
+    assert(equals(copy[i], list_at(list, i)));
+  }
+
+  // cleanup
+  destroy_points(copy, arr_size);
   after(list);
 }
 
@@ -330,6 +367,8 @@ int main(void) {
   list_remove_at_test(points, arr_size);
   list_index_of_test(points, arr_size);
   list_replace_at_test(points, arr_size);
+  list_replace_test(points, arr_size);
+  list_sort_test(points, arr_size);
 
   destroy_points(points, arr_size);
 
