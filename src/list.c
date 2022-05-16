@@ -31,8 +31,8 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
   free(list);
 }
 
-/* construct a node with the data passed in. returns a heap allocated node on
- * success, NULL on failure. internal use only */
+/* construct a node with the a copy of the data passed in. returns a heap
+ * allocated node on success, NULL on failure. internal use only */
 struct node *init_node(struct list *list, void *data) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
@@ -44,7 +44,6 @@ struct node *init_node(struct list *list, void *data) {
   }
 
   memcpy(node->data, data, list->data_size);
-  // node->data = data;
   return node;
 }
 

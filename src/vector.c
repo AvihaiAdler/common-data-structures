@@ -109,7 +109,6 @@ bool vector_push(struct vector *vector, void *element) {
 
   memcpy(&vector->data[vector->size * vector->data_size], element,
          vector->data_size);
-  // vector->data[vector->size] = element;
   vector->size++;
   return true;
 }
