@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -8,19 +7,6 @@
 struct point {
   int x, y;
 };
-
-void print_arr(struct point **points, size_t arr_size) {
-  for (size_t i = 0; i < arr_size; i++) {
-    printf("{.x = %d, .y = %d}\n", points[i]->x, points[i]->y);
-  }
-}
-
-void print_list(struct list *list) {
-  for (struct node *tmp = list->head; tmp; tmp = tmp->next) {
-    struct point *p = tmp->data;
-    printf("{.x = %d, .y = %d}\n", p->x, p->y);
-  }
-}
 
 // points related functions
 int generate_random(int min, int max) {
