@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -7,6 +8,19 @@
 struct point {
   int x, y;
 };
+
+void print_arr(struct point **points, size_t arr_size) {
+  for (size_t i = 0; i < arr_size; i++) {
+    printf("{.x = %d, .y = %d}\n", points[i]->x, points[i]->y);
+  }
+}
+
+void print_list(struct list *list) {
+  for (struct node *tmp = list->head; tmp; tmp = tmp->next) {
+    struct point *p = tmp->data;
+    printf("{.x = %d, .y = %d}\n", p->x, p->y);
+  }
+}
 
 // points related functions
 int generate_random(int min, int max) {
@@ -62,6 +76,13 @@ struct point **copy_points(struct point **points, size_t arr_size) {
   return copy;
 }
 
+int cmpr_points(const void *a, const void *b) {
+  const struct point *p_a = *(void **)a;
+  const struct point *p_b = *(void **)b;
+  if (p_a->x == p_b->x) return (p_a->y > p_b->y) - (p_a->y < p_b->y);
+  return (p_a->x > p_b->x) - (p_a->x < p_b->x);
+}
+
 // linked list related functions
 bool equals(const void *a, const void *b) {
   const struct point *p_a = a;
@@ -70,8 +91,8 @@ bool equals(const void *a, const void *b) {
 }
 
 int cmpr(const void *a, const void *b) {
-  const struct point *p_a = *(void **)a;
-  const struct point *p_b = *(void **)b;
+  const struct point *p_a = a;
+  const struct point *p_b = b;
   if (p_a->x == p_b->x) return (p_a->y > p_b->y) - (p_a->y < p_b->y);
   return (p_a->x > p_b->x) - (p_a->x < p_b->x);
 }
@@ -168,7 +189,12 @@ void list_insert_priority_test(struct point **points, size_t arr_size) {
 
   // create aduplicate of the original array and sort it
   struct point **sorted = copy_points(points, arr_size);
-  qsort(sorted, arr_size, sizeof *sorted, cmpr);
+  qsort(sorted, arr_size, sizeof *sorted, cmpr_points);
+
+  printf("sorted arr:\n");
+  print_arr(points, arr_size);
+  printf("list:\n");
+  print_list(list);
 
   // then
   assert(list_size(list) == arr_size);
