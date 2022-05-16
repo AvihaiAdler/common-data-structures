@@ -42,13 +42,6 @@ struct point *copy_points(struct point *points, size_t arr_size) {
   return copy;
 }
 
-int cmpr_points(const void *a, const void *b) {
-  const struct point *p_a = a;
-  const struct point *p_b = b;
-  if (p_a->x == p_b->x) return (p_a->y > p_b->y) - (p_a->y < p_b->y);
-  return (p_a->x > p_b->x) - (p_a->x < p_b->x);
-}
-
 // linked list related functions
 bool equals(const void *a, const void *b) {
   const struct point *p_a = a;
@@ -155,7 +148,7 @@ void list_insert_priority_test(struct point *points, size_t arr_size) {
 
   // create aduplicate of the original array and sort it
   struct point *sorted = copy_points(points, arr_size);
-  qsort(sorted, arr_size, sizeof *sorted, cmpr_points);
+  qsort(sorted, arr_size, sizeof *sorted, cmpr);
 
   // then
   assert(list_size(list) == arr_size);
@@ -309,7 +302,7 @@ void list_sort_test(struct point *points, size_t arr_size) {
   // given
   struct list *list = before(points, arr_size);
   struct point *copy = copy_points(points, arr_size);
-  qsort(copy, arr_size, sizeof *copy, cmpr_points);
+  qsort(copy, arr_size, sizeof *copy, cmpr);
 
   // when
   list_sort(list, cmpr);
