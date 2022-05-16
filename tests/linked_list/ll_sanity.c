@@ -191,11 +191,6 @@ void list_insert_priority_test(struct point **points, size_t arr_size) {
   struct point **sorted = copy_points(points, arr_size);
   qsort(sorted, arr_size, sizeof *sorted, cmpr_points);
 
-  printf("sorted arr:\n");
-  print_arr(points, arr_size);
-  printf("list:\n");
-  print_list(list);
-
   // then
   assert(list_size(list) == arr_size);
   for (size_t i = arr_size; i > 0; i--) {
@@ -295,6 +290,29 @@ void list_index_of_test(struct point **points, size_t arr_size) {
   after(list);
 }
 
+void list_replace_at_test(struct point **points, size_t arr_size) {
+  // given
+  struct list *list = before(points, arr_size);
+  struct point p = {.x = -1, .y = -1};
+
+  // when
+  struct point *replaced_first = list_replace_at(list, &p, 0);
+  struct point *replaced_mid = list_replace_at(list, &p, arr_size / 2);
+  struct point *replaced_last = list_replace_at(list, &p, arr_size - 1);
+
+  // then
+  assert(replaced_first && replaced_mid && replaced_last);
+  assert(equals(replaced_first, points[0]));
+  assert(equals(replaced_mid, points[arr_size / 2]));
+  assert(equals(replaced_last, points[arr_size - 1]));
+  assert(equals(list_at(list, 0), &p));
+  assert(equals(list_at(list, arr_size / 2), &p));
+  assert(equals(list_at(list, arr_size - 1), &p));
+
+  // cleanup
+  after(list);
+}
+
 int main(void) {
   srand(time(NULL));
 
@@ -311,6 +329,7 @@ int main(void) {
   list_remove_last_test(points, arr_size);
   list_remove_at_test(points, arr_size);
   list_index_of_test(points, arr_size);
+  list_replace_at_test(points, arr_size);
 
   destroy_points(points, arr_size);
 
