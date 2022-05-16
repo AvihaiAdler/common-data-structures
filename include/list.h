@@ -6,7 +6,7 @@
 
 /* node object */
 struct node {
-  void *data;
+  unsigned char *data;
   struct node *next;
   struct node *prev;
 };
@@ -14,6 +14,7 @@ struct node {
 /* doubly linked list object */
 struct list {
   unsigned long long size;  // can never exceeds LLONG_MAX
+  unsigned long long data_size;
   struct node *head;
   struct node *tail;
 };
@@ -21,9 +22,11 @@ struct list {
 /* initialize a heap allocated linked list with a size of 0, where head and tail
  * points to NULL. returns a list on success, NULL on failure
  */
-struct list *list_init();
+struct list *list_init(unsigned long long data_size);
 
-/* destroy a list 'object'. if destroy isn't NULL, calls it for every node::data
+/* destroy a list 'object'. if destroy isn't NULL, calls it for every
+ * node::data. you should only pass in a destroy function if your object
+ * contains a pointer to a heap allocated memory
  */
 void list_destroy(struct list *list, void (*destroy)(void *data));
 
@@ -63,16 +66,16 @@ void *list_peek_last(struct list *list);
 void *list_at(struct list *list, unsigned long long pos);
 
 /* removes the first node from the list. returns a pointer to the removed
- * element on success, NULL on failure */
+ * element on success (which has to be free'd), NULL on failure */
 void *list_remove_first(struct list *list);
 
 /* removes the first node from the list. returns a pointer to the removed
- * element on success, NULL on failure */
+ * element on success (which has to be free'd), NULL on failure */
 void *list_remove_last(struct list *list);
 
 /* removes the node at position pos. the position is caluclated from the head of
- * the list. returns a pointer to the removed element on success, NULL otherwise
- */
+ * the list. returns a pointer to the removed element on success (which has to
+ * be free'd), NULL otherwise */
 void *list_remove_at(struct list *list, unsigned long long pos);
 
 /* finds the first occurence of data and returns its index. the index is
@@ -82,12 +85,12 @@ long long list_index_of(struct list *list, void *data,
                         bool (*equals)(const void *, const void *));
 
 /* replaces an element at position pos. the position is calculated from the
- * list's head. returns a pointer to the replcaed data on success, NULL
- * otherwise */
+ * list's head. returns a pointer to the replcaed data on success (which has to
+ * be free'd), NULL otherwise */
 void *list_replace_at(struct list *list, void *data, unsigned long long pos);
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
- * old_data on success, NULL otherwise */
+ * old_data on success (which has to be free'd), NULL otherwise */
 void *list_replace(struct list *list, void *old_data, void *new_data,
                    bool (*equals)(const void *, const void *));
 
