@@ -12,13 +12,13 @@ bool equals(const void *a, const void *b) {
 }
 
 int cmpr(const void *a, const void *b) {
-  int *i_a = *(void **)a;
-  int *i_b = *(void **)b;
+  const int *i_a = a;
+  const int *i_b = b;
   return (*i_a > *i_b) - (*i_a < *i_b);
 }
 
 struct vector *before(int *arr, size_t arr_size) {
-  struct vector *vect = vector_init();
+  struct vector *vect = vector_init(sizeof *arr);
   for (size_t i = 0; i < arr_size; i++) {
     vector_push(vect, arr + i);
   }
@@ -29,7 +29,7 @@ void after(struct vector *vect) { vector_destroy(vect, NULL); }
 
 void vector_push_sanity_test(int num) {
   // given
-  struct vector *vect = vector_init();
+  struct vector *vect = vector_init(sizeof num);
   assert(vector_empty(vect));
 
   // when
@@ -133,6 +133,7 @@ void vector_remove_at_sanity_test(int *arr, size_t arr_size) {
   assert(vector_find(vect, &arr[arr_size / 2], cmpr) == NULL);
 
   // cleanup
+  free(removed);
   after(vect);
 }
 
@@ -150,6 +151,7 @@ void vector_replace_sanity_test(int *arr, size_t arr_size) {
   assert(vector_find(vect, arr + arr_size / 2, cmpr) == NULL);
 
   // cleanup
+  free(replaced);
   after(vect);
 }
 
