@@ -50,7 +50,7 @@ void *vector_at(struct vector *vector, unsigned long long pos) {
   if (!vector->data) return NULL;
   if (pos >= vector->size) return NULL;
 
-  return vector->data[pos * vector->data_size];
+  return &vector->data[pos * vector->data_size];
 }
 
 void *vector_find(struct vector *vector, void *element,
@@ -117,33 +117,36 @@ bool vector_push(struct vector *vector, void *element) {
 void *vector_pop(struct vector *vector) {
   if (!vector) return NULL;
   if (!vector->data) return NULL;
-  return vector->data[--vector->size * vector->data_size];
+  return &vector->data[--vector->size * vector->data_size];
 }
 
 void *vector_remove_at(struct vector *vector, unsigned long long pos) {
-  void *old = vector_at(vector, pos);
+  void *tmp = vector_at(vector, pos);
+  if (!tmp) return NULL;
+
+  unsigned char *old = calloc(1, vector->data_size);
   if (!old) return NULL;
+
+  memcpy(old, tmp, vector->data_size);
 
   unsigned long long factored_pos = pos * vector->data_size;
   memmove(vector->data + factored_pos, vector->data + factored_pos + 1,
-          vector->size - factored_pos - 1);
+          vector->size * vector->data_size - factored_pos - vector->data_size);
   vector->size--;
   return old;
 }
 
 void *vector_replace(struct vector *vector, void *element,
                      unsigned long long pos) {
+  void *tmp = vector_at(vector, pos);
+  if (!tmp) return NULL;
+
   unsigned char *old = calloc(vector->data_size, 1);
   if (!old) return NULL;
 
-  old = vector_at(vector, pos);
-  if (!old) {
-    free(old);
-    return NULL;
-  }
+  memcpy(old, tmp, vector->data_size);
 
   memcpy(&vector->data[pos * vector->data_size], element, vector->data_size);
-  // vector->data[pos] = element;
   return old;
 }
 
@@ -167,7 +170,7 @@ long long vector_index_of(struct vector *vector, void *element,
 
   for (unsigned long long i = 0; i < vector->size * vector->data_size;
        i += vector->data_size) {
-    if (equals(element, &vector->data[i])) return i;
+    if (equals(element, &vector->data[i])) return i / vector->data_size;
   }
 
   return -1;
@@ -178,6 +181,5 @@ void vector_sort(struct vector *vector,
   if (!vector) return;
   if (!vector->data) return;
 
-  qsort(vector->data, vector->size * vector->data_size, vector->data_size,
-        cmpr);
+  qsort(vector->data, vector->size, vector->data_size, cmpr);
 }
