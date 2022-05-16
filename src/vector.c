@@ -5,6 +5,9 @@
 #include "include/vector.h"
 
 struct vector *vector_init(unsigned long long data_size) {
+  // limit check.
+  if (LLONG_MAX < INIT_CAPACITY * data_size) return NULL;
+
   struct vector *vector = calloc(1, sizeof *vector);
   if (!vector) return NULL;
 
