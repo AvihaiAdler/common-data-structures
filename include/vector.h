@@ -10,16 +10,18 @@ struct vector {
   // both size and capacity can never exceed LLONG_MAX
   unsigned long long size;
   unsigned long long capacity;
-  void **data;
+  unsigned long long data_size;
+  unsigned char *data;
 };
 
 /* initialize a vector object. returns struct vector * on success, NULL on
- * failure. elements are stored as (void *), this means you need to be aware of
- * their scope. constants can't be stored as well */
-struct vector *vector_init();
+ * failure */
+struct vector *vector_init(unsigned long long data_size);
 
 /* destroy a vector and all if it's undelying data. if (*destroy) isn't NULL
- * call it for every element in the underlying array */
+ * call it for every element in the underlying array. you should only pass in a
+ * destroy function if your elements contains a pointer to a heap allocated
+ * memory */
 void vector_destroy(struct vector *vector, void (*destroy)(void *element));
 
 /* returns the number of elements in the vector. avoid acceessing vector::size
@@ -38,8 +40,7 @@ bool vector_empty(struct vector *vector);
 void *vector_at(struct vector *vector, unsigned long long pos);
 
 /* sorts the vector and finds an element on the vector and returns it. returns
- * NULL on failure. the cmpr function expects 2 const void ** pointers catsted
- * into const void *. make sure you do the appropriate casts */
+ * NULL on failure */
 void *vector_find(struct vector *vector, void *element,
                   int (*cmpr)(const void *, const void *));
 
@@ -53,12 +54,13 @@ unsigned long long vector_reserve(struct vector *vector,
 bool vector_push(struct vector *vector, void *element);
 
 /* pops an element for the end of the vector. returns the poped element on
- * success. NULL on failure. if the element was heap allocated it has to be
- * free'd */
+ * success. NULL on failure. the element must not be free'd! however if the
+ * element contains a pointer to a heap allocated memory - it (that pointer)
+ * must be free'd */
 void *vector_pop(struct vector *vector);
 
-/* remove the element at position pos. returns the removed element. NULL on
- * failure */
+/* remove the element at position pos. returns the removed element (which has to
+ * be free'd). NULL on failure */
 void *vector_remove_at(struct vector *vector, unsigned long long pos);
 
 /* replaces an element on the vector at position pos. returns the
