@@ -287,10 +287,11 @@ static void list_split(struct node *src, struct node **front,
   struct node *slow = src;
   struct node *fast = slow->next;
 
-  for (; fast; fast = fast->next) {
+  while (fast) {
     fast = fast->next;
     if (fast) {
       slow = slow->next;
+      fast = fast->next;
     }
   }
 
