@@ -5,7 +5,7 @@
 #include <string.h>
 
 struct list *list_init(unsigned long long data_size) {
-  struct list *list = calloc(1, sizeof(struct list));
+  struct list *list = calloc(1, sizeof *list);
   if (!list) return NULL;
 
   list->data_size = data_size;
