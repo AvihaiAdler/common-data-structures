@@ -34,6 +34,8 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
  * allocated node on success, NULL on failure. internal use only */
 struct node *init_node(struct list *list, const void *data,
                        unsigned long long data_size) {
+  if (data_size == 0) return NULL;
+
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
@@ -262,6 +264,7 @@ void *list_replace_at(struct list *list, const void *data,
   if (!list->head) return NULL;
   if (pos < 0) return NULL;
   if (pos >= list->size) return NULL;
+  if (data_size == 0) return NULL;
 
   struct node *tmp = list->head;
   for (unsigned long i = 0; i < pos; i++) {
