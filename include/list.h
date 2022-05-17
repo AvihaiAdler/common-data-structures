@@ -7,6 +7,7 @@
 /* node object */
 struct node {
   unsigned char *data;
+  unsigned long long data_size;
   struct node *next;
   struct node *prev;
 };
@@ -14,7 +15,6 @@ struct node {
 /* doubly linked list object */
 struct list {
   unsigned long long size;  // can never exceeds LLONG_MAX
-  unsigned long long data_size;
   struct node *head;
   struct node *tail;
 };
@@ -22,7 +22,7 @@ struct list {
 /* initialize a heap allocated linked list with a size of 0, where head and tail
  * points to NULL. returns a list on success, NULL on failure
  */
-struct list *list_init(unsigned long long data_size);
+struct list *list_init();
 
 /* destroy a list 'object'. if destroy isn't NULL, calls it for every
  * node::data. you should only pass in a destroy function if your object
@@ -39,21 +39,24 @@ bool list_empty(struct list *list);
 
 /* add a node to the start of the list. returns true on success, false otherwise
  */
-bool list_prepend(struct list *list, const void *data);
+bool list_prepend(struct list *list, const void *data,
+                  unsigned long long data_size);
 
 /* add a node to the end of the list. returns true on success, false otherwise
  */
-bool list_append(struct list *list, const void *data);
+bool list_append(struct list *list, const void *data,
+                 unsigned long long data_size);
 
 /* constructs and inserts a node at position pos. the position is calculated
  * from the head of the list. returns true on success, false otherwise */
 bool list_insert_at(struct list *list, const void *data,
-                    unsigned long long pos);
+                    unsigned long long data_size, unsigned long long pos);
 
 /* constructs and inserts a node at a position determined by the comparator.
  * inserts the new node at the first location where new_node::data >
  * another_node::data */
 bool list_insert_priority(struct list *list, const void *data,
+                          unsigned long long data_size,
                           int (*cmpr)(const void *, const void *));
 
 /* returns a pointer to the first element on the list. returns NULL on failure
@@ -89,12 +92,12 @@ long long list_index_of(struct list *list, const void *data,
  * list's head. returns a pointer to the replcaed data on success (which has to
  * be free'd), NULL otherwise */
 void *list_replace_at(struct list *list, const void *data,
-                      unsigned long long pos);
+                      unsigned long long data_size, unsigned long long pos);
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success (which has to be free'd), NULL otherwise */
 void *list_replace(struct list *list, const void *old_data,
-                   const void *new_data,
+                   const void *new_data, unsigned long long new_data_size,
                    bool (*equals)(const void *, const void *));
 
 /* sorts the list */

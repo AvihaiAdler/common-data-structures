@@ -4,11 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct list *list_init(unsigned long long data_size) {
+struct list *list_init() {
   struct list *list = calloc(1, sizeof *list);
   if (!list) return NULL;
 
-  list->data_size = data_size;
   return list;
 }
 
@@ -33,17 +32,19 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
 
 /* construct a node with the a copy of the data passed in. returns a heap
  * allocated node on success, NULL on failure. internal use only */
-struct node *init_node(struct list *list, const void *data) {
+struct node *init_node(struct list *list, const void *data,
+                       unsigned long long data_size) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
-  node->data = calloc(list->data_size, 1);
+  node->data = calloc(data_size, 1);
+  node->data_size = data_size;
   if (!node->data) {
     free(node);
     return NULL;
   }
 
-  memcpy(node->data, data, list->data_size);
+  memcpy(node->data, data, node->data_size);
   return node;
 }
 
@@ -57,11 +58,12 @@ bool list_empty(struct list *list) {
   return list->size == 0;
 }
 
-bool list_prepend(struct list *list, const void *data) {
+bool list_prepend(struct list *list, const void *data,
+                  unsigned long long data_size) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;
 
-  struct node *tmp = init_node(list, data);
+  struct node *tmp = init_node(list, data, data_size);
   if (!tmp) return false;
 
   if (!list->head) {
@@ -76,11 +78,12 @@ bool list_prepend(struct list *list, const void *data) {
   return true;
 }
 
-bool list_append(struct list *list, const void *data) {
+bool list_append(struct list *list, const void *data,
+                 unsigned long long data_size) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;
 
-  struct node *tmp = init_node(list, data);
+  struct node *tmp = init_node(list, data, data_size);
   if (!tmp) return false;
 
   if (!list->tail) {
@@ -96,15 +99,15 @@ bool list_append(struct list *list, const void *data) {
 }
 
 bool list_insert_at(struct list *list, const void *data,
-                    unsigned long long pos) {
+                    unsigned long long data_size, unsigned long long pos) {
   if (!list) return false;
   if (pos > list->size) return false;
   if (list->size == LLONG_MAX) return false;
 
-  if (pos == 0) return list_prepend(list, data);
-  if (pos == list->size) return list_append(list, data);
+  if (pos == 0) return list_prepend(list, data, data_size);
+  if (pos == list->size) return list_append(list, data, data_size);
 
-  struct node *new_node = init_node(list, data);
+  struct node *new_node = init_node(list, data, data_size);
   if (!new_node) return false;
 
   struct node *tmp = list->head;
@@ -121,11 +124,12 @@ bool list_insert_at(struct list *list, const void *data,
 }
 
 bool list_insert_priority(struct list *list, const void *data,
+                          unsigned long long data_size,
                           int (*cmpr)(const void *, const void *)) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;
 
-  if (!list->head) return list_prepend(list, data);  // list is empty
+  if (!list->head) return list_prepend(list, data, data_size);  // list is empty
 
   if (!cmpr) return false;
 
@@ -136,12 +140,12 @@ bool list_insert_priority(struct list *list, const void *data,
   }
 
   // reached the end. all elements are bigger than the new data
-  if (!tmp) return list_append(list, data);
+  if (!tmp) return list_append(list, data, data_size);
 
   // the first element is smaller than the new data
-  if (tmp == list->head) return list_prepend(list, data);
+  if (tmp == list->head) return list_prepend(list, data, data_size);
 
-  struct node *new_node = init_node(list, data);
+  struct node *new_node = init_node(list, data, data_size);
   if (!new_node) return false;
 
   new_node->next = tmp;
@@ -253,7 +257,7 @@ long long list_index_of(struct list *list, const void *data,
 }
 
 void *list_replace_at(struct list *list, const void *data,
-                      unsigned long long pos) {
+                      unsigned long long data_size, unsigned long long pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
   if (pos < 0) return NULL;
@@ -264,24 +268,35 @@ void *list_replace_at(struct list *list, const void *data,
     tmp = tmp->next;
   }
 
-  unsigned char *old_data = calloc(list->data_size, 1);
+  unsigned char *old_data = calloc(tmp->data_size, 1);
   if (!old_data) return NULL;
 
-  memcpy(old_data, tmp->data, list->data_size);
+  memcpy(old_data, tmp->data, tmp->data_size);
 
-  memcpy(tmp->data, data, list->data_size);
+  if (data_size != tmp->data_size) {
+    unsigned char *tmp_buf = realloc(tmp->data, data_size);
+    if (!tmp_buf) {
+      free(old_data);
+      return NULL;
+    }
+    tmp->data = tmp_buf;
+    tmp->data_size = data_size;
+  }
+
+  memcpy(tmp->data, data, tmp->data_size);
   return old_data;
 }
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success, NULL otherwise */
 void *list_replace(struct list *list, const void *old_data,
-                   const void *new_data,
+                   const void *new_data, unsigned long long new_data_size,
                    bool (*equals)(const void *, const void *)) {
   long long pos = list_index_of(list, old_data, equals);
   if (pos < 0) return NULL;
 
-  return list_replace_at(list, new_data, (unsigned long long)pos);
+  return list_replace_at(list, new_data, new_data_size,
+                         (unsigned long long)pos);
 }
 
 static struct node *list_merge(struct node *front, struct node *back,

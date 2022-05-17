@@ -57,9 +57,9 @@ int cmpr(const void *a, const void *b) {
 }
 
 struct list *before(struct point *points, size_t arr_size) {
-  struct list *list = list_init(sizeof *points);
+  struct list *list = list_init();
   for (size_t i = 0; i < arr_size; i++) {
-    list_append(list, &points[i]);
+    list_append(list, &points[i], sizeof points[i]);
   }
   return list;
 }
@@ -82,7 +82,7 @@ void list_prepend_and_peek_test(struct point *points, size_t arr_size) {
 
   // when
   for (size_t i = 0; i < arr_size; i++) {
-    list_prepend(list, &points[i]);
+    list_prepend(list, &points[i], sizeof points[i]);
   }
 
   // then
@@ -105,7 +105,7 @@ void list_append_and_peek_test(struct point *points, size_t arr_size) {
 
   // when
   for (size_t i = 0; i < arr_size; i++) {
-    list_append(list, &points[i]);
+    list_append(list, &points[i], sizeof points[i]);
   }
 
   // then
@@ -125,7 +125,7 @@ void list_insert_at_test(struct point *points, size_t arr_size) {
   point->y = point->x = -1;
 
   // when
-  bool res = list_insert_at(list, point, 1);
+  bool res = list_insert_at(list, point, sizeof point, 1);
 
   // then
   assert(res);
@@ -143,7 +143,7 @@ void list_insert_priority_test(struct point *points, size_t arr_size) {
 
   // when
   for (size_t i = 0; i < arr_size; i++) {
-    list_insert_priority(list, &points[i], cmpr);
+    list_insert_priority(list, &points[i], sizeof points[i], cmpr);
   }
 
   // create aduplicate of the original array and sort it
@@ -258,9 +258,11 @@ void list_replace_at_test(struct point *points, size_t arr_size) {
   struct point p = {.x = -1, .y = -1};
 
   // when
-  struct point *replaced_first = list_replace_at(list, &p, 0);
-  struct point *replaced_mid = list_replace_at(list, &p, arr_size / 2);
-  struct point *replaced_last = list_replace_at(list, &p, arr_size - 1);
+  struct point *replaced_first = list_replace_at(list, &p, sizeof p, 0);
+  struct point *replaced_mid =
+      list_replace_at(list, &p, sizeof p, arr_size / 2);
+  struct point *replaced_last =
+      list_replace_at(list, &p, sizeof p, arr_size - 1);
 
   // then
   assert(replaced_first && replaced_mid && replaced_last);
@@ -286,7 +288,7 @@ void list_replace_test(struct point *points, size_t arr_size) {
 
   // when
   struct point *replaced =
-      list_replace(list, &points[arr_size / 2], &p, equals);
+      list_replace(list, &points[arr_size / 2], &p, sizeof p, equals);
 
   // then
   assert(replaced);
