@@ -12,6 +12,9 @@ struct node {
   unsigned char *key;
   unsigned char *value;
 
+  unsigned long long key_size;
+  unsigned long long value_size;
+
   struct node *next;
   struct node *prev;
 };
@@ -29,10 +32,6 @@ struct hash_table {
   unsigned long long capacity;
   unsigned long long num_of_entries;
   unsigned long long num_of_elements;
-
-  unsigned long long key_size;
-  unsigned long long value_size;
-
   struct vector *entries;
 };
 
@@ -42,8 +41,7 @@ struct hash_table {
  * pointer to the data into the table instead and define key_size / value_size
  * accordingly i.e. sizeof(char *).
  * returns a pointer to a heap allocated table on success, NULL on failure */
-struct hash_table *init_table(unsigned long long key_size,
-                              unsigned long long value_size);
+struct hash_table *init_table();
 
 /* destroys the hash table. expects a destroy function (which may by NULL). if
  * it doesn't NULL calls it for evey key-value pair in the table. you should
@@ -61,12 +59,16 @@ unsigned long long table_size(struct hash_table *table);
 /* creates a copy of the data passed in - and put it in the table. returns the
  * previous value for that key (which has to be free'd) or NULL if there was no
  * mapping for that key */
-void *table_put(struct hash_table *table, const void *key, const void *value);
+void *table_put(struct hash_table *table, const void *key,
+                unsigned long long key_size, const void *value,
+                unsigned long long value_size);
 
 /* removes the mapping for a specific key if present. returns the previous value
  * (which has to be free'd) or NULL if there was no mapping for that key */
-void *table_remove(struct hash_table *table, const void *key);
+void *table_remove(struct hash_table *table, const void *key,
+                   unsigned long long key_size);
 
 /* returns the mapping for a specific key if present or NULL if there was no
  * mapping for that key. the value must not be free'd */
-void *table_get(struct hash_table *table, const void *key);
+void *table_get(struct hash_table *table, const void *key,
+                unsigned long long key_size);

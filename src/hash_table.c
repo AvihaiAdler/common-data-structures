@@ -1,6 +1,7 @@
 #include "include/hash_table.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "include/vector.h"
 
@@ -15,8 +16,6 @@ struct hash_table *init_table(unsigned long long key_size,
     return NULL;
   }
 
-  table->key_size = key_size;
-  table->value_size = value_size;
   table->num_of_entries = table->num_of_elements = 0;
 
   // table::capacity is at least INIT_CAPACITY (might be higher if vector init
@@ -59,7 +58,7 @@ unsigned long long table_size(struct hash_table *table) {
 
 /* used internally to hash the keys (slightly modified djd2 by Dan Bernstein).
  * can be improved by operating on more than one byte at a time */
-unsigned long long hash(const void *key, unsigned long long key_size) {
+static unsigned long long hash(const void *key, unsigned long long key_size) {
   const unsigned char *k = key;
   unsigned long long hash = 5381;
   for (unsigned long long i = 0; i < key_size; i++, k++) {
@@ -68,21 +67,56 @@ unsigned long long hash(const void *key, unsigned long long key_size) {
   return hash;
 }
 
-/* utils functions */
+/* util functions */
+/* used internally to create a node and init it with a key-value pair. returns a
+ * pointer to a heap allocated node which holds the copied of key and value.
+ * both node::key, node::value and node must be free'd */
+static struct node *node_init(const void *key, unsigned long long key_size,
+                              const void *value,
+                              unsigned long long value_size) {
+  struct node *node = calloc(1, sizeof *node);
+  if (!node) return NULL;
+
+  node->key = calloc(key_size, 1);
+  if (!node->key) {
+    free(node);
+    return NULL;
+  }
+
+  node->value = calloc(value_size, 1);
+  if (!node->value) {
+    free(node->key);
+    free(node);
+    return NULL;
+  }
+
+  node->key_size = key_size;
+  node->value_size = value_size;
+
+  memcpy(node->key, key, node->key_size);
+  memcpy(node->value, value, value_size);
+  return node;
+}
+
 /* used internally to replace an existing mapping for a certain key. returns a
  * copy of the previous key which has to be free'd */
-void *entry_replace(struct entry *entry, const void *key, const void *value) {}
+static void *entry_replace(struct entry *entry, const void *key,
+                           unsigned long long key_size, const void *value,
+                           unsigned long long value_size) {}
 
 /* used internally to prepend a bucket to an entry. retuns true on success, NULL
  * on failure */
-bool entry_prepend(struct entry *entry, const void *key, const void *value) {}
+static bool entry_prepend(struct entry *entry, const void *key,
+                          unsigned long long key_size, const void *value,
+                          unsigned long long value_size) {}
 
 /* used internally to check whether an entry contains a mapping for a certain
  * key */
-bool entry_contains(struct entry *entries, const void *key) {}
+static bool entry_contains(struct entry *entries, const void *key,
+                           unsigned long long key_size) {}
 
 /* used internally to resize (and rehash) the table */
-bool resize_table(struct table *table) {}
+static bool resize_table(struct table *table) {}
 
 /* used internally to get the number of buckets in an entry */
 unsigned long long entry_size(struct entry *entry) {
@@ -90,7 +124,9 @@ unsigned long long entry_size(struct entry *entry) {
   return entry->size;
 }
 
-void *table_put(struct hash_table *table, const void *key, const void *value) {
+void *table_put(struct hash_table *table, const void *key,
+                unsigned long long key_size, const void *value,
+                unsigned long long value_size) {
   if (!table) return NULL;
   if (!table->entries) return NULL;
 
@@ -100,12 +136,12 @@ void *table_put(struct hash_table *table, const void *key, const void *value) {
   }
 
   // get the entry index from the hash
-  unsigned long long pos = hash(key, table->key_size) % table->capacity;
+  unsigned long long pos = hash(key, key_size) % table->capacity;
   struct entry *entry = vector_at(table->entries, pos);
 
   // there's an existing mapping for this key
-  if (entry_contains(entry, key)) {
-    void *old_value = entry_replace(entry, key, value);
+  if (entry_contains(entry, key, key_size)) {
+    void *old_value = entry_replace(entry, key, key_size, value, value_size);
     if (!old_value) return NULL;
 
     table->num_of_elements++;
@@ -113,7 +149,7 @@ void *table_put(struct hash_table *table, const void *key, const void *value) {
   }
 
   // there isn't an existing mapping for this key
-  bool success = entry_prepend(entry, key, value);
+  bool success = entry_prepend(entry, key, key_size, value, value_size);
   if (!success) return NULL;
 
   if (entry_size(entry) == 1) {
