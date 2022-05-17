@@ -14,6 +14,7 @@ add_library(
   generics
   src/vector.c
   src/list.c
+  src/hash_table.c
 )
 set_target_properties(
   generics PROPERTIES 

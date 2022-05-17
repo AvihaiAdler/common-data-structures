@@ -94,7 +94,7 @@ static struct node *node_init(const void *key, unsigned long long key_size,
   node->value_size = value_size;
 
   memcpy(node->key, key, node->key_size);
-  memcpy(node->value, value, value_size);
+  memcpy(node->value, value, node->value_size);
   return node;
 }
 
