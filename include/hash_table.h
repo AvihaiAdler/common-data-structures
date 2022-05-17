@@ -26,6 +26,7 @@ struct entry {
 
 /* hash table struct */
 struct hash_table {
+  unsigned long long capacity;
   unsigned long long num_of_entries;
   unsigned long long num_of_elements;
 
@@ -38,8 +39,8 @@ struct hash_table {
 /* creates a hash table with initial capacity of INIT_CAPACITY. key_size and
  * value_size are the size of the key && value in bytes. note that if you key or
  * value are of unknown / changing size (e.g. strings) you'll have to pass a
- * pointer to the data (i.e. for a string - a pointer to the string, char **,
- * etc) into the table instead and define key_size / value_size accordingly.
+ * pointer to the data into the table instead and define key_size / value_size
+ * accordingly i.e. sizeof(char *).
  * returns a pointer to a heap allocated table on success, NULL on failure */
 struct hash_table *init_table(unsigned long long key_size,
                               unsigned long long value_size);
