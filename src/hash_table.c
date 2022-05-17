@@ -31,7 +31,7 @@ void table_destroy(struct hash_table *table,
   if (!table->entries) return;
 
   for (unsigned long long i = 0; i < table->num_of_entries; i++) {
-    // destroy all buckets
+    // destroy all buckets in an entry
     struct entry *entry = vector_at(table->entries, i);
     for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
       bucket = bucket->next;
@@ -68,16 +68,21 @@ unsigned long long hash(const void *key, unsigned long long key_size) {
   return hash;
 }
 
-/* used internally to resize (and rehash) the table */
-bool resize_table(struct table *table) {}
-
+/* utils functions */
 /* used internally to replace an existing mapping for a certain key. returns a
  * copy of the previous key which has to be free'd */
-void *entry_replace(struct entry *entry, void *key, void *value) {}
+void *entry_replace(struct entry *entry, const void *key, const void *value) {}
 
 /* used internally to prepend a bucket to an entry. retuns true on success, NULL
  * on failure */
-bool entry_prepend(struct entry *entry, void *key, void *value) {}
+bool entry_prepend(struct entry *entry, const void *key, const void *value) {}
+
+/* used internally to check whether an entry contains a mapping for a certain
+ * key */
+bool entry_contains(struct entry *entries, const void *key) {}
+
+/* used internally to resize (and rehash) the table */
+bool resize_table(struct table *table) {}
 
 /* used internally to get the number of buckets in an entry */
 unsigned long long entry_size(struct entry *entry) {
@@ -89,11 +94,13 @@ void *table_put(struct hash_table *table, const void *key, const void *value) {
   if (!table) return NULL;
   if (!table->entries) return NULL;
 
+  // load factor exceeded
   if (table->num_of_elements / (double)table->num_of_elements > LOAD_FACTOR) {
     if (!resize_table(table)) return NULL;
   }
 
-  unsigned long long pos = hash(key, table->key_size);
+  // get the entry index from the hash
+  unsigned long long pos = hash(key, table->key_size) % table->capacity;
   struct entry *entry = vector_at(table->entries, pos);
 
   // there's an existing mapping for this key
