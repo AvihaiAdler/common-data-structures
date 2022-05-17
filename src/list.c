@@ -33,7 +33,7 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
 
 /* construct a node with the a copy of the data passed in. returns a heap
  * allocated node on success, NULL on failure. internal use only */
-struct node *init_node(struct list *list, void *data) {
+struct node *init_node(struct list *list, const void *data) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
@@ -57,7 +57,7 @@ bool list_empty(struct list *list) {
   return list->size == 0;
 }
 
-bool list_prepend(struct list *list, void *data) {
+bool list_prepend(struct list *list, const void *data) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;
 
@@ -76,7 +76,7 @@ bool list_prepend(struct list *list, void *data) {
   return true;
 }
 
-bool list_append(struct list *list, void *data) {
+bool list_append(struct list *list, const void *data) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;
 
@@ -95,7 +95,8 @@ bool list_append(struct list *list, void *data) {
   return true;
 }
 
-bool list_insert_at(struct list *list, void *data, unsigned long long pos) {
+bool list_insert_at(struct list *list, const void *data,
+                    unsigned long long pos) {
   if (!list) return false;
   if (pos > list->size) return false;
   if (list->size == LLONG_MAX) return false;
@@ -119,7 +120,7 @@ bool list_insert_at(struct list *list, void *data, unsigned long long pos) {
   return true;
 }
 
-bool list_insert_priority(struct list *list, void *data,
+bool list_insert_priority(struct list *list, const void *data,
                           int (*cmpr)(const void *, const void *)) {
   if (!list) return false;
   if (list->size == LLONG_MAX) return false;
@@ -238,7 +239,7 @@ void *list_remove_at(struct list *list, unsigned long long pos) {
   return data;
 }
 
-long long list_index_of(struct list *list, void *data,
+long long list_index_of(struct list *list, const void *data,
                         bool (*equals)(const void *, const void *)) {
   if (!list) return INVALID_POS;
   if (!equals) return INVALID_POS;
@@ -251,7 +252,8 @@ long long list_index_of(struct list *list, void *data,
   return INVALID_POS;
 }
 
-void *list_replace_at(struct list *list, void *data, unsigned long long pos) {
+void *list_replace_at(struct list *list, const void *data,
+                      unsigned long long pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
   if (pos < 0) return NULL;
@@ -273,7 +275,8 @@ void *list_replace_at(struct list *list, void *data, unsigned long long pos) {
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success, NULL otherwise */
-void *list_replace(struct list *list, void *old_data, void *new_data,
+void *list_replace(struct list *list, const void *old_data,
+                   const void *new_data,
                    bool (*equals)(const void *, const void *)) {
   long long pos = list_index_of(list, old_data, equals);
   if (pos < 0) return NULL;

@@ -41,7 +41,7 @@ void *vector_at(struct vector *vector, unsigned long long pos);
 
 /* sorts the vector and finds an element on the vector and returns it. returns
  * NULL on failure */
-void *vector_find(struct vector *vector, void *element,
+void *vector_find(struct vector *vector, const void *element,
                   int (*cmpr)(const void *, const void *));
 
 /* reservse space for size elements. returns the new reserved space
@@ -51,7 +51,7 @@ unsigned long long vector_reserve(struct vector *vector,
 
 /* push a new element into the vector. returns trow on success, false otherwise
  */
-bool vector_push(struct vector *vector, void *element);
+bool vector_push(struct vector *vector, const void *element);
 
 /* pops an element for the end of the vector. returns the poped element on
  * success. NULL on failure. the element must not be free'd! however if the
@@ -66,7 +66,7 @@ void *vector_remove_at(struct vector *vector, unsigned long long pos);
 /* replaces an element on the vector at position pos. returns the
  * replaced element on success as heap allocated element (has to be free'd), or
  * NULL on failure */
-void *vector_replace(struct vector *vector, void *element,
+void *vector_replace(struct vector *vector, const void *element,
                      unsigned long long pos);
 
 /* shrink the underlying array to fit exactly vector::size elements. returns the
@@ -75,7 +75,7 @@ unsigned long long vector_shrink(struct vector *vector);
 
 /* finds and returns the index of the first occurence of an element on the
  * vector. returns its position on success, or -1 if no such element found */
-long long vector_index_of(struct vector *vector, void *element,
+long long vector_index_of(struct vector *vector, const void *element,
                           bool (*equals)(const void *, const void *));
 
 /* sort the vector. the compr function should returns an int bigger than 0 if

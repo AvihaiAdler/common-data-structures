@@ -37,9 +37,13 @@ void vector_destroy(struct vector *vector, void (*destroy)(void *element)) {
   free(vector);
 }
 
-unsigned long long vector_size(struct vector *vector) { return vector->size; }
+unsigned long long vector_size(struct vector *vector) {
+  if (!vector) return 0;
+  return vector->size;
+}
 
 unsigned long long vector_capacity(struct vector *vector) {
+  if (!vector) return 0;
   return vector->capacity;
 }
 
@@ -56,7 +60,7 @@ void *vector_at(struct vector *vector, unsigned long long pos) {
   return &vector->data[pos * vector->data_size];
 }
 
-void *vector_find(struct vector *vector, void *element,
+void *vector_find(struct vector *vector, const void *element,
                   int (*cmpr)(const void *, const void *)) {
   if (!vector) return NULL;
   if (!vector->data) return NULL;
@@ -103,7 +107,7 @@ unsigned long long vector_reserve(struct vector *vector,
   return vector->capacity;
 }
 
-bool vector_push(struct vector *vector, void *element) {
+bool vector_push(struct vector *vector, const void *element) {
   if (!vector) return false;
   if (!vector->data) return false;
   if (vector->size == vector->capacity) {
@@ -138,7 +142,7 @@ void *vector_remove_at(struct vector *vector, unsigned long long pos) {
   return old;
 }
 
-void *vector_replace(struct vector *vector, void *element,
+void *vector_replace(struct vector *vector, const void *element,
                      unsigned long long pos) {
   void *tmp = vector_at(vector, pos);
   if (!tmp) return NULL;
@@ -165,7 +169,7 @@ unsigned long long vector_shrink(struct vector *vector) {
   return vector->capacity;
 }
 
-long long vector_index_of(struct vector *vector, void *element,
+long long vector_index_of(struct vector *vector, const void *element,
                           bool (*equals)(const void *, const void *)) {
   if (!vector) return -1;
   if (!vector->data) return -1;
