@@ -89,6 +89,9 @@ static bool vector_resize(struct vector *vector) {
   unsigned char *tmp = realloc(vector->data, new_capacity * vector->data_size);
   if (!tmp) return false;
 
+  memset(tmp + vector->size * vector->data_size, 0,
+         new_capacity * vector->data_size - vector->size * vector->data_size);
+
   vector->capacity = new_capacity;
   vector->data = tmp;
   return true;
@@ -102,6 +105,9 @@ unsigned long long vector_reserve(struct vector *vector,
 
   unsigned char *tmp = realloc(vector->data, size * vector->data_size);
   if (!tmp) return vector->capacity;
+
+  memset(tmp + vector->size * vector->data_size, 0,
+         size * vector->data_size - vector->size * vector->data_size);
 
   vector->capacity = size;
   vector->data = tmp;
