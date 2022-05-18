@@ -146,7 +146,6 @@ static bool entry_prepend(struct entry *entry, const void *key,
   }
   node->next = entry->head;
   entry->head = node;
-  entry->size++;
   return true;
 }
 
@@ -207,9 +206,6 @@ static bool resize_table(struct hash_table *table) {
         new_entry->tail = tmp;
       }
 
-      entry->size--;
-      new_entry->size++;
-
       // rehashed all the buckets in the entry
       if (tmp == entry->tmp) {
         entry->tmp = NULL;
@@ -218,12 +214,6 @@ static bool resize_table(struct hash_table *table) {
     }
   }
   return true;
-}
-
-/* used internally to get the number of buckets in an entry */
-unsigned long long entry_size(struct entry *entry) {
-  if (!entry) return 0;
-  return entry->size;
 }
 
 void *table_put(struct hash_table *table, const void *key,
@@ -271,7 +261,7 @@ void *table_remove(struct hash_table *table, const void *key,
   if (!removed) return NULL;  // the table doesn't contains the key key
 
   // the node is the only node in the entry
-  if (entry_size(entry) == 1) {
+  if (entry->head == entry->tail) {
     entry->head = entry->tail = NULL;
   } else if (!removed->next) {  // removed node is entry::tail
     entry->tail = entry->tail->prev;
@@ -283,9 +273,6 @@ void *table_remove(struct hash_table *table, const void *key,
     removed->prev->next = removed->next;
     removed->next->prev = removed->prev;
   }
-
-  table->num_of_elements--;
-  entry->size--;
 
   void *old_value = removed->value;
   if (table->destroy_key) {

@@ -21,7 +21,6 @@ struct node {
 
 /* entry */
 struct entry {
-  unsigned long long size;  // number of 'buckets' in the entry
   struct node *head;
   struct node *tail;
   struct node *tmp;  // used internally in the rehash process
