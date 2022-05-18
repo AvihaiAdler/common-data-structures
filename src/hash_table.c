@@ -19,7 +19,7 @@ struct hash_table *init_table(int (*cmpr)(const void *key, const void *other),
     return NULL;
   }
 
-  table->num_of_entries = table->num_of_elements = 0;
+  table->num_of_elements = 0;
   table->cmpr = cmpr;
   table->destroy_key = destroy_key;
   table->destroy_value = destroy_value;
@@ -34,7 +34,7 @@ void table_destroy(struct hash_table *table) {
   if (!table) return;
   if (!table->entries) return;
 
-  for (unsigned long long i = 0; i < table->num_of_entries; i++) {
+  for (unsigned long long i = 0; i < table->capacity; i++) {
     // destroy all buckets in an entry
     struct entry *entry = vector_at(table->entries, i);
     for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
@@ -67,8 +67,7 @@ unsigned long long table_size(struct hash_table *table) {
   return table->num_of_elements;
 }
 
-/* used internally to hash the keys (slightly modified djd2 by Dan Bernstein).
- * can be improved by operating on more than one byte at a time */
+/* used internally to hash the keys (slightly modified djd2 by Dan Bernstein) */
 static unsigned long long hash(const void *key, unsigned long long key_size) {
   const unsigned char *k = key;
   unsigned long long hash = 5381;
@@ -164,8 +163,63 @@ static struct node *entry_contains(struct entry *entry, const void *key,
   return NULL;
 }
 
-/* used internally to resize (and rehash) the table */
-static bool resize_table(struct table *table) {}
+/* used internally to resize (and rehash) the table with minimum
+ * allocations/frees */
+static bool resize_table(struct hash_table *table) {
+  if (!table) return NULL;
+  if (!table->entries) return NULL;
+
+  unsigned long long new_capacity =
+      vector_reserve(table->entries, table->capacity << TABLE_GROWTH);
+  if (new_capacity == table->capacity) return false;
+
+  table->capacity = new_capacity;
+
+  // rehash every key-value pair
+  for (unsigned long long pos = 0; pos < table->capacity; pos++) {
+    struct entry *entry = vector_at(table->entries, pos);
+    if (!entry->head) continue;  // entry is empty
+
+    /* stopping condition. we will iterate over every bucket until we reach
+     * entry->tmp */
+    entry->tmp = entry->tail;
+    struct node *tmp = entry->head;
+
+    // rehash every bucket in a given entry
+    for (; entry->tmp; tmp = tmp->next) {
+      // fix node 'relations'
+      if (!tmp->next) {  // this bucket is the only bucket in the entry
+        entry->head = entry->tail = NULL;
+      } else {  // this bucket is entry::head
+        entry->head = entry->head->next;
+        entry->head->prev = NULL;
+      }
+
+      unsigned long long new_pos =
+          hash(tmp->key, tmp->key_size) % table->capacity;
+      struct entry *new_entry = vector_at(table->entries, new_pos);
+
+      if (!new_entry->head) {  // new entry is empty
+        new_entry->head = new_entry->tail = tmp;
+      } else {
+        new_entry->tail->next = tmp;
+        tmp->prev = new_entry;
+        tmp->next = NULL;
+        new_entry->tail = tmp;
+      }
+
+      entry->size--;
+      new_entry->size++;
+
+      // rehashed all the buckets in the entry
+      if (tmp == entry->tmp) {
+        entry->tmp = NULL;
+        break;
+      }
+    }
+  }
+  return true;
+}
 
 /* used internally to get the number of buckets in an entry */
 unsigned long long entry_size(struct entry *entry) {
@@ -181,7 +235,7 @@ void *table_put(struct hash_table *table, const void *key,
   if (!key && !key_size) return NULL;
 
   // load factor exceeded
-  if (table->num_of_elements / (double)table->num_of_elements > LOAD_FACTOR) {
+  if (table->capacity * LOAD_FACTOR < table->num_of_elements + 1) {
     if (!resize_table(table)) return NULL;
   }
 
@@ -200,9 +254,6 @@ void *table_put(struct hash_table *table, const void *key,
   bool success = entry_prepend(entry, key, key_size, value, value_size);
   if (!success) return NULL;
 
-  if (entry_size(entry) == 1) {
-    table->num_of_entries++;
-  }
   table->num_of_elements++;
   return NULL;
 }
@@ -236,7 +287,6 @@ void *table_remove(struct hash_table *table, const void *key,
 
   table->num_of_elements--;
   entry->size--;
-  if (!entry_size(entry)) table->num_of_entries--;
 
   void *old_value = removed->value;
   if (table->destroy_key) {
