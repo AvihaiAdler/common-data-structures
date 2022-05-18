@@ -21,6 +21,7 @@ set_target_properties(
   VERSION ${PROJECT_VERSION}
   PUBLIC_HEADER include/vector.h 
   PUBLIC_HEADER include/list.h
+  PUBLIC_HEADER include/hash_table.h
 )
 target_include_directories(generics PRIVATE .)
 # add_compile_options(-Wall -Wextra -pedantic -fsanitize=address,undefined)
