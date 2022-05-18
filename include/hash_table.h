@@ -21,17 +21,23 @@ struct node {
 
 /* entry */
 struct entry {
-  unsigned long long size;  // number of 'buckets'
+  unsigned long long size;  // number of 'buckets' in the entry
   struct node *head;
   struct node *tail;
-  struct node *tmp;  // used internally for the rehash process
+  struct node *tmp;  // used internally in the rehash process
 };
 
 /* hash table struct */
 struct hash_table {
+  // total number of entries
   unsigned long long capacity;
+
+  // number of occupied entries (entries with at least 1 'bucket')
   unsigned long long num_of_entries;
+
+  // total number of 'buckets'
   unsigned long long num_of_elements;
+
   struct vector *entries;
 
   int (*cmpr)(const void *key, const void *other);
