@@ -67,7 +67,8 @@ unsigned long long table_size(struct hash_table *table) {
   return table->num_of_elements;
 }
 
-/* used internally to hash the keys (slightly modified djd2 by Dan Bernstein) */
+/* used internally to hash the keys (slightly modified djd2 by Dan Bernstein)
+ */
 static unsigned long long hash(const void *key, unsigned long long key_size) {
   const unsigned char *k = key;
   unsigned long long hash = 5381;
@@ -78,9 +79,10 @@ static unsigned long long hash(const void *key, unsigned long long key_size) {
 }
 
 /* util functions */
-/* used internally to create a node and init it with a key-value pair. returns a
- * pointer to a heap allocated node which holds the copies of key and value.
- * both node::key, node::value and node must be free'd. the function assumes key
+/* used internally to create a node and init it with a key-value pair. returns
+ * a pointer to a heap allocated node which holds the copies of key and value.
+ * both node::key, node::value and node must be free'd. the function assumes
+ * key
  * != NULL and key_size > 0 */
 static struct node *init_node(const void *key, unsigned long long key_size,
                               const void *value,
@@ -131,8 +133,8 @@ static void *node_replace_value(struct node *node, const void *value,
   return old_value;
 }
 
-/* used internally to prepend a bucket to an entry. retuns true on success, NULL
- * on failure */
+/* used internally to prepend a bucket to an entry. retuns true on success,
+ * NULL on failure */
 static bool entry_prepend(struct entry *entry, const void *key,
                           unsigned long long key_size, const void *value,
                           unsigned long long value_size) {
@@ -150,8 +152,8 @@ static bool entry_prepend(struct entry *entry, const void *key,
 }
 
 /* used internally to check whether an entry contains a mapping for a certain
- * key. returns a pointer to the node which contains the same key, or NULL if no
- * such node found */
+ * key. returns a pointer to the node which contains the same key, or NULL if
+ * no such node found */
 static struct node *entry_contains(struct entry *entry, const void *key,
                                    int (*cmpr)(const void *key,
                                                const void *other)) {
