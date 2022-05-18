@@ -203,7 +203,7 @@ static bool resize_table(struct hash_table *table) {
         new_entry->head = new_entry->tail = tmp;
       } else {
         new_entry->tail->next = tmp;
-        tmp->prev = new_entry;
+        tmp->prev = new_entry->tail;
         tmp->next = NULL;
         new_entry->tail = tmp;
       }
