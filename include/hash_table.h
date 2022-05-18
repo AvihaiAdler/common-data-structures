@@ -33,20 +33,21 @@ struct hash_table {
   unsigned long long num_of_entries;
   unsigned long long num_of_elements;
   struct vector *entries;
+
+  int (*cmpr)(const void *key, const void *other);
 };
 
-/* creates a hash table with initial capacity of INIT_CAPACITY. key_size and
- * value_size are the size of the key && value in bytes. note that if you key or
- * value are of unknown / changing size (e.g. strings) you'll have to pass a
- * pointer to the data into the table instead and define key_size / value_size
- * accordingly i.e. sizeof(char *).
- * returns a pointer to a heap allocated table on success, NULL on failure */
-struct hash_table *init_table();
+/* creates a hash table with initial capacity INIT_CAPACITY. expects a cmpr
+ * function to compare between 2 keys. the function should return an int less
+ * than 0 if key < other, 0 if both are equal or an int bigger than 0 if key >
+ * other. returns a pointer to a heap allocated table on success, NULL on
+ * failure */
+struct hash_table *init_table(int (*cmpr)(const void *, const void *));
 
-/* destroys the hash table. expects a destroy function (which may by NULL). if
- * it doesn't NULL calls it for evey key-value pair in the table. you should
- * only pass in a destroy function if you key or value contains a pointer to a
- * heap allocated memory */
+/* destroys the hash table. expects a destroy function (which may be NULL). if
+ * it isn't NULL calls it for evey key-value pair in the table. you should
+ * only pass in a destroy function if your key or value contains / is a pointer
+ * to a heap allocated memory */
 void table_destroy(struct hash_table *table,
                    void (*destroy)(void *key, void *value));
 
@@ -56,7 +57,7 @@ bool table_empty(struct hash_table *table);
 /* returns the number of elements in the table */
 unsigned long long table_size(struct hash_table *table);
 
-/* creates a copy of the data passed in - and put it in the table. returns the
+/* creates a copy of the data passed in - and store it in the table. returns the
  * previous value for that key (which has to be free'd) or NULL if there was no
  * mapping for that key */
 void *table_put(struct hash_table *table, const void *key,
