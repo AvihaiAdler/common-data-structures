@@ -183,10 +183,9 @@ static bool resize_table(struct hash_table *table) {
     /* stopping condition. we will iterate over every bucket until we reach
      * entry->tmp */
     entry->tmp = entry->tail;
-    struct node *tmp = entry->head;
 
     // rehash every bucket in a given entry
-    for (; entry->tmp; tmp = tmp->next) {
+    for (struct node *tmp = entry->head; tmp; tmp = tmp->next) {
       // fix node 'relations'
       if (!tmp->next) {  // this bucket is the only bucket in the entry
         entry->head = entry->tail = NULL;
