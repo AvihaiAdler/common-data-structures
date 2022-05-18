@@ -35,21 +35,24 @@ struct hash_table {
   struct vector *entries;
 
   int (*cmpr)(const void *key, const void *other);
+  void (*destroy_key)(void *key);
+  void (*destroy_value)(void *value);
 };
 
 /* creates a hash table with initial capacity INIT_CAPACITY. expects a cmpr
  * function to compare between 2 keys. the function should return an int less
  * than 0 if key < other, 0 if both are equal or an int bigger than 0 if key >
- * other. returns a pointer to a heap allocated table on success, NULL on
- * failure */
-struct hash_table *init_table(int (*cmpr)(const void *, const void *));
+ * other. expects 2 destroy functions (which may be NULL). if they're not NULL
+ * calls them for evey key-value pair in the table. you should only pass in a
+ * destroy function if your key or value contains / is a pointer to a heap
+ * allocated memory. returns a pointer to a heap allocated table on
+ * success, NULL on failure */
+struct hash_table *init_table(int (*cmpr)(const void *, const void *),
+                              void (*destroy_key)(void *),
+                              void (*destroy_value)(void *));
 
-/* destroys the hash table. expects a destroy function (which may be NULL). if
- * it isn't NULL calls it for evey key-value pair in the table. you should
- * only pass in a destroy function if your key or value contains / is a pointer
- * to a heap allocated memory */
-void table_destroy(struct hash_table *table,
-                   void (*destroy)(void *key, void *value));
+/* destroys the hash table */
+void table_destroy(struct hash_table *table);
 
 /* returns true if the table is empty. false otherwise */
 bool table_empty(struct hash_table *table);
