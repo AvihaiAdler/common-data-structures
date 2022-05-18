@@ -5,7 +5,9 @@
 
 #include "include/vector.h"
 
-struct hash_table *init_table(int (*cmpr)(const void *key, const void *other)) {
+struct hash_table *init_table(int (*cmpr)(const void *key, const void *other),
+                              void (*destroy_key)(void *key),
+                              void (*destroy_value)(void *value)) {
   if (!cmpr) return NULL;
 
   struct hash_table *table = calloc(1, sizeof *table);
@@ -19,6 +21,8 @@ struct hash_table *init_table(int (*cmpr)(const void *key, const void *other)) {
 
   table->num_of_entries = table->num_of_elements = 0;
   table->cmpr = cmpr;
+  table->destroy_key = destroy_key;
+  table->destroy_value = destroy_value;
 
   // table::capacity is at least INIT_CAPACITY (might be higher if vector init
   // capacity > INIT_CAPACITY)
@@ -26,8 +30,7 @@ struct hash_table *init_table(int (*cmpr)(const void *key, const void *other)) {
   return table;
 }
 
-void table_destroy(struct hash_table *table,
-                   void (*destroy)(void *key, void *value)) {
+void table_destroy(struct hash_table *table) {
   if (!table) return;
   if (!table->entries) return;
 
@@ -37,10 +40,16 @@ void table_destroy(struct hash_table *table,
     for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
       bucket = bucket->next;
 
-      if (destroy) {
-        destroy(entry->head->key, entry->head->prev);
+      if (table->destroy_key) {
+        table->destroy_key(bucket->key);
       }
 
+      if (table->destroy_value) {
+        table->destroy_value(bucket->value);
+      }
+
+      if (bucket->key) free(bucket->key);
+      if (bucket->value) free(bucket->value);
       free(entry->head);
     }
   }
@@ -179,6 +188,7 @@ void *table_put(struct hash_table *table, const void *key,
   // get the entry index from the hash
   unsigned long long pos = hash(key, key_size) % table->capacity;
   struct entry *entry = vector_at(table->entries, pos);
+  if (!entry) return NULL;
 
   // there's an existing mapping for this key
   struct node *contains_same_key = entry_contains(entry, key, table->cmpr);
@@ -198,7 +208,58 @@ void *table_put(struct hash_table *table, const void *key,
 }
 
 void *table_remove(struct hash_table *table, const void *key,
-                   unsigned long long key_size) {}
+                   unsigned long long key_size) {
+  if (!table) return NULL;
+  if (!table->entries) return NULL;
+  if (!key && !key_size) return NULL;
+
+  unsigned long long pos = hash(key, key_size) % table->capacity;
+  struct entry *entry = vector_at(table->entries, pos);
+  if (!entry) return NULL;
+
+  struct node *removed = entry_contains(entry, key, table->cmpr);
+  if (!removed) return NULL;  // the table doesn't contains the key key
+
+  // the node is the only node in the entry
+  if (entry_size(entry) == 1) {
+    entry->head = entry->tail = NULL;
+  } else if (!removed->next) {  // removed node is entry::tail
+    entry->tail = entry->tail->prev;
+    entry->tail->next = NULL;
+  } else if (!removed->prev) {  // removed node is entry::head
+    entry->head = entry->head->next;
+    entry->head->prev = NULL;
+  } else {
+    removed->prev->next = removed->next;
+    removed->next->prev = removed->prev;
+  }
+
+  table->num_of_elements--;
+  entry->size--;
+  if (!entry_size(entry)) table->num_of_entries--;
+
+  void *old_value = removed->value;
+  if (table->destroy_key) {
+    table->destroy_key(removed->key);
+  }
+  free(removed->key);
+  free(removed);
+
+  return old_value;
+}
 
 void *table_get(struct hash_table *table, const void *key,
-                unsigned long long key_size) {}
+                unsigned long long key_size) {
+  if (!table) return NULL;
+  if (!table->entries) return NULL;
+  if (!key && !key_size) return NULL;
+
+  unsigned long long pos = hash(key, key_size) % table->capacity;
+  struct entry *entry = vector_at(table->entries, pos);
+  if (!entry) return NULL;
+
+  struct node *looked_for = entry_contains(entry, key, table->cmpr);
+  if (!looked_for) return NULL;
+
+  return looked_for->value;
+}
