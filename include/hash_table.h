@@ -32,9 +32,6 @@ struct hash_table {
   // total number of entries
   unsigned long long capacity;
 
-  // number of occupied entries (entries with at least 1 'bucket')
-  unsigned long long num_of_entries;
-
   // total number of 'buckets'
   unsigned long long num_of_elements;
 
