@@ -166,8 +166,8 @@ static struct node *entry_contains(struct entry *entry, const void *key,
 /* used internally to resize (and rehash) the table with minimum
  * allocations/frees */
 static bool resize_table(struct hash_table *table) {
-  if (!table) return NULL;
-  if (!table->entries) return NULL;
+  if (!table) return false;
+  if (!table->entries) return false;
 
   unsigned long long new_capacity =
       vector_reserve(table->entries, table->capacity << TABLE_GROWTH);
