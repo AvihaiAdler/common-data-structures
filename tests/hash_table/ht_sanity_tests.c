@@ -39,9 +39,10 @@ void after(struct hash_table *table) { table_destroy(table); }
 void table_put_empty_table_test(const char **keys, size_t keys_size,
                                 struct string *strings, size_t strings_size) {
   assert(keys_size == strings_size);  // precondition
-
   // given
   struct hash_table *table = before();
+  assert(table_empty(table));
+  assert(table_size(table) == 0);
 
   // when
   for (size_t i = 0; i < keys_size; i++) {
@@ -51,11 +52,12 @@ void table_put_empty_table_test(const char **keys, size_t keys_size,
   }
 
   // then
-  assert(table->num_of_elements == keys_size);
+  assert(table_size(table) == keys_size);
 
   // cleanup
   after(table);
 }
+
 void table_put_override_value_test(const char **keys, size_t keys_size,
                                    struct string *strings,
                                    size_t strings_size) {
@@ -82,5 +84,30 @@ void table_put_override_value_test(const char **keys, size_t keys_size,
 
   // cleanup
   free(old);
+  after(table);
+}
+
+void table_get_test(const char **keys, size_t keys_size, struct string *strings,
+                    size_t strings_size) {
+  // precondition
+  assert(keys_size == strings_size);
+
+  // given
+  struct hash_table *table = before();
+
+  for (size_t i = 0; i < keys_size; i++) {
+    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
+                                   &strings[i], sizeof strings[i]);
+    assert(!old);
+  }
+
+  // when
+  struct string *val = table_get(table, keys[0], strlen(keys[0]) + 1);
+
+  // then
+  assert(val);
+  assert(cmpr_values(val, &strings[0]));
+
+  // cleanup
   after(table);
 }
