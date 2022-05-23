@@ -5,7 +5,7 @@
 
 #include "include/vector.h"
 
-struct hash_table *init_table(int (*cmpr)(const void *key, const void *other),
+struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
                               void (*destroy_key)(void *key),
                               void (*destroy_value)(void *value)) {
   if (!cmpr) return NULL;
@@ -203,12 +203,13 @@ static bool resize_table(struct hash_table *table) {
 
       if (!new_entry->head) {  // new entry is empty
         new_entry->head = new_entry->tail = tmp;
+        tmp->prev = NULL;
       } else {
         new_entry->tail->next = tmp;
         tmp->prev = new_entry->tail;
-        tmp->next = NULL;
         new_entry->tail = tmp;
       }
+      tmp->next = NULL;
 
       // rehashed all the buckets in the entry
       if (tmp == entry->tmp) {
