@@ -9,6 +9,7 @@ include(CTest)
 enable_testing()
 add_subdirectory(tests/vector)
 add_subdirectory(tests/linked_list)
+add_subdirectory(tests/hash_table)
 
 add_library(
   generics
