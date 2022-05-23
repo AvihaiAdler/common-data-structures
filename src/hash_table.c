@@ -26,7 +26,8 @@ struct hash_table *init_table(int (*cmpr)(const void *key, const void *other),
 
   // table::capacity is at least INIT_CAPACITY (might be higher if vector init
   // capacity > INIT_CAPACITY)
-  table->capacity = vector_reserve(table->entries, INIT_CAPACITY);
+  table->capacity = vector_reserve(table->entries, TABLE_INIT_CAPACITY);
+  table->entries->size = table->capacity;
   return table;
 }
 
@@ -41,15 +42,15 @@ void table_destroy(struct hash_table *table) {
       bucket = bucket->next;
 
       if (table->destroy_key) {
-        table->destroy_key(bucket->key);
+        table->destroy_key(entry->head->key);
       }
 
       if (table->destroy_value) {
-        table->destroy_value(bucket->value);
+        table->destroy_value(entry->head->value);
       }
 
-      if (bucket->key) free(bucket->key);
-      if (bucket->value) free(bucket->value);
+      if (entry->head->key) free(entry->head->key);
+      if (entry->head->value) free(entry->head->value);
       free(entry->head);
     }
   }
@@ -175,6 +176,7 @@ static bool resize_table(struct hash_table *table) {
   if (new_capacity == table->capacity) return false;
 
   table->capacity = new_capacity;
+  table->entries->size = table->capacity;
 
   // rehash every key-value pair
   for (unsigned long long pos = 0; pos < table->capacity; pos++) {
