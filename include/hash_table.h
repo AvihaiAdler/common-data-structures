@@ -49,7 +49,7 @@ struct hash_table {
  * destroy function if your key or value contains / is a pointer to a heap
  * allocated memory. returns a pointer to a heap allocated table on
  * success, NULL on failure */
-struct hash_table *init_table(int (*cmpr)(const void *, const void *),
+struct hash_table *table_init(int (*cmpr)(const void *, const void *),
                               void (*destroy_key)(void *),
                               void (*destroy_value)(void *));
 
