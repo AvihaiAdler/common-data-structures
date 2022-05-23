@@ -89,8 +89,6 @@ int cmpr_values(const void *val, const void *other) {
   const struct string *str = val;
   const struct string *str_other = other;
   if (str->str_size != str_other->str_size) return -1;
-  print_str(str->str, str->str_size);
-  print_str(str_other->str, str_other->str_size);
   return strcmp(str->str, str_other->str);
 }
 
@@ -101,7 +99,7 @@ void str_destroy(void *str) {
 
 // unit tests
 struct hash_table *before(void) {
-  struct hash_table *table = init_table(cmpr_keys, NULL, NULL);
+  struct hash_table *table = table_init(cmpr_keys, NULL, NULL);
   assert(table);
   assert(table->num_of_elements == 0);
   return table;
@@ -161,6 +159,39 @@ void table_put_override_value_test(char **keys, size_t keys_size,
   after(table);
 }
 
+void table_put_with_resize_test(size_t size) {
+  // precondition
+  assert(size > TABLE_INIT_CAPACITY);
+
+  // given
+  char **keys = generate_keys(size);
+  for (size_t i = 0; i < size; i++) {
+    print_str(keys[i], strlen(keys[i]));
+  }
+
+  struct string *strings = generate_strings(size);
+
+  struct hash_table *table = table_init(cmpr_keys, NULL, str_destroy);
+
+  // when
+  for (size_t i = 0; i < size; i++) {
+    table_put(table, keys[i], strlen(keys[i]) + 1, &strings[i],
+              sizeof strings[i]);
+  }
+
+  // then
+  assert(table_size(table) > TABLE_INIT_CAPACITY);
+  for (size_t i = 0; i < size; i++) {
+    struct string *str = table_get(table, keys[i], strlen(keys[i]) + 1);
+    if (str) assert(cmpr_values(str, &strings[i]) == 0);
+  }
+
+  // cleanup
+  table_destroy(table);
+  free(strings);
+  destroy_keys(keys, size);
+}
+
 void table_get_test(char **keys, size_t keys_size, struct string *strings,
                     size_t strings_size) {
   // precondition
@@ -199,6 +230,7 @@ int main(void) {
 
   table_put_empty_table_test(keys, num_of_keys, strings, num_of_strings);
   table_put_override_value_test(keys, num_of_keys, strings, num_of_strings);
+  table_put_with_resize_test(TABLE_INIT_CAPACITY + 1);
   table_get_test(keys, num_of_keys, strings, num_of_strings);
 
   destroy_keys(keys, num_of_keys);
