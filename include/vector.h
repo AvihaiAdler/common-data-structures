@@ -49,6 +49,16 @@ void *vector_find(struct vector *vector, const void *element,
 unsigned long long vector_reserve(struct vector *vector,
                                   unsigned long long size);
 
+/* changes the size of the vector. if size < vector::size vector::size will
+ * decrease to the size passed in. beware if the vector contains a pointers to
+ * heap allocated memory you might loose track of them causing a memory leak. if
+ * size > vector::capacity the result will be as if vector_reserve were called
+ * followed by vector_resize. if size >= vector::size && size <
+ * vector::capacity, vector::size will be set to size and number of NULL values
+ * will be pushed into the vector. returns the new vector::size */
+unsigned long long vector_resize(struct vector *vector,
+                                 unsigned long long size);
+
 /* push a new element into the vector. returns trow on success, false otherwise
  */
 bool vector_push(struct vector *vector, const void *element);

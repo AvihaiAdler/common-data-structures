@@ -75,7 +75,7 @@ void *vector_find(struct vector *vector, const void *element,
 }
 
 /* used internally to resize the vector by GROWTH_FACTOR */
-static bool vector_resize(struct vector *vector) {
+static bool vector_resize_internal(struct vector *vector) {
   // limit check. vector:capacity cannot exceeds LLONG_MAX
   if (LLONG_MAX >> GROWTH_FACTOR < vector->capacity) return false;
   unsigned long long new_capacity = vector->capacity << GROWTH_FACTOR;
@@ -114,11 +114,32 @@ unsigned long long vector_reserve(struct vector *vector,
   return vector->capacity;
 }
 
+unsigned long long vector_resize(struct vector *vector,
+                                 unsigned long long size) {
+  if (!vector) return 0;
+
+  if (size >= vector->size && size <= vector->capacity) {
+    memset(vector->data + vector->size * vector->data_size, 0,
+           size * vector->data_size - vector->size * vector->data_size);
+  } else if (size > vector->capacity) {
+    unsigned long long prev_capacity = vector_capacity(vector);
+    unsigned long long new_capacity = vector_reserve(vector, size);
+
+    // vector_reserve failure
+    if (prev_capacity == new_capacity) {
+      return vector->size;
+    }
+  }
+
+  vector->size = size;
+  return vector->size;
+}
+
 bool vector_push(struct vector *vector, const void *element) {
   if (!vector) return false;
   if (!vector->data) return false;
   if (vector->size == vector->capacity) {
-    if (!vector_resize(vector)) return false;
+    if (!vector_resize_internal(vector)) return false;
   }
 
   memcpy(&vector->data[vector->size * vector->data_size], element,
