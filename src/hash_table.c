@@ -68,6 +68,11 @@ unsigned long long table_size(struct hash_table *table) {
   return table->num_of_elements;
 }
 
+unsigned long long table_capacity(struct hash_table *table) {
+  if (!table) return 0;
+  return table->capacity;
+}
+
 /* used internally to hash the keys (slightly modified djd2 by Dan Bernstein)
  */
 static unsigned long long hash(const void *key, unsigned long long key_size) {

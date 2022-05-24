@@ -64,6 +64,9 @@ bool table_empty(struct hash_table *table);
 /* returns the number of elements in the table */
 unsigned long long table_size(struct hash_table *table);
 
+/* returns the number of entries in the table */
+unsigned long long table_capacity(struct hash_table *table);
+
 /* creates a copy of the data passed in - and store it in the table. returns the
  * previous value for that key (which has to be free'd) or NULL if there was no
  * mapping for that key. key_size - the size of key in bytes, value_size - the
