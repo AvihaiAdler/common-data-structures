@@ -290,6 +290,7 @@ void *table_remove(struct hash_table *table, const void *key,
   }
   free(removed->key);
   free(removed);
+  table->num_of_elements--;
 
   return old_value;
 }
