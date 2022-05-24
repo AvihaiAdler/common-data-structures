@@ -284,10 +284,6 @@ void *table_remove(struct hash_table *table, const void *key,
     removed->next->prev = removed->prev;
   }
 
-  // unsigned char *old_value = calloc(removed->value_size, 1);
-  // if (!old_value) return NULL;
-
-  // memcpy(old_value, removed->value, removed->value_size);
   unsigned char *old_value = removed->value;
 
   if (table->destroy_key) {
