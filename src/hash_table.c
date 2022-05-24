@@ -27,7 +27,7 @@ struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
   // table::capacity is at least INIT_CAPACITY (might be higher if vector init
   // capacity > INIT_CAPACITY)
   table->capacity = vector_reserve(table->entries, TABLE_INIT_CAPACITY);
-  table->entries->size = table->capacity;
+  vector_resize(table->entries, table->capacity);
   return table;
 }
 
@@ -147,10 +147,10 @@ static bool entry_prepend(struct entry *entry, const void *key,
   struct node *node = init_node(key, key_size, value, value_size);
   if (!node) return false;
 
-  if (entry->head) {
-    entry->head->prev = node->next;
-  } else {
+  if (!entry->head) {  // entry is empty
     entry->tail = node;
+  } else {
+    entry->head->prev = node;
   }
   node->next = entry->head;
   entry->head = node;
@@ -181,7 +181,7 @@ static bool resize_table(struct hash_table *table) {
   if (new_capacity == table->capacity) return false;
 
   table->capacity = new_capacity;
-  table->entries->size = table->capacity;
+  vector_resize(table->entries, table->capacity);
 
   // rehash every key-value pair
   for (unsigned long long pos = 0; pos < table->capacity; pos++) {
@@ -271,7 +271,7 @@ void *table_remove(struct hash_table *table, const void *key,
   if (!removed) return NULL;  // the table doesn't contains the key key
 
   // the node is the only node in the entry
-  if (entry->head == entry->tail) {
+  if (!removed->next && !removed->prev) {
     entry->head = entry->tail = NULL;
   } else if (!removed->next) {  // removed node is entry::tail
     entry->tail = entry->tail->prev;
@@ -284,7 +284,12 @@ void *table_remove(struct hash_table *table, const void *key,
     removed->next->prev = removed->prev;
   }
 
-  void *old_value = removed->value;
+  // unsigned char *old_value = calloc(removed->value_size, 1);
+  // if (!old_value) return NULL;
+
+  // memcpy(old_value, removed->value, removed->value_size);
+  unsigned char *old_value = removed->value;
+
   if (table->destroy_key) {
     table->destroy_key(removed->key);
   }
