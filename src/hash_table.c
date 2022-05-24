@@ -26,8 +26,7 @@ struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
 
   // table::capacity is at least INIT_CAPACITY (might be higher if vector init
   // capacity > INIT_CAPACITY)
-  table->capacity = vector_reserve(table->entries, TABLE_INIT_CAPACITY);
-  vector_resize(table->entries, table->capacity);
+  table->capacity = vector_resize(table->entries, TABLE_INIT_CAPACITY);
   return table;
 }
 
@@ -177,11 +176,10 @@ static bool resize_table(struct hash_table *table) {
   if (!table->entries) return false;
 
   unsigned long long new_capacity =
-      vector_reserve(table->entries, table->capacity << TABLE_GROWTH);
+      vector_resize(table->entries, table->capacity << TABLE_GROWTH);
   if (new_capacity == table->capacity) return false;
 
   table->capacity = new_capacity;
-  vector_resize(table->entries, table->capacity);
 
   // rehash every key-value pair
   for (unsigned long long pos = 0; pos < table->capacity; pos++) {
