@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #define GROWTH_FACTOR 1
-#define INIT_CAPACITY 16
+#define VECT_INIT_CAPACITY 16
 
 /* vector object */
 struct vector {

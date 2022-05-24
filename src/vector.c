@@ -7,19 +7,19 @@
 struct vector *vector_init(unsigned long long data_size) {
   // limit check.
   if (data_size == 0) return NULL;
-  if (LLONG_MAX < INIT_CAPACITY * data_size) return NULL;
+  if (LLONG_MAX < VECT_INIT_CAPACITY * data_size) return NULL;
 
   struct vector *vector = calloc(1, sizeof *vector);
   if (!vector) return NULL;
 
   vector->data_size = data_size;
-  vector->data = calloc(INIT_CAPACITY * vector->data_size, 1);
+  vector->data = calloc(VECT_INIT_CAPACITY * vector->data_size, 1);
   if (!vector->data) {
     free(vector);
     return NULL;
   }
 
-  vector->capacity = INIT_CAPACITY;
+  vector->capacity = VECT_INIT_CAPACITY;
   vector->size = 0;
   return vector;
 }
