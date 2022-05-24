@@ -161,7 +161,7 @@ void table_put_override_value_test(char **keys, size_t keys_size,
 
 void table_put_with_resize_test(size_t size) {
   // precondition
-  assert(size > TABLE_INIT_CAPACITY);
+  assert(size > TABLE_INIT_CAPACITY * LOAD_FACTOR);
 
   // given
   char **keys = generate_keys(size);
@@ -180,7 +180,7 @@ void table_put_with_resize_test(size_t size) {
   }
 
   // then
-  assert(table_size(table) > TABLE_INIT_CAPACITY);
+  assert(table_capacity(table) > TABLE_INIT_CAPACITY);
   for (size_t i = 0; i < size; i++) {
     struct string *str = table_get(table, keys[i], strlen(keys[i]) + 1);
     if (str) assert(cmpr_values(str, &strings[i]) == 0);
@@ -230,7 +230,7 @@ int main(void) {
 
   table_put_empty_table_test(keys, num_of_keys, strings, num_of_strings);
   table_put_override_value_test(keys, num_of_keys, strings, num_of_strings);
-  table_put_with_resize_test(TABLE_INIT_CAPACITY + 1);
+  table_put_with_resize_test(TABLE_INIT_CAPACITY * LOAD_FACTOR + 1);
   table_get_test(keys, num_of_keys, strings, num_of_strings);
 
   destroy_keys(keys, num_of_keys);
