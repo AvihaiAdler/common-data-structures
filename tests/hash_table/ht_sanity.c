@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -78,13 +77,6 @@ int cmpr_keys(const void *key, const void *other) {
   return strcmp(str_key, str_other);
 }
 
-void print_str(char *str, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    fputc(str[i], stdout);
-  }
-  printf("\n");
-}
-
 int cmpr_values(const void *val, const void *other) {
   const struct string *str = val;
   const struct string *str_other = other;
@@ -98,10 +90,19 @@ void str_destroy(void *str) {
 }
 
 // unit tests
-struct hash_table *before(void) {
+struct hash_table *before(char **keys, size_t keys_size, struct string *strings,
+                          size_t strings_size) {
+  assert(keys_size == strings_size);
   struct hash_table *table = table_init(cmpr_keys, NULL, NULL);
   assert(table);
   assert(table->num_of_elements == 0);
+
+  for (size_t i = 0; i < keys_size; i++) {
+    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
+                                   &strings[i], sizeof strings[i]);
+    assert(!old);
+  }
+
   return table;
 }
 
@@ -109,18 +110,8 @@ void after(struct hash_table *table) { table_destroy(table); }
 
 void table_put_empty_table_test(char **keys, size_t keys_size,
                                 struct string *strings, size_t strings_size) {
-  assert(keys_size == strings_size);  // precondition
   // given
-  struct hash_table *table = before();
-  assert(table_empty(table));
-  assert(table_size(table) == 0);
-
-  // when
-  for (size_t i = 0; i < keys_size; i++) {
-    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
-                                   &strings[i], sizeof strings[i]);
-    assert(!old);
-  }
+  struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
   // then
   assert(table_size(table) == keys_size);
@@ -129,19 +120,11 @@ void table_put_empty_table_test(char **keys, size_t keys_size,
   after(table);
 }
 
-void table_put_override_value_test(char **keys, size_t keys_size,
-                                   struct string *strings,
-                                   size_t strings_size) {
-  assert(keys_size == strings_size);  // precondition
-
+void table_put_with_replace_value_test(char **keys, size_t keys_size,
+                                       struct string *strings,
+                                       size_t strings_size) {
   // given
-  struct hash_table *table = before();
-
-  for (size_t i = 0; i < keys_size; i++) {
-    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
-                                   &strings[i], sizeof strings[i]);
-    assert(!old);
-  }
+  struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
   char *another_str = "not the original string";
   struct string another_string_same_key = {.str_size = strlen(another_str),
@@ -165,9 +148,6 @@ void table_put_with_resize_test(size_t size) {
 
   // given
   char **keys = generate_keys(size);
-  for (size_t i = 0; i < size; i++) {
-    print_str(keys[i], strlen(keys[i]));
-  }
 
   struct string *strings = generate_strings(size);
 
@@ -192,19 +172,39 @@ void table_put_with_resize_test(size_t size) {
   destroy_keys(keys, size);
 }
 
+void table_remove_test(char **keys, size_t keys_size, struct string *strings,
+                       size_t strings_size) {
+  // given
+  struct hash_table *table = before(keys, keys_size, strings, strings_size);
+
+  unsigned long long old_size = table_size(table);
+
+  // when
+  struct string *first = table_remove(table, keys[0], strlen(keys[0]) + 1);
+  struct string *last =
+      table_remove(table, keys[keys_size - 1], strlen(keys[keys_size - 1]) + 1);
+  struct string *mid =
+      table_remove(table, keys[keys_size / 2], strlen(keys[keys_size / 2]) + 1);
+
+  // then
+  assert(first && last && mid);
+  assert(table_size(table) < old_size);
+  assert(cmpr_values(first, &strings[0]) == 0);
+  assert(cmpr_values(last, &strings[strings_size - 1]) == 0);
+  assert(cmpr_values(mid, &strings[strings_size / 2]) == 0);
+
+  // cleanup
+  free(first);
+  free(last);
+  free(mid);
+
+  after(table);
+}
+
 void table_get_test(char **keys, size_t keys_size, struct string *strings,
                     size_t strings_size) {
-  // precondition
-  assert(keys_size == strings_size);
-
   // given
-  struct hash_table *table = before();
-
-  for (size_t i = 0; i < keys_size; i++) {
-    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
-                                   &strings[i], sizeof strings[i]);
-    assert(!old);
-  }
+  struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
   // when
   struct string *val = table_get(table, keys[0], strlen(keys[0]) + 1);
@@ -229,8 +229,9 @@ int main(void) {
   assert(strings);
 
   table_put_empty_table_test(keys, num_of_keys, strings, num_of_strings);
-  table_put_override_value_test(keys, num_of_keys, strings, num_of_strings);
+  table_put_with_replace_value_test(keys, num_of_keys, strings, num_of_strings);
   table_put_with_resize_test(TABLE_INIT_CAPACITY * LOAD_FACTOR + 1);
+  table_remove_test(keys, num_of_keys, strings, num_of_strings);
   table_get_test(keys, num_of_keys, strings, num_of_strings);
 
   destroy_keys(keys, num_of_keys);
