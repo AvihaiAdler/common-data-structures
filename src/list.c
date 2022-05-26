@@ -199,7 +199,7 @@ void *list_remove_first(struct list *list) {
   }
   list->size--;
 
-  void *data = tmp->data;
+  unsigned char *data = tmp->data;
   free(tmp);
   return data;
 }
@@ -219,7 +219,7 @@ void *list_remove_last(struct list *list) {
   }
   list->size--;
 
-  void *data = tmp->data;
+  unsigned char *data = tmp->data;
   free(tmp);
   return data;
 }
