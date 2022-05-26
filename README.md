@@ -128,7 +128,7 @@ You have 2 options when it comes to build and link your project against the libr
 1. Clone the repository. Create a subdirectory in the code base with your project in it and set Cmake accordingly
 2. Download the `.a` file via packages or clone and build the project yourself. Copy the `.a` file into your project as well as the header files, and link the library against your project.
 An example project might looks like:
-```s
+```bash
 .
 ├── CMakeLists.txt
 ├── include
