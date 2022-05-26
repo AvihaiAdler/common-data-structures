@@ -59,7 +59,7 @@ unsigned long long vector_reserve(struct vector *vector,
 unsigned long long vector_resize(struct vector *vector,
                                  unsigned long long size);
 
-/* push a new element into the vector. returns trow on success, false otherwise
+/* push a new element into the vector. returns true on success, false otherwise
  */
 bool vector_push(struct vector *vector, const void *element);
 
@@ -80,13 +80,13 @@ void *vector_replace(struct vector *vector, const void *element,
                      unsigned long long pos);
 
 /* shrink the underlying array to fit exactly vector::size elements. returns the
- * new size */
+ * new capacity */
 unsigned long long vector_shrink(struct vector *vector);
 
 /* finds and returns the index of the first occurence of an element on the
  * vector. returns its position on success, or -1 if no such element found */
 long long vector_index_of(struct vector *vector, const void *element,
-                          bool (*equals)(const void *, const void *));
+                          int (*cmpr)(const void *, const void *));
 
 /* sort the vector. the compr function should returns an int bigger than 0 if
  * the first element if bigger the second, 0 if both elements are equals or an

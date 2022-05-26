@@ -184,7 +184,7 @@ void vector_index_of_sanity_test(int *arr, size_t arr_size) {
   struct vector *vect = before(arr, arr_size);
 
   // when
-  long long index = vector_index_of(vect, &arr[arr_size / 2], equals);
+  long long index = vector_index_of(vect, &arr[arr_size / 2], cmpr);
 
   // then
   assert(index >= 0);
