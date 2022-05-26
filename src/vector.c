@@ -207,7 +207,7 @@ long long vector_index_of(struct vector *vector, const void *element,
     if (cmpr(element, &vector->data[i]) == 0) return i / vector->data_size;
   }
 
-  return -1;
+  return N_EXISTS;
 }
 
 void vector_sort(struct vector *vector,

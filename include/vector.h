@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #define GROWTH_FACTOR 1
+#define N_EXISTS -1
 #define VECT_INIT_CAPACITY 16
 
 /* vector object */
@@ -84,7 +85,8 @@ void *vector_replace(struct vector *vector, const void *element,
 unsigned long long vector_shrink(struct vector *vector);
 
 /* finds and returns the index of the first occurence of an element on the
- * vector. returns its position on success, or -1 if no such element found */
+ * vector. returns its position on success, or N_EXISTS if no such element
+ * found */
 long long vector_index_of(struct vector *vector, const void *element,
                           int (*cmpr)(const void *, const void *));
 
