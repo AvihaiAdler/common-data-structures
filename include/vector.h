@@ -2,8 +2,9 @@
 
 #include <stdbool.h>
 
+#include "defines.h"
+
 #define GROWTH_FACTOR 1
-#define N_EXISTS -1
 #define VECT_INIT_CAPACITY 16
 
 /* vector object */

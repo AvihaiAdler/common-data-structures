@@ -247,15 +247,15 @@ void *list_remove_at(struct list *list, unsigned long long pos) {
 
 long long list_index_of(struct list *list, const void *data,
                         int (*cmpr)(const void *, const void *)) {
-  if (!list) return INVALID_POS;
-  if (!cmpr) return INVALID_POS;
-  if (!list->head) return INVALID_POS;
+  if (!list) return N_EXISTS;
+  if (!cmpr) return N_EXISTS;
+  if (!list->head) return N_EXISTS;
 
   long long pos = 0;
   for (struct node *tmp = list->head; tmp; tmp = tmp->next, pos++) {
     if (cmpr(tmp->data, data) == 0) return pos;
   }
-  return INVALID_POS;
+  return N_EXISTS;
 }
 
 void *list_replace_at(struct list *list, const void *data,

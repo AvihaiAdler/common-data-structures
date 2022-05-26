@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#define INVALID_POS -1
+#include "defines.h"
 
 /* node object */
 struct node {
