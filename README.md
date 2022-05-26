@@ -151,5 +151,5 @@ set_target_properties(
   IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libgenerics.a
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/include
 )
-target_link_libraries(ds_example PRIVATE libgenerics)
+target_link_libraries(<executable name> PRIVATE libgenerics)
 ```
