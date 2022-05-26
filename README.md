@@ -294,11 +294,11 @@ Hash table provides an implementation of a heap allocated hash table. Under the 
                   const void *value,
                   unsigned long long value_size);
   ```
-  inserts an element into the table. `key` is a pointer to the key you want to associate with the data. `key` will determine the position of the data as `key` will be hashed. `key_size` is the size of `key` in bytes.
-  `value` is a pointer to the data one want to store in the table. `value_size` is the size of `value` in bytes.
+  inserts an element into the table. `key` is a pointer to the key one want to associate with `value`. `key` will determine the position of the `value` as `key` will be hashed. `key_size` is the size of `key` in bytes.
+  `value` is a pointer to the data one might want to store in the table. `value_size` is the size of `value` in bytes.
   the functions creates a shallow copy of `key` and `value` and inserts them into `table`.
   ###### return value
-    returns a shallow copy of the old value associated with `key` (if such value exists) which has to be free'd, or `NULL` if no such value exists or if the function falied to insert the key-value pair
+    returns a shallow copy of the old value associated with `key` (if such value exists) which has to be free'd, or `NULL` if no such value exists or if the function failed to insert the key-value pair
 
 - ```c
   void *table_remove(struct hash_table *table, const void *key, unsigned long long key_size);
