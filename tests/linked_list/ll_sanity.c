@@ -191,7 +191,7 @@ void list_remove_first_test(struct point *points, size_t arr_size) {
   assert(list_size(list) == arr_size - 1);
   assert(equals(removed, &points[0]));
   assert(equals(list_peek_first(list), &points[1]));
-  assert(list_index_of(list, removed, cmpr) < 0);
+  assert(list_index_of(list, removed, cmpr) == N_EXISTS);
 
   // cleanup
   free(removed);
