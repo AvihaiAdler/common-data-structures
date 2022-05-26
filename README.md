@@ -5,8 +5,9 @@ libgenerics is a small static library for personal use consists of 3 'generics' 
 - [vector](https://github.com/AvihaiAdler/common-generic-data-structures#vector)
 - [list](https://github.com/AvihaiAdler/common-generic-data-structures#list)
 - [hash table](https://github.com/AvihaiAdler/common-generic-data-structures#hash-table)
+- [compiling and building](https://github.com/AvihaiAdler/common-generic-data-structures#compiling-and-building)
 
-##### vector
+#### vector
 Vector provides an implementation of a heap allocated vector. The underlying array saves a shallow copy of the data passed in. Note that you should avoid accessing the members of `struct vector` directly, use the various methods provided below.
 
 - ```c
@@ -119,11 +120,11 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
   ```
   sorts the vector with the use of a `cmpr` function. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, 1 if the first element is bigger than the second or -1 if the first element is smaller than the second.
 
-##### list
+#### list
 
-##### hash table
+#### hash table
 
-#### building
+#### compiling and building
 You have 2 options when it comes to build and link your project against the library:
 1. Clone the repository. Create a subdirectory in the code base with your project in it and set Cmake accordingly
 2. Download the `.a` file via packages or clone and build the project yourself. Copy the `.a` file into your project as well as the header files, and link the library against your project.
