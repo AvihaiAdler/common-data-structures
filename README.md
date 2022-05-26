@@ -19,7 +19,7 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
 - ```c
   void vector_destroy(struct vector *vector, void (*destroy)(void *element));
   ```
-  used to destroy a vector 'object'. expects a vector as well as a destroy function which may be `NULL`. you should only pass a destroy function if your data either: contains a pointer, OR has more than 1 level of inderction (a double pointer for example).
+  used to destroy a vector 'object'. expects a vector as well as a destroy function which may be `NULL`. one should only pass a destroy function if your data either: contains a pointer, OR has more than 1 level of inderction (a double pointer for example).
   the destroy function should free any underlying data pointed to by `element`. note: you should never `free` `element` itself! however if your `element` is a double (or higher) pointer OR is a struct which contains a pointer to a heap allocated memory, you should `free` that data. e.g. `free(*(void **)element)`.
   
 
@@ -54,9 +54,9 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
 - ```c
   void *vector_find(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *));
   ```
-  search for an element `element` in the vector using the `cmpr` function. `element` is a pointer to the element you'd like to find, `cmpr` is a compare function which should accepts 2 `const void *` and returns 0 if both are equal, 1 if the first is bigger than the second, and -1 if the first is smaller than the second.
+  searches for an element `element` in the vector using the `cmpr` function. `element` is a pointer to the element one would like to find, `cmpr` is a compare function which should accepts 2 `const void *` and returns 0 if both are equal, 1 if the first is bigger than the second, and -1 if the first is smaller than the second.
   ###### return value
-    returns a pointer to the desired element if exists or `NULL` if the element doesn't exists. the function may return `NULL` if either parameters is `NULL`
+    returns a pointer to the desired element if exists or `NULL` if the element doesn't exists. the function may return `NULL` if either parameters passed in is `NULL`
 
 - ```c
   unsigned long long vector_reserve(struct vector *vector, unsigned long long size);
