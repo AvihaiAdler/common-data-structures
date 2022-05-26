@@ -250,6 +250,69 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
   sorts the list using the `cmpr` function. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
 
 #### hash table
+Hash table provides an implementation of a heap allocated, hash table. Under the hood the hash table consists of a vector which holds `size` entries. Each entry is a doublt linked list which contains a shallow copy of the data one might pass in. Note that you should avoid accessing the members of `struct hash_table` directly, use the various methods provided below.
+
+- ```c
+  struct hash_table *table_init(int (*cmpr)(const void *, const void *),
+                                void (*destroy_key)(void *),
+                                void (*destroy_value)(void *));
+  ```
+  used to create a `hash_table` 'object'. expects a `cmpr` function which must NOT be `NULL` as well as 2 destroy function which may be `NULL`. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second. as a good practice one may not free `key` or `value` themselves, but rather if `key` or `value` contains a pointer to a heap allocated memory one should free that said pointer.
+  ###### return value
+    returns a `struct hash_table *` on success, `NULL` on failure
+
+- ```c
+  void table_destroy(struct hash_table *table);
+  ```
+  destroys the hash table. if `destroy_key` or `destroy_value` aren't `NULL` calls them for every key-value pair.
+
+- ```c
+  bool table_empty(struct hash_table *table);
+  ```
+  used to determine if the table is empty or not.
+  ###### return value
+    returns `true` if the table contains no elements or if `table` is `NULL`, `false` otherwise
+
+- ```c
+  unsigned long long table_size(struct hash_table *table);
+  ```
+  used to get the number of elements the table currently holds.
+  ###### return value
+    returns the number of element currently stored in `table`
+
+- ```c
+  unsigned long long table_capacity(struct hash_table *table);
+  ```
+  used to get the number of entries in the table.
+  ###### return value
+    the number of enetries in the table 
+
+- ```c
+  void *table_put(struct hash_table *table, 
+                  const void *key,
+                  unsigned long long key_size, 
+                  const void *value,
+                  unsigned long long value_size);
+  ```
+  inserts an element into the table. `key` is a pointer to the key you want to associate with the data. `key` will determine the position of the data as `key` will be hashed. `key_size` is the size of `key` in bytes.
+  `value` is a pointer to the data one want to store in the table. `value_size` is the size of `value` in bytes.
+  the functions creates a shallow copy of `key` and `value` and inserts them into `table`.
+  ###### return value
+    returns a shallow copy of the old value associated with `key` (if such value exists) which has to be free'd, or `NULL` if no such value exists or if the function falied to insert the key-value pair
+
+- ```c
+  void *table_remove(struct hash_table *table, const void *key, unsigned long long key_size);
+  ```
+  removes the mapping for a specific `key` if present. `key_size` is the size of `key` in bytes.
+  ###### return value
+    returns a shallow copy of the removed value (whcih has to be free'd), or `NULL` on failure
+
+- ```c
+  void *table_get(struct hash_table *table, const void *key, unsigned long long key_size);
+  ```
+  returns the mapping for a specific `key` if present. `key_size` is the size of `key` in bytes.
+  ###### return value
+    returns a pointer to the value which is mapped to `key`. the value must NOT be free'd
 
 #### compiling and building
 You have 2 options when it comes to build and link your project against the library:
