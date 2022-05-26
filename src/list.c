@@ -246,14 +246,14 @@ void *list_remove_at(struct list *list, unsigned long long pos) {
 }
 
 long long list_index_of(struct list *list, const void *data,
-                        bool (*equals)(const void *, const void *)) {
+                        int (*cmpr)(const void *, const void *)) {
   if (!list) return INVALID_POS;
-  if (!equals) return INVALID_POS;
+  if (!cmpr) return INVALID_POS;
   if (!list->head) return INVALID_POS;
 
   long long pos = 0;
   for (struct node *tmp = list->head; tmp; tmp = tmp->next, pos++) {
-    if (equals(tmp->data, data)) return pos;
+    if (cmpr(tmp->data, data) == 0) return pos;
   }
   return INVALID_POS;
 }
@@ -294,8 +294,8 @@ void *list_replace_at(struct list *list, const void *data,
  * old_data on success, NULL otherwise */
 void *list_replace(struct list *list, const void *old_data,
                    const void *new_data, unsigned long long new_data_size,
-                   bool (*equals)(const void *, const void *)) {
-  long long pos = list_index_of(list, old_data, equals);
+                   int (*cmpr)(const void *, const void *)) {
+  long long pos = list_index_of(list, old_data, cmpr);
   if (pos < 0) return NULL;
 
   return list_replace_at(list, new_data, new_data_size,

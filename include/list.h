@@ -86,7 +86,7 @@ void *list_remove_at(struct list *list, unsigned long long pos);
  * calculated for the list's head. returns a positive number as the index on
  * success, negative number on failure */
 long long list_index_of(struct list *list, const void *data,
-                        bool (*equals)(const void *, const void *));
+                        int (*cmpr)(const void *, const void *));
 
 /* replaces an element at position pos. the position is calculated from the
  * list's head. returns a pointer to the replcaed data on success (which has to
@@ -98,7 +98,7 @@ void *list_replace_at(struct list *list, const void *data,
  * old_data on success (which has to be free'd), NULL otherwise */
 void *list_replace(struct list *list, const void *old_data,
                    const void *new_data, unsigned long long new_data_size,
-                   bool (*equals)(const void *, const void *));
+                   int (*cmpr)(const void *, const void *));
 
 /* sorts the list */
 void list_sort(struct list *list, int (*cmpr)(const void *, const void *));

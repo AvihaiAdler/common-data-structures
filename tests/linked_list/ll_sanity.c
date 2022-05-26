@@ -191,7 +191,7 @@ void list_remove_first_test(struct point *points, size_t arr_size) {
   assert(list_size(list) == arr_size - 1);
   assert(equals(removed, &points[0]));
   assert(equals(list_peek_first(list), &points[1]));
-  assert(list_index_of(list, removed, equals) < 0);
+  assert(list_index_of(list, removed, cmpr) < 0);
 
   // cleanup
   free(removed);
@@ -209,7 +209,7 @@ void list_remove_last_test(struct point *points, size_t arr_size) {
   assert(list_size(list) == arr_size - 1);
   assert(equals(list_peek_last(list), &points[arr_size - 2]));
   assert(equals(removed, &points[arr_size - 1]));
-  assert(list_index_of(list, removed, equals) < 0);
+  assert(list_index_of(list, removed, cmpr) < 0);
 
   // cleaup
   free(removed);
@@ -227,7 +227,7 @@ void list_remove_at_test(struct point *points, size_t arr_size) {
   assert(removed);
   assert(list_size(list) == arr_size - 1);
   assert(equals(removed, &points[arr_size / 2]));
-  assert(list_index_of(list, removed, equals) < 0);
+  assert(list_index_of(list, removed, cmpr) < 0);
 
   // cleanup
   free(removed);
@@ -239,9 +239,9 @@ void list_index_of_test(struct point *points, size_t arr_size) {
   struct list *list = before(points, arr_size);
 
   // when
-  long long int first = list_index_of(list, &points[0], equals);
-  long long int last = list_index_of(list, &points[arr_size - 1], equals);
-  long long int mid = list_index_of(list, &points[arr_size / 2], equals);
+  long long int first = list_index_of(list, &points[0], cmpr);
+  long long int last = list_index_of(list, &points[arr_size - 1], cmpr);
+  long long int mid = list_index_of(list, &points[arr_size / 2], cmpr);
 
   // then
   assert(first == 0);
@@ -288,12 +288,12 @@ void list_replace_test(struct point *points, size_t arr_size) {
 
   // when
   struct point *replaced =
-      list_replace(list, &points[arr_size / 2], &p, sizeof p, equals);
+      list_replace(list, &points[arr_size / 2], &p, sizeof p, cmpr);
 
   // then
   assert(replaced);
   assert(list_size(list) == arr_size);
-  assert((size_t)list_index_of(list, &p, equals) == arr_size / 2);
+  assert((size_t)list_index_of(list, &p, cmpr) == arr_size / 2);
 
   // cleanup
   free(replaced);
