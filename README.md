@@ -55,7 +55,7 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
 - ```c
   void *vector_find(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *));
   ```
-  searches for an element `element` in the vector using the `cmpr` function. `element` is a pointer to the element one would like to find, `cmpr` is a compare function which should accepts 2 `const void *` and returns 0 if both are equal, 1 if the first is bigger than the second, and -1 if the first is smaller than the second.
+  searches for an element `element` in the vector using the `cmpr` function. `element` is a pointer to the element one would like to find, `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
   ###### return value
     returns a pointer to the desired element if exists or `NULL` if the element doesn't exists. the function may return `NULL` if either parameters passed in is `NULL`
 
@@ -111,16 +111,143 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
 - ```c
   long long vector_index_of(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *));
   ```
-  searches for the element `element` using the `cmpr` function. `element` is a pointer to the element one want to look for, `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, 1 if the first element is bigger than the second or -1 if the first element is smaller than the second.
+  searches for the element `element` using the `cmpr` function. `element` is a pointer to the element one want to look for, `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
   ###### return value
     returns the index of `element` on success or `N_EXISTS` on faliure
 
 - ```c
   void vector_sort(struct vector *vector, int (*cmpr)(const void *, const void *));
   ```
-  sorts the vector with the use of a `cmpr` function. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, 1 if the first element is bigger than the second or -1 if the first element is smaller than the second.
+  sorts the vector with the use of a `cmpr` function. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
 
 #### list
+List provides an implementation of a heap allocated, doubly linked list. Each node contains a shallow copy of the data one pass in. Note that you should avoid accessing the members of `struct list` directly, use the various methods provided below.
+
+- ```c
+  struct list *list_init();
+  ```
+  used to create a list 'object'.
+  ###### return value
+    returns a list 'object' on success, `NULL` on failure
+
+- ```c
+  void list_destroy(struct list *list, void (*destroy)(void *data));
+  ```
+  destroy a list `list`. accepts a destroy function which may be `NULL`. as a good practice one may not free `data` itself, but rather if `data` contains a pointer to a heap allocated memory one should free that said pointer.
+
+- ```c
+  unsigned long long list_size(struct list *list);
+  ```
+  used to get the number of elements the list currently holds.
+  ###### return value
+    returns the number of elements currently in the list
+
+- ```c
+  bool list_empty(struct list *list);
+  ```
+  used as a function to determine wether a list is empty or not.
+  ###### return value
+    returns `true` if `list` contains no elements or `NULL`, returns `false` otherwise
+
+- ```c
+  bool list_prepend(struct list *list, const void *data, unsigned long long data_size);
+  ```
+  adds a node with a shallow copy of `data` to the start of the list. expects a pointer to the data as well as `data_size` which is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc) (`O(1)`).
+  ###### return value
+    return `true` on success, `false` on failure
+
+- ```c
+  bool list_append(struct list *list, const void *data, unsigned long long data_size);
+  ```
+  adds a node with a shallow copy of `data` to the end of the list. expects a pointer to the data as well as `data_size` which is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc) (`O(1)`).
+  ###### return value
+    return `true` on success, `false` on failure
+
+- ```c
+  bool list_insert_at(struct list *list, const void *data, unsigned long long data_size, unsigned long long pos);
+  ```
+  inserts a node with a shallow copy of `data` at a given position `pos`. the position is calculated from the start of the list. expects a pointer to the data as well as `data_size` which is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc).
+  ###### return value
+    return `true` on success, `false` on failure
+
+- ```c
+  bool list_insert_priority(struct list *list, const void *data, unsigned long long data_size, int (*cmpr)(const void *, const void *));
+  ```
+  inserts a node with a shallow copy of `data` at a location which is determined by the `cmpr` function. the node will be inserted at the _first_ location where `node::data` is bigger than the next `other::data`. the comparison always starts from the start of the list. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
+  ###### return value
+    returns `true` on success, `false` on failure
+
+- ```c
+  void *list_peek_first(struct list *list);
+  ```
+  used to get the first element on the list without removing it (`O(1)`).
+  ###### return value
+    returns a pointer to the first element on the list, `NULL` on failure
+
+- ```c
+  void *list_peek_last(struct list *list);
+  ```
+  used to get the last element on the list without removing it (`O(1)`).
+  ###### return value
+    returns a pointer to the last element on the list, `NULL` on failure
+
+- ```c
+  void *list_at(struct list *list, unsigned long long pos);
+  ```
+  used to get the element at position `pos` whithout removing it. the position is calculated from the start of the list.
+  ###### return value
+    returns a pointer to the element at position `pos`, `NULL` on failure
+
+- ```c
+  void *list_remove_first(struct list *list);
+  ```
+  used to remove the first element on the list (`O(1)`).
+  ###### return value
+    returns a shallow copy of the removed element (which has to be free'd), `NULL` on failure
+
+- ```c
+  void *list_remove_last(struct list *list);
+  ```
+  used to remove the last element on the list (`O(1)`). 
+  ###### return value
+    returns a shallow copy of the removed element (which has to be free'd), `NULL` on failure
+
+- ```c
+  void *list_remove_at(struct list *list, unsigned long long pos);
+  ```
+  used to remove an element at position `pos`. the position is calculated from the start of the list.
+  ###### return value
+    returns a shallow copy of the removed element (which has to be free'd), `NULL` on failure
+
+- ```c
+  long long list_index_of(struct list *list, const void *data, int (*cmpr)(const void *, const void *));
+  ```
+  used to get the index of an element on the list. the index is calculated from the start of the list. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
+  ###### return value
+    returns the index of the desired element on success, returns `N_EXISTS` on failure
+
+- ```c
+  void *list_replace_at(struct list *list, const void *data, unsigned long long data_size, unsigned long long pos);
+  ```
+  replaces an element at position `pos` with the new element `data`. the position is calculated from the start of the list. `data_size` is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc).
+  ###### return value
+    returns a pointer to a shallow copy of the replaced element (which has to be free'd) on success, `NULL` on failure
+
+- ```c
+  void *list_replace(struct list *list, 
+                     const void *old_data,
+                     const void *new_data, 
+                     unsigned long long new_data_size,
+                     int (*cmpr)(const void *, const void *));
+  ```
+  replaces the element `old_data` with a new element `new_data`. `data_size` is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc). `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
+  ###### return value
+    returns a pointer to a shallow copy of the replaced element (which has to be free'd) on success, `NULL` on failure
+
+- ```c
+  void list_sort(struct list *list, int (*cmpr)(const void *, const void *));
+  ```
+  sorts the list using the `cmpr` function. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
 
 #### hash table
 
