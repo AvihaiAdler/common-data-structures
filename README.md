@@ -250,7 +250,7 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
   sorts the list using the `cmpr` function. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
 
 #### hash table
-Hash table provides an implementation of a heap allocated, hash table. Under the hood the hash table consists of a vector which holds `size` entries. Each entry is a doublt linked list which contains a shallow copy of the data one might pass in. Note that you should avoid accessing the members of `struct hash_table` directly, use the various methods provided below.
+Hash table provides an implementation of a heap allocated hash table. Under the hood the hash table consists of a vector which holds `size` entries. Each entry is a doubly linked list which contains a shallow copy of the data one might pass in. Note that you should avoid accessing the members of `struct hash_table` directly, use the various methods provided below.
 
 - ```c
   struct hash_table *table_init(int (*cmpr)(const void *, const void *),
