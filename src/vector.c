@@ -164,8 +164,12 @@ void *vector_remove_at(struct vector *vector, unsigned long long pos) {
   memcpy(old, tmp, vector->data_size);
 
   unsigned long long factored_pos = pos * vector->data_size;
-  memmove(vector->data + factored_pos, vector->data + factored_pos + 1,
-          vector->size * vector->data_size - factored_pos - vector->data_size);
+  // memmove(vector->data + factored_pos, vector->data + factored_pos + 1,
+  //         vector->size * vector->data_size - factored_pos -
+  //         vector->data_size);
+  memmove(vector->data + factored_pos,
+          vector->data + factored_pos + 1 * vector->data_size,
+          (vector->size - pos - 1) * vector->data_size);
   vector->size--;
   return old;
 }
