@@ -239,9 +239,9 @@ void list_index_of_test(struct point *points, size_t arr_size) {
   struct list *list = before(points, arr_size);
 
   // when
-  long long int first = list_index_of(list, &points[0], cmpr);
-  long long int last = list_index_of(list, &points[arr_size - 1], cmpr);
-  long long int mid = list_index_of(list, &points[arr_size / 2], cmpr);
+  intmax_t first = list_index_of(list, &points[0], cmpr);
+  intmax_t last = list_index_of(list, &points[arr_size - 1], cmpr);
+  intmax_t mid = list_index_of(list, &points[arr_size / 2], cmpr);
 
   // then
   assert(first == 0);
@@ -310,7 +310,7 @@ void list_sort_test(struct point *points, size_t arr_size) {
   list_sort(list, cmpr);
 
   // then
-  for (unsigned long long i = 0; i < arr_size; i++) {
+  for (size_t i = 0; i < arr_size; i++) {
     assert(equals(&copy[i], list_at(list, i)));
   }
 

@@ -34,7 +34,7 @@ void table_destroy(struct hash_table *table) {
   if (!table) return;
   if (!table->entries) return;
 
-  for (unsigned long long i = 0; i < table->capacity; i++) {
+  for (size_t i = 0; i < table->capacity; i++) {
     // destroy all buckets in an entry
     struct entry *entry = vector_at(table->entries, i);
     for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
@@ -62,22 +62,22 @@ bool table_empty(struct hash_table *table) {
   return table->num_of_elements == 0;
 }
 
-unsigned long long table_size(struct hash_table *table) {
+size_t table_size(struct hash_table *table) {
   if (!table) return 0;
   return table->num_of_elements;
 }
 
-unsigned long long table_capacity(struct hash_table *table) {
+size_t table_capacity(struct hash_table *table) {
   if (!table) return 0;
   return table->capacity;
 }
 
 /* used internally to hash the keys (slightly modified djd2 by Dan Bernstein)
  */
-static unsigned long long hash(const void *key, unsigned long long key_size) {
+static size_t hash(const void *key, size_t key_size) {
   const unsigned char *k = key;
-  unsigned long long hash = 5381;
-  for (unsigned long long i = 0; i < key_size; i++, k++) {
+  size_t hash = 5381;
+  for (size_t i = 0; i < key_size; i++, k++) {
     hash = hash * 33 + *k;
   }
   return hash;
@@ -89,9 +89,8 @@ static unsigned long long hash(const void *key, unsigned long long key_size) {
  * both node::key, node::value and node must be free'd. the function assumes
  * key
  * != NULL and key_size > 0 */
-static struct node *init_node(const void *key, unsigned long long key_size,
-                              const void *value,
-                              unsigned long long value_size) {
+static struct node *init_node(const void *key, size_t key_size,
+                              const void *value, size_t value_size) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
@@ -123,7 +122,7 @@ static struct node *init_node(const void *key, unsigned long long key_size,
  * pointer to the previous key which has to be free'd. the
  * function assumes the node passed in isn't NULL */
 static void *node_replace_value(struct node *node, const void *value,
-                                unsigned long long value_size) {
+                                size_t value_size) {
   void *old_value = node->value;
   if (value_size) {
     unsigned char *tmp_value = calloc(value_size, 1);
@@ -140,9 +139,8 @@ static void *node_replace_value(struct node *node, const void *value,
 
 /* used internally to prepend a bucket to an entry. retuns true on success,
  * NULL on failure */
-static bool entry_prepend(struct entry *entry, const void *key,
-                          unsigned long long key_size, const void *value,
-                          unsigned long long value_size) {
+static bool entry_prepend(struct entry *entry, const void *key, size_t key_size,
+                          const void *value, size_t value_size) {
   struct node *node = init_node(key, key_size, value, value_size);
   if (!node) return false;
 
@@ -175,14 +173,14 @@ static bool resize_table(struct hash_table *table) {
   if (!table) return false;
   if (!table->entries) return false;
 
-  unsigned long long new_capacity =
+  size_t new_capacity =
       vector_resize(table->entries, table->capacity << TABLE_GROWTH);
   if (new_capacity == table->capacity) return false;
 
   table->capacity = new_capacity;
 
   // rehash every key-value pair
-  for (unsigned long long pos = 0; pos < table->capacity; pos++) {
+  for (size_t pos = 0; pos < table->capacity; pos++) {
     struct entry *entry = vector_at(table->entries, pos);
     if (!entry->head) continue;  // entry is empty
 
@@ -200,8 +198,7 @@ static bool resize_table(struct hash_table *table) {
         entry->head->prev = NULL;
       }
 
-      unsigned long long new_pos =
-          hash(tmp->key, tmp->key_size) % table->capacity;
+      size_t new_pos = hash(tmp->key, tmp->key_size) % table->capacity;
       struct entry *new_entry = vector_at(table->entries, new_pos);
 
       if (!new_entry->head) {  // new entry is empty
@@ -224,9 +221,8 @@ static bool resize_table(struct hash_table *table) {
   return true;
 }
 
-void *table_put(struct hash_table *table, const void *key,
-                unsigned long long key_size, const void *value,
-                unsigned long long value_size) {
+void *table_put(struct hash_table *table, const void *key, size_t key_size,
+                const void *value, size_t value_size) {
   if (!table) return NULL;
   if (!table->entries) return NULL;
   if (!key && !key_size) return NULL;
@@ -237,7 +233,7 @@ void *table_put(struct hash_table *table, const void *key,
   }
 
   // get the entry index from the hash
-  unsigned long long pos = hash(key, key_size) % table->capacity;
+  size_t pos = hash(key, key_size) % table->capacity;
   struct entry *entry = vector_at(table->entries, pos);
   if (!entry) return NULL;
 
@@ -255,13 +251,12 @@ void *table_put(struct hash_table *table, const void *key,
   return NULL;
 }
 
-void *table_remove(struct hash_table *table, const void *key,
-                   unsigned long long key_size) {
+void *table_remove(struct hash_table *table, const void *key, size_t key_size) {
   if (!table) return NULL;
   if (!table->entries) return NULL;
   if (!key && !key_size) return NULL;
 
-  unsigned long long pos = hash(key, key_size) % table->capacity;
+  size_t pos = hash(key, key_size) % table->capacity;
   struct entry *entry = vector_at(table->entries, pos);
   if (!entry) return NULL;
 
@@ -294,13 +289,12 @@ void *table_remove(struct hash_table *table, const void *key,
   return old_value;
 }
 
-void *table_get(struct hash_table *table, const void *key,
-                unsigned long long key_size) {
+void *table_get(struct hash_table *table, const void *key, size_t key_size) {
   if (!table) return NULL;
   if (!table->entries) return NULL;
   if (!key && !key_size) return NULL;
 
-  unsigned long long pos = hash(key, key_size) % table->capacity;
+  size_t pos = hash(key, key_size) % table->capacity;
   struct entry *entry = vector_at(table->entries, pos);
   if (!entry) return NULL;
 

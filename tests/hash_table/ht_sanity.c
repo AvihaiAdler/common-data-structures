@@ -177,7 +177,7 @@ void table_remove_test(char **keys, size_t keys_size, struct string *strings,
   // given
   struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
-  unsigned long long old_size = table_size(table);
+  size_t old_size = table_size(table);
 
   // when
   struct string *first = table_remove(table, keys[0], strlen(keys[0]) + 1);
