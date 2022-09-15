@@ -1,13 +1,13 @@
-#include <limits.h>
+#include "include/vector.h"
+
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/vector.h"
-
-struct vector *vector_init(unsigned long long data_size) {
+struct vector *vector_init(size_t data_size) {
   // limit check.
   if (data_size == 0) return NULL;
-  if (LLONG_MAX < VECT_INIT_CAPACITY * data_size) return NULL;
+  // for vector_index_of
+  if (SIZE_MAX >> 1 < VECT_INIT_CAPACITY * data_size) return NULL;
 
   struct vector *vector = calloc(1, sizeof *vector);
   if (!vector) return NULL;
@@ -27,7 +27,7 @@ struct vector *vector_init(unsigned long long data_size) {
 void vector_destroy(struct vector *vector, void (*destroy)(void *element)) {
   if (!vector) return;
   if (vector->data) {
-    for (unsigned long long i = 0; i < vector->size * vector->data_size;
+    for (size_t i = 0; i < vector->size * vector->data_size;
          i += vector->data_size) {
       if (destroy) {
         destroy(&vector->data[i]);
@@ -38,12 +38,12 @@ void vector_destroy(struct vector *vector, void (*destroy)(void *element)) {
   free(vector);
 }
 
-unsigned long long vector_size(struct vector *vector) {
+size_t vector_size(struct vector *vector) {
   if (!vector) return 0;
   return vector->size;
 }
 
-unsigned long long vector_capacity(struct vector *vector) {
+size_t vector_capacity(struct vector *vector) {
   if (!vector) return 0;
   return vector->capacity;
 }
@@ -53,7 +53,7 @@ bool vector_empty(struct vector *vector) {
   return vector->size == 0;
 }
 
-void *vector_at(struct vector *vector, unsigned long long pos) {
+void *vector_at(struct vector *vector, size_t pos) {
   if (!vector) return NULL;
   if (!vector->data) return NULL;
   if (pos >= vector->size) return NULL;
@@ -76,14 +76,15 @@ void *vector_find(struct vector *vector, const void *element,
 
 /* used internally to resize the vector by GROWTH_FACTOR */
 static bool vector_resize_internal(struct vector *vector) {
-  // limit check. vector:capacity cannot exceeds LLONG_MAX
-  if (LLONG_MAX >> GROWTH_FACTOR < vector->capacity) return false;
-  unsigned long long new_capacity = vector->capacity << GROWTH_FACTOR;
+  // limit check. vector:capacity cannot exceeds SIZE_MAX >> 1 (which should
+  // theoretically be represented by intmax_t)
+  if ((SIZE_MAX >> 1) >> GROWTH_FACTOR < vector->capacity) return false;
+  size_t new_capacity = vector->capacity << GROWTH_FACTOR;
 
   // limit check. vector::capacity * vector::data_size (the max number of
   // element the vector can hold) cannot exceeds LLONG_MAX / vector::data_size
   // (the number of elements LLONG_MAX can hold)
-  if (LLONG_MAX / vector->data_size < new_capacity * vector->data_size)
+  if ((SIZE_MAX >> 1) / vector->data_size < new_capacity * vector->data_size)
     return false;
 
   unsigned char *tmp = realloc(vector->data, new_capacity * vector->data_size);
@@ -97,10 +98,9 @@ static bool vector_resize_internal(struct vector *vector) {
   return true;
 }
 
-unsigned long long vector_reserve(struct vector *vector,
-                                  unsigned long long size) {
+size_t vector_reserve(struct vector *vector, size_t size) {
   if (!vector) return 0;
-  if (size > LLONG_MAX) return vector->capacity;
+  if (size > (SIZE_MAX >> 1)) return vector->capacity;
   if (size <= vector->capacity) return vector->capacity;
 
   unsigned char *tmp = realloc(vector->data, size * vector->data_size);
@@ -114,16 +114,15 @@ unsigned long long vector_reserve(struct vector *vector,
   return vector->capacity;
 }
 
-unsigned long long vector_resize(struct vector *vector,
-                                 unsigned long long size) {
+size_t vector_resize(struct vector *vector, size_t size) {
   if (!vector) return 0;
 
   if (size >= vector->size && size <= vector->capacity) {
     memset(vector->data + vector->size * vector->data_size, 0,
            size * vector->data_size - vector->size * vector->data_size);
   } else if (size > vector->capacity) {
-    unsigned long long prev_capacity = vector_capacity(vector);
-    unsigned long long new_capacity = vector_reserve(vector, size);
+    size_t prev_capacity = vector_capacity(vector);
+    size_t new_capacity = vector_reserve(vector, size);
 
     // vector_reserve failure
     if (prev_capacity == new_capacity) {
@@ -154,7 +153,7 @@ void *vector_pop(struct vector *vector) {
   return &vector->data[--vector->size * vector->data_size];
 }
 
-void *vector_remove_at(struct vector *vector, unsigned long long pos) {
+void *vector_remove_at(struct vector *vector, size_t pos) {
   void *tmp = vector_at(vector, pos);
   if (!tmp) return NULL;
 
@@ -163,7 +162,7 @@ void *vector_remove_at(struct vector *vector, unsigned long long pos) {
 
   memcpy(old, tmp, vector->data_size);
 
-  unsigned long long factored_pos = pos * vector->data_size;
+  size_t factored_pos = pos * vector->data_size;
   // memmove(vector->data + factored_pos, vector->data + factored_pos + 1,
   //         vector->size * vector->data_size - factored_pos -
   //         vector->data_size);
@@ -174,8 +173,7 @@ void *vector_remove_at(struct vector *vector, unsigned long long pos) {
   return old;
 }
 
-void *vector_replace(struct vector *vector, const void *element,
-                     unsigned long long pos) {
+void *vector_replace(struct vector *vector, const void *element, size_t pos) {
   void *tmp = vector_at(vector, pos);
   if (!tmp) return NULL;
 
@@ -188,11 +186,11 @@ void *vector_replace(struct vector *vector, const void *element,
   return old;
 }
 
-unsigned long long vector_shrink(struct vector *vector) {
+size_t vector_shrink(struct vector *vector) {
   if (!vector) return 0;
   if (!vector->data) return 0;
 
-  unsigned long long new_capacity = vector->size;
+  size_t new_capacity = vector->size;
   unsigned char *tmp = realloc(vector->data, new_capacity * vector->data_size);
   if (!tmp) return vector->capacity;
 
@@ -201,12 +199,12 @@ unsigned long long vector_shrink(struct vector *vector) {
   return vector->capacity;
 }
 
-long long vector_index_of(struct vector *vector, const void *element,
-                          int (*cmpr)(const void *, const void *)) {
+intmax_t vector_index_of(struct vector *vector, const void *element,
+                         int (*cmpr)(const void *, const void *)) {
   if (!vector) return -1;
   if (!vector->data) return -1;
 
-  for (unsigned long long i = 0; i < vector->size * vector->data_size;
+  for (size_t i = 0; i < vector->size * vector->data_size;
        i += vector->data_size) {
     if (cmpr(element, &vector->data[i]) == 0) return i / vector->data_size;
   }
