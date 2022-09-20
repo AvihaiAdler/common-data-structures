@@ -1,9 +1,25 @@
 #include "include/list.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-struct list *list_init() {
+/* node object */
+struct node {
+  unsigned char *data;
+  size_t data_size;
+  struct node *next;
+  struct node *prev;
+};
+
+/* doubly linked list object */
+struct list {
+  size_t size;  // can never exceeds SIZE_MAX / 2
+  struct node *head;
+  struct node *tail;
+};
+
+struct list *list_init(void) {
   struct list *list = calloc(1, sizeof *list);
   if (!list) return NULL;
 
@@ -16,13 +32,9 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
   for (struct node *tmp = list->head; list->head; tmp = list->head) {
     list->head = list->head->next;
 
-    if (destroy) {
-      destroy(tmp->data);
-    }
+    if (destroy) { destroy(tmp->data); }
 
-    if (tmp->data) {
-      free(tmp->data);
-    }
+    if (tmp->data) { free(tmp->data); }
 
     free(tmp);
   }
@@ -96,8 +108,7 @@ bool list_append(struct list *list, const void *data, size_t data_size) {
   return true;
 }
 
-bool list_insert_at(struct list *list, const void *data, size_t data_size,
-                    size_t pos) {
+bool list_insert_at(struct list *list, const void *data, size_t data_size, size_t pos) {
   if (!list) return false;
   if (pos > list->size) return false;
   if (list->size == (SIZE_MAX >> 1)) return false;
@@ -121,7 +132,9 @@ bool list_insert_at(struct list *list, const void *data, size_t data_size,
   return true;
 }
 
-bool list_insert_priority(struct list *list, const void *data, size_t data_size,
+bool list_insert_priority(struct list *list,
+                          const void *data,
+                          size_t data_size,
                           int (*cmpr)(const void *, const void *)) {
   if (!list) return false;
   if (list->size == (SIZE_MAX >> 1)) return false;
@@ -240,21 +253,19 @@ void *list_remove_at(struct list *list, size_t pos) {
   return data;
 }
 
-intmax_t list_index_of(struct list *list, const void *data,
-                       int (*cmpr)(const void *, const void *)) {
-  if (!list) return N_EXISTS;
-  if (!cmpr) return N_EXISTS;
-  if (!list->head) return N_EXISTS;
+size_t list_index_of(struct list *list, const void *data, int (*cmpr)(const void *, const void *)) {
+  if (!list) return GENERICS_EINVAL;
+  if (!cmpr) return GENERICS_EINVAL;
+  if (!list->head) return GENERICS_EINVAL;
 
-  intmax_t pos = 0;
+  size_t pos = 0;
   for (struct node *tmp = list->head; tmp; tmp = tmp->next, pos++) {
     if (cmpr(tmp->data, data) == 0) return pos;
   }
-  return N_EXISTS;
+  return GENERICS_EINVAL;
 }
 
-void *list_replace_at(struct list *list, const void *data, size_t data_size,
-                      size_t pos) {
+void *list_replace_at(struct list *list, const void *data, size_t data_size, size_t pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
   if (pos < 0) return NULL;
@@ -287,17 +298,18 @@ void *list_replace_at(struct list *list, const void *data, size_t data_size,
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success, NULL otherwise */
-void *list_replace(struct list *list, const void *old_data,
-                   const void *new_data, size_t new_data_size,
+void *list_replace(struct list *list,
+                   const void *old_data,
+                   const void *new_data,
+                   size_t new_data_size,
                    int (*cmpr)(const void *, const void *)) {
-  intmax_t pos = list_index_of(list, old_data, cmpr);
+  size_t pos = list_index_of(list, old_data, cmpr);
   if (pos < 0) return NULL;
 
-  return list_replace_at(list, new_data, new_data_size, (size_t)pos);
+  return list_replace_at(list, new_data, new_data_size, pos);
 }
 
-static struct node *list_merge(struct node *front, struct node *back,
-                               int (*cmpr)(const void *, const void *)) {
+static struct node *list_merge(struct node *front, struct node *back, int (*cmpr)(const void *, const void *)) {
   struct node *merged = NULL;
 
   // base
@@ -316,8 +328,7 @@ static struct node *list_merge(struct node *front, struct node *back,
   return merged;
 }
 
-static void list_split(struct node *src, struct node **front,
-                       struct node **back) {
+static void list_split(struct node *src, struct node **front, struct node **back) {
   struct node *slow = src;
   struct node *fast = slow->next;
 
@@ -330,9 +341,7 @@ static void list_split(struct node *src, struct node **front,
   }
 
   // slow reached the middle of the list;
-  if (slow->next) {
-    slow->next->prev = NULL;
-  }
+  if (slow->next) { slow->next->prev = NULL; }
 
   *front = src;
   *back = slow->next;
