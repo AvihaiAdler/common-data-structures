@@ -125,7 +125,7 @@ static void *node_replace_value(struct node *node, const void *value,
                                 size_t value_size) {
   void *old_value = node->value;
   if (value_size) {
-    unsigned char *tmp_value = calloc(value_size, 1);
+    void *tmp_value = calloc(value_size, 1);
     if (!tmp_value) return NULL;
 
     memcpy(tmp_value, value, value_size);
@@ -277,7 +277,7 @@ void *table_remove(struct hash_table *table, const void *key, size_t key_size) {
     removed->next->prev = removed->prev;
   }
 
-  unsigned char *old_value = removed->value;
+  void *old_value = removed->value;
 
   if (table->destroy_key) {
     table->destroy_key(removed->key);
