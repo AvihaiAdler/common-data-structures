@@ -11,7 +11,7 @@ libgenerics is a small static library for personal use consists of 3 'generics' 
 Vector provides an implementation of a heap allocated vector. The underlying array saves a shallow copy of the data passed in. Note that you should avoid accessing the members of `struct vector` directly, use the various methods provided below.
 
 - ```c
-  struct vector *vector_init(unsigned long long data_size);
+  struct vector *vector_init(size_t data_size);
   ```
   used to create a vector 'object'. `data_size` is the size of the data you want to store in bytes.
   ###### return value
@@ -25,14 +25,14 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
   
 
 - ```c
-  unsigned long long vector_size(struct vector *vector);
+  size_t vector_size(struct vector *vector);
   ```
   used to get the number of elements the vector corrently holds.
   ###### return value
     returns the number of elements in the vector
 
 - ```c
-  unsigned long long vector_capacity(struct vector *vector);
+  size_t vector_capacity(struct vector *vector);
   ```
   used to get the number of elements the vector CAN hold.
   ###### return value
@@ -46,7 +46,7 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
     returns `true` if the vector is empty or `NULL`, `false` otherwise
 
 - ```c
-  void *vector_at(struct vector *vector, unsigned long long pos);
+  void *vector_at(struct vector *vector, size_t pos);
   ```
   used to get a pointer to the element at position `pos`. the element must not be free'd.
   ###### return value
@@ -60,14 +60,14 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
     returns a pointer to the desired element if exists or `NULL` if the element doesn't exists. the function may return `NULL` if either parameters passed in is `NULL`
 
 - ```c
-  unsigned long long vector_reserve(struct vector *vector, unsigned long long size);
+  size_t vector_reserve(struct vector *vector, size_t size);
   ```
   used to pre-allocate a space for `size` elements in the vector. note that the vector will allocate the space only if `size` is bigger than `vector::capacity`.
   ###### return value
     returns (the reserved space) `vector::capacity`
 
 - ```c
-  unsigned long long vector_resize(struct vector *vector, unsigned long long size);
+  size_t vector_resize(struct vector *vector, size_t size);
   ```
   changes the size of the vector. if `size` < `vector::size`, `vector::size` will be decreased to the size passed in. beware if the vector contains a pointers to heap allocated memory you might loose track of them causing a memory leak. if `size` > `vector::capacity` the result will be as if `vector_reserve` were called followed by `vector_resize`. if `size` >= `vector::size` && `size` < `vector::capacity`, `vector::size` will be set to `size` and number of `NULL` values will be pushed into the vector.
   ###### return value
@@ -88,28 +88,28 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
     returns a pointer to the last element of the vector or `NULL` on failure
 
 - ```c
-  void *vector_remove_at(struct vector *vector, unsigned long long pos);
+  void *vector_remove_at(struct vector *vector, size_t pos);
   ```
   removes an element at position `pos`. return a shallow copy of said element which has to be free'd 
   ###### return value
     returns the removed element (which has to be free'd) on success or `NULL` on failure
 
 - ```c
-  void *vector_replace(struct vector *vector, const void *element, unsigned long long pos);
+  void *vector_replace(struct vector *vector, const void *element, size_t pos);
   ```
   replaces an element at position `pos` with the new element `element`. return a shallow copy of the old element which has to be free'd 
   ###### return value
     returns the replaced element (which has to be free'd) on success or `NULL` on failure
 
 - ```c
-  unsigned long long vector_shrink(struct vector *vector);
+  size_t vector_shrink(struct vector *vector);
   ```
   shrink the underlying array to fit exactly `vector::size` elements.
   ###### return value
     returns (the new) `vector::capacity`
 
 - ```c
-  long long vector_index_of(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *));
+  size_t vector_index_of(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *));
   ```
   searches for the element `element` using the `cmpr` function. `element` is a pointer to the element one want to look for, `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
   ###### return value
@@ -136,7 +136,7 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
   destroy a list `list`. accepts a destroy function which may be `NULL`. as a good practice one may not free `data` itself, but rather if `data` contains a pointer to a heap allocated memory one should free that said pointer.
 
 - ```c
-  unsigned long long list_size(struct list *list);
+  size_t list_size(struct list *list);
   ```
   used to get the number of elements the list currently holds.
   ###### return value
@@ -150,28 +150,28 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
     returns `true` if `list` contains no elements or `NULL`, returns `false` otherwise
 
 - ```c
-  bool list_prepend(struct list *list, const void *data, unsigned long long data_size);
+  bool list_prepend(struct list *list, const void *data, size_t data_size);
   ```
   adds a node with a shallow copy of `data` to the start of the list. expects a pointer to the data as well as `data_size` which is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc) (`O(1)`).
   ###### return value
     return `true` on success, `false` on failure
 
 - ```c
-  bool list_append(struct list *list, const void *data, unsigned long long data_size);
+  bool list_append(struct list *list, const void *data, size_t data_size);
   ```
   adds a node with a shallow copy of `data` to the end of the list. expects a pointer to the data as well as `data_size` which is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc) (`O(1)`).
   ###### return value
     return `true` on success, `false` on failure
 
 - ```c
-  bool list_insert_at(struct list *list, const void *data, unsigned long long data_size, unsigned long long pos);
+  bool list_insert_at(struct list *list, const void *data, size_t data_size, size_t pos);
   ```
   inserts a node with a shallow copy of `data` at a given position `pos`. the position is calculated from the start of the list. expects a pointer to the data as well as `data_size` which is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc).
   ###### return value
     return `true` on success, `false` on failure
 
 - ```c
-  bool list_insert_priority(struct list *list, const void *data, unsigned long long data_size, int (*cmpr)(const void *, const void *));
+  bool list_insert_priority(struct list *list, const void *data, size_t data_size, int (*cmpr)(const void *, const void *));
   ```
   inserts a node with a shallow copy of `data` at a location which is determined by the `cmpr` function. the node will be inserted at the _first_ location where `node::data` is bigger than the next `other::data`. the comparison always starts from the start of the list. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
   ###### return value
@@ -192,7 +192,7 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
     returns a pointer to the last element on the list, `NULL` on failure
 
 - ```c
-  void *list_at(struct list *list, unsigned long long pos);
+  void *list_at(struct list *list, size_t pos);
   ```
   used to get the element at position `pos` whithout removing it. the position is calculated from the start of the list.
   ###### return value
@@ -213,21 +213,21 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
     returns a shallow copy of the removed element (which has to be free'd), `NULL` on failure
 
 - ```c
-  void *list_remove_at(struct list *list, unsigned long long pos);
+  void *list_remove_at(struct list *list, size_t pos);
   ```
   used to remove an element at position `pos`. the position is calculated from the start of the list.
   ###### return value
     returns a shallow copy of the removed element (which has to be free'd), `NULL` on failure
 
 - ```c
-  long long list_index_of(struct list *list, const void *data, int (*cmpr)(const void *, const void *));
+  size_t list_index_of(struct list *list, const void *data, int (*cmpr)(const void *, const void *));
   ```
   used to get the index of an element on the list. the index is calculated from the start of the list. `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
   ###### return value
     returns the index of the desired element on success, returns `N_EXISTS` on failure
 
 - ```c
-  void *list_replace_at(struct list *list, const void *data, unsigned long long data_size, unsigned long long pos);
+  void *list_replace_at(struct list *list, const void *data, size_t data_size, size_t pos);
   ```
   replaces an element at position `pos` with the new element `data`. the position is calculated from the start of the list. `data_size` is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc).
   ###### return value
@@ -237,7 +237,7 @@ List provides an implementation of a heap allocated, doubly linked list. Each no
   void *list_replace(struct list *list, 
                      const void *old_data,
                      const void *new_data, 
-                     unsigned long long new_data_size,
+                     size_t new_data_size,
                      int (*cmpr)(const void *, const void *));
   ```
   replaces the element `old_data` with a new element `new_data`. `data_size` is the size of `data` in bytes (e.g if you want to store an `int` -> `data_size = sizeof(int)` etc). `cmpr` is a function which should accepts 2 `const void *` and return 0 if both are equal, a positive integer if the first element is bigger than the second or a negative integer if the first element is smaller than the second.
@@ -274,14 +274,14 @@ Hash table provides an implementation of a heap allocated hash table. Under the 
     returns `true` if the table contains no elements or if `table` is `NULL`, `false` otherwise
 
 - ```c
-  unsigned long long table_size(struct hash_table *table);
+  size_t table_size(struct hash_table *table);
   ```
   used to get the number of elements the table currently holds.
   ###### return value
     returns the number of element currently stored in `table`
 
 - ```c
-  unsigned long long table_capacity(struct hash_table *table);
+  size_t table_capacity(struct hash_table *table);
   ```
   used to get the number of entries in the table.
   ###### return value
@@ -290,9 +290,9 @@ Hash table provides an implementation of a heap allocated hash table. Under the 
 - ```c
   void *table_put(struct hash_table *table, 
                   const void *key,
-                  unsigned long long key_size, 
+                  size_t key_size, 
                   const void *value,
-                  unsigned long long value_size);
+                  size_t value_size);
   ```
   inserts an element into the table. `key` is a pointer to the key one want to associate with `value`. `key` will determine the position of the `value` as `key` will be hashed. `key_size` is the size of `key` in bytes.
   `value` is a pointer to the data one might want to store in the table. `value_size` is the size of `value` in bytes.
@@ -301,14 +301,14 @@ Hash table provides an implementation of a heap allocated hash table. Under the 
     returns a shallow copy of the old value associated with `key` (if such value exists) which has to be free'd, or `NULL` if no such value exists or if the function failed to insert the key-value pair
 
 - ```c
-  void *table_remove(struct hash_table *table, const void *key, unsigned long long key_size);
+  void *table_remove(struct hash_table *table, const void *key, size_t key_size);
   ```
   removes the mapping for a specific `key` if present. `key_size` is the size of `key` in bytes.
   ###### return value
     returns a shallow copy of the removed value (whcih has to be free'd), or `NULL` on failure
 
 - ```c
-  void *table_get(struct hash_table *table, const void *key, unsigned long long key_size);
+  void *table_get(struct hash_table *table, const void *key, size_t key_size);
   ```
   returns the mapping for a specific `key` if present. `key_size` is the size of `key` in bytes.
   ###### return value
