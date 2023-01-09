@@ -32,9 +32,13 @@ void list_destroy(struct list *list, void (*destroy)(void *data)) {
   for (struct node *tmp = list->head; list->head; tmp = list->head) {
     list->head = list->head->next;
 
-    if (destroy) { destroy(tmp->data); }
+    if (destroy) {
+      destroy(tmp->data);
+    }
 
-    if (tmp->data) { free(tmp->data); }
+    if (tmp->data) {
+      free(tmp->data);
+    }
 
     free(tmp);
   }
@@ -108,7 +112,8 @@ bool list_append(struct list *list, const void *data, size_t data_size) {
   return true;
 }
 
-bool list_insert_at(struct list *list, const void *data, size_t data_size, size_t pos) {
+bool list_insert_at(struct list *list, const void *data, size_t data_size,
+                    size_t pos) {
   if (!list) return false;
   if (pos > list->size) return false;
   if (list->size == (SIZE_MAX >> 1)) return false;
@@ -132,9 +137,7 @@ bool list_insert_at(struct list *list, const void *data, size_t data_size, size_
   return true;
 }
 
-bool list_insert_priority(struct list *list,
-                          const void *data,
-                          size_t data_size,
+bool list_insert_priority(struct list *list, const void *data, size_t data_size,
                           int (*cmpr)(const void *, const void *)) {
   if (!list) return false;
   if (list->size == (SIZE_MAX >> 1)) return false;
@@ -253,7 +256,8 @@ void *list_remove_at(struct list *list, size_t pos) {
   return data;
 }
 
-size_t list_index_of(struct list *list, const void *data, int (*cmpr)(const void *, const void *)) {
+size_t list_index_of(struct list *list, const void *data,
+                     int (*cmpr)(const void *, const void *)) {
   if (!list) return GENERICS_EINVAL;
   if (!cmpr) return GENERICS_EINVAL;
   if (!list->head) return GENERICS_EINVAL;
@@ -265,7 +269,8 @@ size_t list_index_of(struct list *list, const void *data, int (*cmpr)(const void
   return GENERICS_EINVAL;
 }
 
-void *list_replace_at(struct list *list, const void *data, size_t data_size, size_t pos) {
+void *list_replace_at(struct list *list, const void *data, size_t data_size,
+                      size_t pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
   if (pos < 0) return NULL;
@@ -298,10 +303,8 @@ void *list_replace_at(struct list *list, const void *data, size_t data_size, siz
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success, NULL otherwise */
-void *list_replace(struct list *list,
-                   const void *old_data,
-                   const void *new_data,
-                   size_t new_data_size,
+void *list_replace(struct list *list, const void *old_data,
+                   const void *new_data, size_t new_data_size,
                    int (*cmpr)(const void *, const void *)) {
   size_t pos = list_index_of(list, old_data, cmpr);
   if (pos < 0) return NULL;
@@ -309,7 +312,8 @@ void *list_replace(struct list *list,
   return list_replace_at(list, new_data, new_data_size, pos);
 }
 
-static struct node *list_merge(struct node *front, struct node *back, int (*cmpr)(const void *, const void *)) {
+static struct node *list_merge(struct node *front, struct node *back,
+                               int (*cmpr)(const void *, const void *)) {
   struct node *merged = NULL;
 
   // base
@@ -328,39 +332,36 @@ static struct node *list_merge(struct node *front, struct node *back, int (*cmpr
   return merged;
 }
 
-static void list_split(struct node *src, struct node **front, struct node **back) {
-  struct node *slow = src;
-  struct node *fast = slow->next;
+static struct node *get_middle(struct node *head) {
+  struct node *slow = head;
+  struct node *fast = head;
 
-  while (fast) {
-    fast = fast->next;
-    if (fast) {
-      slow = slow->next;
-      fast = fast->next;
-    }
+  while (fast && fast->next) {
+    slow = slow->next;
+    fast = fast->next->next;
   }
 
-  // slow reached the middle of the list;
-  if (slow->next) { slow->next->prev = NULL; }
-
-  *front = src;
-  *back = slow->next;
-
-  slow->next = NULL;
+  return slow;
 }
 
-static void sort(struct node **src, int (*cmpr)(const void *, const void *)) {
-  struct node *head = *src;
-  struct node *front;
-  struct node *back;
-  if (!head || !head->next) return;
+static struct node *sort(struct node *head,
+                         int (*cmpr)(const void *, const void *)) {
+  if (!head || !head->next) {
+    return head;
+  }
 
-  list_split(head, &front, &back);
+  struct node *middle = get_middle(head);
 
-  sort(&front, cmpr);
-  sort(&back, cmpr);
+  // split the list
+  struct node *front = head;
+  struct node *back = middle;
+  if (middle->prev) middle->prev->next = NULL;
+  if (middle) middle->prev = NULL;
 
-  *src = list_merge(front, back, cmpr);
+  front = sort(front, cmpr);
+  back = sort(back, cmpr);
+
+  return list_merge(front, back, cmpr);
 }
 
 /* sorts the list */
@@ -369,5 +370,5 @@ void list_sort(struct list *list, int (*cmpr)(const void *, const void *)) {
   if (!cmpr) return;
   if (!list->head) return;
 
-  sort(&list->head, cmpr);
+  list->head = sort(list->head, cmpr);
 }
