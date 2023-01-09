@@ -26,7 +26,7 @@ static void print_value(void *value) {
 }
 
 static struct bst *before(struct pair *pairs, size_t size) {
-  struct bst *bst = bst_init(cmpr, NULL, NULL);
+  struct bst *bst = bst_create(cmpr, NULL, NULL);
 
   for (size_t i = 0; i < size; i++) {
     assert(bst_upsert(bst, &pairs[i].id, sizeof pairs[i].id, pairs[i].str,
@@ -36,91 +36,91 @@ static struct bst *before(struct pair *pairs, size_t size) {
   return bst;
 }
 
-static void after(struct bst *tree) { bst_destroy(tree); }
+static void after(struct bst *bst) { bst_destroy(bst); }
 
 static void bst_insert_sanity(struct pair *pairs, size_t size) {
   // given
   // when
-  struct bst *tree = before(pairs, size);
+  struct bst *bst = before(pairs, size);
 
   // then
-  assert(tree);
-  bst_print(tree, print_key, print_value);
+  assert(bst);
+  bst_print(bst, print_key, print_value);
 
   // cleanup
-  after(tree);
+  after(bst);
 }
 
 static void bst_find_sanity(struct pair *pairs, size_t size) {
   // given
-  struct bst *tree = before(pairs, size);
+  struct bst *bst = before(pairs, size);
   // and
   size_t i = 4;
 
-  assert(tree);
-  bst_print(tree, print_key, print_value);
+  assert(bst);
+  bst_print(bst, print_key, print_value);
 
   // when
-  char *val = bst_find(tree, &pairs[i].id);
+  char *val = bst_find(bst, &pairs[i].id);
   // then
   assert(strcmp(val, pairs[i].str) == 0);
 
   // cleanup
-  after(tree);
+  after(bst);
 }
 
 static void bst_replace_sanity(struct pair *pairs, size_t size) {
   // given
-  struct bst *tree = before(pairs, size);
+  struct bst *bst = before(pairs, size);
   // and
   size_t i = 4;
   const char *new_str = "hello, world";
 
   // validation
-  assert(tree);
+  assert(bst);
 
-  bst_print(tree, print_key, print_value);
-  char *val = bst_find(tree, &pairs[i].id);
+  bst_print(bst, print_key, print_value);
+  char *val = bst_find(bst, &pairs[i].id);
 
   assert(strcmp(val, pairs[i].str) == 0);
 
   // when
-  bool ret = bst_upsert(tree, &pairs[i].id, sizeof pairs[i].id, new_str,
+  bool ret = bst_upsert(bst, &pairs[i].id, sizeof pairs[i].id, new_str,
                         strlen(new_str) + 1);
   assert(ret);
 
   // and
-  const char *value = bst_find(tree, &pairs[i].id);
-  bst_print(tree, print_key, print_value);
+  const char *value = bst_find(bst, &pairs[i].id);
+  bst_print(bst, print_key, print_value);
 
   // then
   assert(strcmp(value, new_str) == 0);
 
   // cleanup
-  after(tree);
+  after(bst);
 }
 
 static void bst_delete_sanity(struct pair *pairs, size_t size) {
   // given
-  struct bst *tree = before(pairs, size);
+  struct bst *bst = before(pairs, size);
   // and
   size_t i = 4;
 
-  assert(tree);
-  bst_print(tree, print_key, print_value);
+  assert(bst);
+  bst_print(bst, print_key, print_value);
 
   // when
-  bool ret = bst_delete(tree, &pairs[i].id);
+  bool ret = bst_delete(bst, &pairs[i].id);
 
   // then
   assert(ret);
 
-  char *val = bst_find(tree, &pairs[i].id);
+  char *val = bst_find(bst, &pairs[i].id);
   assert(!val);
-  bst_print(tree, print_key, print_value);
+  bst_print(bst, print_key, print_value);
 
   // cleanup
-  after(tree);
+  after(bst);
 }
 
 int main(void) {

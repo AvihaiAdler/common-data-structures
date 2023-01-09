@@ -60,20 +60,6 @@ static void node_swap(struct node *node, struct node *other) {
   other->value = value;
 }
 
-struct bst *bst_init(int (*cmpr)(void *key, void *other),
-                     void (*destroy_key)(void *key),
-                     void (*destroy_value)(void *value)) {
-  if (!cmpr) return NULL;
-
-  struct bst *tree = calloc(1, sizeof *tree);
-  if (!tree) return NULL;
-
-  tree->cmpr = cmpr;
-  tree->destroy_key = destroy_key;
-  tree->destroy_value = destroy_value;
-  return tree;
-}
-
 static void node_destroy(struct node *node, void (*destroy_key)(void *key),
                          void (*destroy_value)(void *value)) {
   if (!node) return;
@@ -88,17 +74,10 @@ static void node_destroy(struct node *node, void (*destroy_key)(void *key),
   free(node);
 }
 
-void bst_destroy(struct bst *tree) {
-  if (!tree) return;
-
-  node_destroy(tree->root, tree->destroy_key, tree->destroy_value);
-  free(tree);
-}
-
-struct node *node_insert(struct node *root, struct node *node,
-                         int (*cmpr)(void *key, void *other),
-                         void (*destroy_key)(void *key),
-                         void (*destroy_value)(void *value)) {
+static struct node *node_insert(struct node *root, struct node *node,
+                                int (*cmpr)(void *key, void *other),
+                                void (*destroy_key)(void *key),
+                                void (*destroy_value)(void *value)) {
   if (!node) return NULL;
 
   if (!root) return node;
@@ -125,21 +104,6 @@ struct node *node_insert(struct node *root, struct node *node,
   return ret;
 }
 
-bool bst_upsert(struct bst *tree, const void *const key, size_t key_size,
-                const void *const value, size_t value_size) {
-  if (!tree) return false;
-
-  if (!key || !key_size) return false;
-
-  struct node *tmp = node_create(key, key_size, value, value_size);
-  if (!tmp) return false;
-
-  tree->root = node_insert(tree->root, tmp, tree->cmpr, tree->destroy_key,
-                           tree->destroy_value);
-
-  return true;
-}
-
 static void *node_find(struct node *node, void *key,
                        int (*cmpr)(void *key, void *other)) {
   if (!node) return NULL;
@@ -158,24 +122,26 @@ static void *node_find(struct node *node, void *key,
   return ret_ptr;
 }
 
-void *bst_find(struct bst *tree, void *key) {
-  if (!tree || !key) return NULL;
-
-  return node_find(tree->root, key, tree->cmpr);
-}
-
-static struct node *find_smallest(struct node *node) {
+static struct node *find_predecessor(struct node *node) {
   if (!node) return NULL;  // should never happens
 
   if (!node->left) return node;
 
-  return find_smallest(node->left);
+  return find_predecessor(node->left);
 }
 
-struct node *node_delete(struct node *node, void *key,
-                         int (*cmpr)(void *key, void *other),
-                         void (*destroy_key)(void *key),
-                         void (*destroy_value)(void *value)) {
+static struct node *find_successor(struct node *node) {
+  if (!node) return NULL;  // should never happens
+
+  if (!node->right) return node;
+
+  return find_successor(node->left);
+}
+
+static struct node *node_delete(struct node *node, void *key,
+                                int (*cmpr)(void *key, void *other),
+                                void (*destroy_key)(void *key),
+                                void (*destroy_value)(void *value)) {
   if (!node) return NULL;
 
   struct node *ret = node;
@@ -196,7 +162,7 @@ struct node *node_delete(struct node *node, void *key,
       node_destroy(node, destroy_key, destroy_value);
     } else {
       // node has 2 children
-      struct node *smallest = find_smallest(node->right);
+      struct node *smallest = find_predecessor(node->right);
       node_swap(node, smallest);
 
       smallest->parent->left = NULL;
@@ -216,13 +182,18 @@ struct node *node_delete(struct node *node, void *key,
   return ret;
 }
 
-bool bst_delete(struct bst *tree, void *key) {
-  if (!tree || !key) return NULL;
+struct bst *bst_create(int (*cmpr)(void *key, void *other),
+                       void (*destroy_key)(void *key),
+                       void (*destroy_value)(void *value)) {
+  if (!cmpr) return NULL;
 
-  tree->root = node_delete(tree->root, key, tree->cmpr, tree->destroy_key,
-                           tree->destroy_value);
+  struct bst *bst = calloc(1, sizeof *bst);
+  if (!bst) return NULL;
 
-  return true;
+  bst->cmpr = cmpr;
+  bst->destroy_key = destroy_key;
+  bst->destroy_value = destroy_value;
+  return bst;
 }
 
 static void node_print(struct node *node, void (*print_key)(void *key),
@@ -235,9 +206,46 @@ static void node_print(struct node *node, void (*print_key)(void *key),
   node_print(node->right, print_key, print_value);
 }
 
-void bst_print(struct bst *tree, void (*print_key)(void *key),
-               void (*print_value)(void *value)) {
-  if (!tree) return;
+void bst_destroy(struct bst *bst) {
+  if (!bst) return;
 
-  node_print(tree->root, print_key, print_value);
+  node_destroy(bst->root, bst->destroy_key, bst->destroy_value);
+  free(bst);
+}
+
+bool bst_upsert(struct bst *bst, const void *const key, size_t key_size,
+                const void *const value, size_t value_size) {
+  if (!bst) return false;
+
+  if (!key || !key_size) return false;
+
+  struct node *tmp = node_create(key, key_size, value, value_size);
+  if (!tmp) return false;
+
+  bst->root = node_insert(bst->root, tmp, bst->cmpr, bst->destroy_key,
+                          bst->destroy_value);
+
+  return true;
+}
+
+void *bst_find(struct bst *bst, void *key) {
+  if (!bst || !key) return NULL;
+
+  return node_find(bst->root, key, bst->cmpr);
+}
+
+bool bst_delete(struct bst *bst, void *key) {
+  if (!bst || !key) return NULL;
+
+  bst->root = node_delete(bst->root, key, bst->cmpr, bst->destroy_key,
+                          bst->destroy_value);
+
+  return true;
+}
+
+void bst_print(struct bst *bst, void (*print_key)(void *key),
+               void (*print_value)(void *value)) {
+  if (!bst) return;
+
+  node_print(bst->root, print_key, print_value);
 }
