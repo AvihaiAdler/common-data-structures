@@ -5,6 +5,46 @@
 
 #include "include/vector.h"
 
+#define LOAD_FACTOR 0.7
+#define TABLE_GROWTH 1
+#define TABLE_INIT_CAPACITY 32
+
+/* 'bucket' */
+struct node {
+  void *key;
+  void *value;
+
+  // the size of key in bytes
+  size_t key_size;
+  // the size of value in bytes
+  size_t value_size;
+
+  struct node *next;
+  struct node *prev;
+};
+
+/* entry */
+struct entry {
+  struct node *head;
+  struct node *tail;
+  struct node *tmp;  // used internally in the rehash process
+};
+
+/* hash table struct */
+struct hash_table {
+  // total number of entries
+  size_t capacity;
+
+  // total number of 'buckets'
+  size_t num_of_elements;
+
+  struct vector *entries;
+
+  int (*cmpr)(const void *key, const void *other);
+  void (*destroy_key)(void *key);
+  void (*destroy_value)(void *value);
+};
+
 struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
                               void (*destroy_key)(void *key),
                               void (*destroy_value)(void *value)) {
@@ -40,9 +80,13 @@ void table_destroy(struct hash_table *table) {
     for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
       bucket = bucket->next;
 
-      if (table->destroy_key) { table->destroy_key(entry->head->key); }
+      if (table->destroy_key) {
+        table->destroy_key(entry->head->key);
+      }
 
-      if (table->destroy_value) { table->destroy_value(entry->head->value); }
+      if (table->destroy_value) {
+        table->destroy_value(entry->head->value);
+      }
 
       if (entry->head->key) free(entry->head->key);
       if (entry->head->value) free(entry->head->value);
@@ -85,7 +129,8 @@ static size_t hash(const void *key, size_t key_size) {
  * both node::key, node::value and node must be free'd. the function assumes
  * key
  * != NULL and key_size > 0 */
-static struct node *init_node(const void *key, size_t key_size, const void *value, size_t value_size) {
+static struct node *init_node(const void *key, size_t key_size,
+                              const void *value, size_t value_size) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
@@ -116,7 +161,8 @@ static struct node *init_node(const void *key, size_t key_size, const void *valu
 /* used internally to replace an existing mapping for a certain key. returns a
  * pointer to the previous key which has to be free'd. the
  * function assumes the node passed in isn't NULL */
-static void *node_replace_value(struct node *node, const void *value, size_t value_size) {
+static void *node_replace_value(struct node *node, const void *value,
+                                size_t value_size) {
   void *old_value = node->value;
   if (value_size) {
     void *tmp_value = calloc(value_size, 1);
@@ -133,7 +179,8 @@ static void *node_replace_value(struct node *node, const void *value, size_t val
 
 /* used internally to prepend a bucket to an entry. retuns true on success,
  * NULL on failure */
-static bool entry_prepend(struct entry *entry, const void *key, size_t key_size, const void *value, size_t value_size) {
+static bool entry_prepend(struct entry *entry, const void *key, size_t key_size,
+                          const void *value, size_t value_size) {
   struct node *node = init_node(key, key_size, value, value_size);
   if (!node) return false;
 
@@ -150,9 +197,9 @@ static bool entry_prepend(struct entry *entry, const void *key, size_t key_size,
 /* used internally to check whether an entry contains a mapping for a certain
  * key. returns a pointer to the node which contains the same key, or NULL if
  * no such node found */
-static struct node *entry_contains(struct entry *entry,
-                                   const void *key,
-                                   int (*cmpr)(const void *key, const void *other)) {
+static struct node *entry_contains(struct entry *entry, const void *key,
+                                   int (*cmpr)(const void *key,
+                                               const void *other)) {
   if (!entry->head) return NULL;
   for (struct node *tmp = entry->head; tmp; tmp = tmp->next) {
     if (cmpr(key, tmp->key) == 0) return tmp;
@@ -166,7 +213,8 @@ static bool resize_table(struct hash_table *table) {
   if (!table) return false;
   if (!table->entries) return false;
 
-  size_t new_capacity = vector_resize(table->entries, table->capacity << TABLE_GROWTH);
+  size_t new_capacity =
+      vector_resize(table->entries, table->capacity << TABLE_GROWTH);
   if (new_capacity == table->capacity) return false;
 
   table->capacity = new_capacity;
@@ -213,7 +261,8 @@ static bool resize_table(struct hash_table *table) {
   return true;
 }
 
-void *table_put(struct hash_table *table, const void *key, size_t key_size, const void *value, size_t value_size) {
+void *table_put(struct hash_table *table, const void *key, size_t key_size,
+                const void *value, size_t value_size) {
   if (!table) return NULL;
   if (!table->entries) return NULL;
   if (!key && !key_size) return NULL;
@@ -230,7 +279,9 @@ void *table_put(struct hash_table *table, const void *key, size_t key_size, cons
 
   // there's an existing mapping for this key
   struct node *contains_same_key = entry_contains(entry, key, table->cmpr);
-  if (contains_same_key) { return node_replace_value(contains_same_key, value, value_size); }
+  if (contains_same_key) {
+    return node_replace_value(contains_same_key, value, value_size);
+  }
 
   // there isn't an existing mapping for this key
   bool success = entry_prepend(entry, key, key_size, value, value_size);
@@ -268,7 +319,9 @@ void *table_remove(struct hash_table *table, const void *key, size_t key_size) {
 
   void *old_value = removed->value;
 
-  if (table->destroy_key) { table->destroy_key(removed->key); }
+  if (table->destroy_key) {
+    table->destroy_key(removed->key);
+  }
   free(removed->key);
   free(removed);
   table->num_of_elements--;

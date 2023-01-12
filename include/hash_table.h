@@ -3,45 +3,7 @@
 
 #include "vector.h"
 
-#define LOAD_FACTOR 0.7
-#define TABLE_GROWTH 1
-#define TABLE_INIT_CAPACITY 32
-
-/* 'bucket' */
-struct node {
-  void *key;
-  void *value;
-
-  // the size of key in bytes
-  size_t key_size;
-  // the size of value in bytes
-  size_t value_size;
-
-  struct node *next;
-  struct node *prev;
-};
-
-/* entry */
-struct entry {
-  struct node *head;
-  struct node *tail;
-  struct node *tmp;  // used internally in the rehash process
-};
-
-/* hash table struct */
-struct hash_table {
-  // total number of entries
-  size_t capacity;
-
-  // total number of 'buckets'
-  size_t num_of_elements;
-
-  struct vector *entries;
-
-  int (*cmpr)(const void *key, const void *other);
-  void (*destroy_key)(void *key);
-  void (*destroy_value)(void *value);
-};
+struct hash_table;
 
 /* creates a hash table with initial capacity INIT_CAPACITY. expects a cmpr
  * function to compare between 2 keys. the function should return an int less

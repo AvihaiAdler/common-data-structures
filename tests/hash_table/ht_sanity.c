@@ -5,6 +5,10 @@
 
 #include "include/hash_table.h"
 
+#define LOAD_FACTOR 0.7
+#define TABLE_GROWTH 1
+#define TABLE_INIT_CAPACITY 32
+
 struct string {
   size_t str_size;
   char *str;
@@ -95,7 +99,7 @@ struct hash_table *before(char **keys, size_t keys_size, struct string *strings,
   assert(keys_size == strings_size);
   struct hash_table *table = table_init(cmpr_keys, NULL, NULL);
   assert(table);
-  assert(table->num_of_elements == 0);
+  assert(table_size(table) == 0);
 
   for (size_t i = 0; i < keys_size; i++) {
     struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
