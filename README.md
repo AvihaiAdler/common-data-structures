@@ -1,10 +1,11 @@
 #### libgenerics
-libgenerics is a small static library for personal use consists of 3 'generics' data structures written in c. The library contains an implementation of a vector, doubly linked list (aka list) and a hash table.
+libgenerics is a small static library for personal use consists of 4 'generics' data structures written in c. The library contains an implementation of a vector, doubly linked list (aka list), a hash table and a binary search tree.
 
 #### table of contents
 - [vector](https://github.com/AvihaiAdler/common-generic-data-structures#vector)
 - [list](https://github.com/AvihaiAdler/common-generic-data-structures#list)
 - [hash table](https://github.com/AvihaiAdler/common-generic-data-structures#hash-table)
+- binary search tree
 - [compiling and building](https://github.com/AvihaiAdler/common-generic-data-structures#compiling-and-building)
 
 #### vector
@@ -37,6 +38,19 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
   used to get the number of elements the vector CAN hold.
   ###### return value
     returns the number of elements you can fit in the vector
+
+- ```c
+  void *vector_data(struct vector *vector);
+  ```
+  returns the underlaying array the vector uses to store its data. use it with care. changes to said array may result in udefined behavior.
+  ###### return value
+    a pointer to the undelying array backing up the vector
+
+- ```c
+  size_t vector_struct_size(struct vector *vector);
+  ```
+  ###### return value
+    the size in bytes on the vector type
 
 - ```c
   bool vector_empty(struct vector *vector);
@@ -124,7 +138,7 @@ Vector provides an implementation of a heap allocated vector. The underlying arr
 List provides an implementation of a heap allocated, doubly linked list. Each node contains a shallow copy of the data one pass in. Note that you should avoid accessing the members of `struct list` directly, use the various methods provided below.
 
 - ```c
-  struct list *list_init();
+  struct list *list_init(void);
   ```
   used to create a list 'object'.
   ###### return value
