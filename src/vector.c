@@ -1,223 +1,286 @@
+#include "include/vector.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/vector.h"
+struct vec_iter {
+  size_t pos;
+  size_t num_elements;
 
-/* vector object */
-struct vector {
+  size_t elem_size;
+  void *elem;
+};
+
+struct vec {
   // both size and capacity can never exceed SIZE_MAX / 2
   size_t size;
   size_t capacity;
   size_t data_size;
   void *data;
+
+  struct vec_iter iter;
 };
 
-struct vector *vector_init(size_t data_size) {
-  // limit check.
+struct vec *vec_init(size_t data_size) {
+  // limit check
   if (data_size == 0) return NULL;
   if ((SIZE_MAX >> 1) / data_size < VECT_INIT_CAPACITY) return NULL;
 
-  struct vector *vector = calloc(1, sizeof *vector);
-  if (!vector) return NULL;
+  struct vec *vec = calloc(1, sizeof *vec);
+  if (!vec) return NULL;
 
-  vector->data_size = data_size;
-  vector->data = calloc(VECT_INIT_CAPACITY * vector->data_size, 1);
-  if (!vector->data) {
-    free(vector);
+  vec->data_size = data_size;
+  vec->data = calloc(VECT_INIT_CAPACITY * vec->data_size, 1);
+  if (!vec->data) {
+    free(vec);
     return NULL;
   }
 
-  vector->capacity = VECT_INIT_CAPACITY;
-  vector->size = 0;
-  return vector;
+  vec->capacity = VECT_INIT_CAPACITY;
+  vec->size = 0;
+  return vec;
 }
 
-void vector_destroy(struct vector *vector, void (*destroy)(void *element)) {
-  if (!vector) return;
-  if (vector->data) {
-    for (size_t i = 0; i < vector->size * vector->data_size; i += vector->data_size) {
-      if (destroy) { destroy((unsigned char *)vector->data + i); }
+void vec_destroy(struct vec *vec, void (*destroy)(void *element)) {
+  if (!vec) return;
+  if (vec->data) {
+    for (size_t i = 0; i < vec->size * vec->data_size; i += vec->data_size) {
+      if (destroy) {
+        destroy((unsigned char *)vec->data + i);
+      }
     }
-    free(vector->data);
+    free(vec->data);
   }
-  free(vector);
+  free(vec);
 }
 
-size_t vector_size(struct vector *vector) {
-  if (!vector) return 0;
-  return vector->size;
+size_t vec_size(struct vec *vec) {
+  if (!vec) return 0;
+  return vec->size;
 }
 
-size_t vector_struct_size(struct vector *vector) {
-  return sizeof *vector;
+size_t vec_struct_size(struct vec *vec) { return sizeof *vec; }
+
+size_t vec_capacity(struct vec *vec) {
+  if (!vec) return 0;
+  return vec->capacity;
 }
 
-size_t vector_capacity(struct vector *vector) {
-  if (!vector) return 0;
-  return vector->capacity;
+void *vec_data(struct vec *vec) { return vec->data; }
+
+bool vec_empty(struct vec *vec) {
+  if (!vec) return true;
+  return vec->size == 0;
 }
 
-void *vector_data(struct vector *vector) {
-  return vector->data;
+void *vec_at(struct vec *vec, size_t pos) {
+  if (!vec) return NULL;
+  if (!vec->data) return NULL;
+  if (pos >= vec->size) return NULL;
+
+  return (unsigned char *)vec->data + (pos * vec->data_size);
 }
 
-bool vector_empty(struct vector *vector) {
-  if (!vector) return true;
-  return vector->size == 0;
-}
-
-void *vector_at(struct vector *vector, size_t pos) {
-  if (!vector) return NULL;
-  if (!vector->data) return NULL;
-  if (pos >= vector->size) return NULL;
-
-  return (unsigned char *)vector->data + (pos * vector->data_size);
-}
-
-void *vector_find(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *)) {
-  if (!vector) return NULL;
-  if (!vector->data) return NULL;
+void *vec_find(struct vec *vec, const void *element,
+               int (*cmpr)(const void *, const void *)) {
+  if (!vec) return NULL;
+  if (!vec->data) return NULL;
   if (!cmpr) return NULL;
 
-  vector_sort(vector, cmpr);
-  void *elem = bsearch(element, vector->data, vector->size, vector->data_size, cmpr);
+  vec_sort(vec, cmpr);
+  void *elem = bsearch(element, vec->data, vec->size, vec->data_size, cmpr);
   if (!elem) return NULL;
   return elem;
 }
 
-/* used internally to resize the vector by GROWTH_FACTOR */
-static bool vector_resize_internal(struct vector *vector) {
-  // limit check. vector:capacity cannot exceeds (SIZE_MAX >> 1)
-  if ((SIZE_MAX >> 1) >> GROWTH_FACTOR < vector->capacity) return false;
-  size_t new_capacity = vector->capacity << GROWTH_FACTOR;
+/* used internally to resize the vec by GROWTH_FACTOR */
+static bool vec_resize_internal(struct vec *vec) {
+  // limit check. vec:capacity cannot exceeds (SIZE_MAX >> 1)
+  if ((SIZE_MAX >> 1) >> GROWTH_FACTOR < vec->capacity) return false;
+  size_t new_capacity = vec->capacity << GROWTH_FACTOR;
 
-  // limit check. vector::capacity * vector::data_size (the max number of
-  // element the vector can hold) cannot exceeds (SIZE_MAX >> 1) / vector::data_size
+  // limit check. vec::capacity * vec::data_size (the max number of
+  // element the vec can hold) cannot exceeds (SIZE_MAX >> 1) / vec::data_size
   // (the number of elements (SIZE_MAX >> 1) can hold)
-  if ((SIZE_MAX >> 1) / vector->data_size < new_capacity) return false;
+  if ((SIZE_MAX >> 1) / vec->data_size < new_capacity) return false;
 
-  void *tmp = realloc(vector->data, new_capacity * vector->data_size);
+  void *tmp = realloc(vec->data, new_capacity * vec->data_size);
   if (!tmp) return false;
 
-  memset(tmp + vector->size * vector->data_size,
-         0,
-         new_capacity * vector->data_size - vector->size * vector->data_size);
+  memset(tmp + vec->size * vec->data_size, 0,
+         new_capacity * vec->data_size - vec->size * vec->data_size);
 
-  vector->capacity = new_capacity;
-  vector->data = tmp;
+  vec->capacity = new_capacity;
+  vec->data = tmp;
   return true;
 }
 
-size_t vector_reserve(struct vector *vector, size_t size) {
-  if (!vector) return 0;
-  if (size > (SIZE_MAX >> 1)) return vector->capacity;
-  if (size <= vector->capacity) return vector->capacity;
+size_t vec_reserve(struct vec *vec, size_t size) {
+  if (!vec) return 0;
+  if (size > (SIZE_MAX >> 1)) return vec->capacity;
+  if (size <= vec->capacity) return vec->capacity;
 
-  void *tmp = realloc(vector->data, size * vector->data_size);
-  if (!tmp) return vector->capacity;
+  void *tmp = realloc(vec->data, size * vec->data_size);
+  if (!tmp) return vec->capacity;
 
-  memset(tmp + vector->size * vector->data_size, 0, size * vector->data_size - vector->size * vector->data_size);
+  memset(tmp + vec->size * vec->data_size, 0,
+         size * vec->data_size - vec->size * vec->data_size);
 
-  vector->capacity = size;
-  vector->data = tmp;
-  return vector->capacity;
+  vec->capacity = size;
+  vec->data = tmp;
+  return vec->capacity;
 }
 
-size_t vector_resize(struct vector *vector, size_t size) {
-  if (!vector) return 0;
+size_t vec_resize(struct vec *vec, size_t size) {
+  if (!vec) return 0;
 
-  if (size >= vector->size && size <= vector->capacity) {
-    memset((unsigned char *)vector->data + vector->size * vector->data_size,
-           0,
-           size * vector->data_size - vector->size * vector->data_size);
-  } else if (size > vector->capacity) {
-    size_t prev_capacity = vector_capacity(vector);
-    size_t new_capacity = vector_reserve(vector, size);
+  if (size >= vec->size && size <= vec->capacity) {
+    memset((unsigned char *)vec->data + vec->size * vec->data_size, 0,
+           size * vec->data_size - vec->size * vec->data_size);
+  } else if (size > vec->capacity) {
+    size_t prev_capacity = vec_capacity(vec);
+    size_t new_capacity = vec_reserve(vec, size);
 
-    // vector_reserve failure
-    if (prev_capacity == new_capacity) { return vector->size; }
+    // vec_reserve failure
+    if (prev_capacity == new_capacity) {
+      return vec->size;
+    }
   }
 
-  vector->size = size;
-  return vector->size;
+  vec->size = size;
+  return vec->size;
 }
 
-bool vector_push(struct vector *vector, const void *element) {
-  if (!vector) return false;
-  if (!vector->data) return false;
-  if (vector->size == vector->capacity) {
-    if (!vector_resize_internal(vector)) return false;
+bool vec_push(struct vec *vec, const void *element) {
+  if (!vec) return false;
+  if (!vec->data) return false;
+  if (vec->size == vec->capacity) {
+    if (!vec_resize_internal(vec)) return false;
   }
 
-  memcpy((unsigned char *)vector->data + (vector->size * vector->data_size), element, vector->data_size);
-  vector->size++;
+  memcpy((unsigned char *)vec->data + (vec->size * vec->data_size), element,
+         vec->data_size);
+  vec->size++;
   return true;
 }
 
-void *vector_pop(struct vector *vector) {
-  if (!vector) return NULL;
-  if (!vector->data) return NULL;
-  return (unsigned char *)vector->data + (--vector->size * vector->data_size);
+void *vec_pop(struct vec *vec) {
+  if (!vec) return NULL;
+  if (!vec->data) return NULL;
+  return (unsigned char *)vec->data + (--vec->size * vec->data_size);
 }
 
-void *vector_remove_at(struct vector *vector, size_t pos) {
-  void *tmp = vector_at(vector, pos);
+void *vec_remove_at(struct vec *vec, size_t pos) {
+  void *tmp = vec_at(vec, pos);
   if (!tmp) return NULL;
 
-  void *old = calloc(1, vector->data_size);
+  void *old = calloc(1, vec->data_size);
   if (!old) return NULL;
 
-  memcpy(old, tmp, vector->data_size);
+  memcpy(old, tmp, vec->data_size);
 
-  size_t factored_pos = pos * vector->data_size;
-  memmove((unsigned char *)vector->data + factored_pos,
-          (unsigned char *)vector->data + factored_pos + 1 * vector->data_size,
-          (vector->size - pos - 1) * vector->data_size);
-  vector->size--;
+  size_t factored_pos = pos * vec->data_size;
+  memmove((unsigned char *)vec->data + factored_pos,
+          (unsigned char *)vec->data + factored_pos + 1 * vec->data_size,
+          (vec->size - pos - 1) * vec->data_size);
+  vec->size--;
   return old;
 }
 
-void *vector_replace(struct vector *vector, const void *element, size_t pos) {
-  void *tmp = vector_at(vector, pos);
+void *vec_replace(struct vec *vec, const void *element, size_t pos) {
+  void *tmp = vec_at(vec, pos);
   if (!tmp) return NULL;
 
-  void *old = calloc(vector->data_size, 1);
+  void *old = calloc(vec->data_size, 1);
   if (!old) return NULL;
 
-  memcpy(old, tmp, vector->data_size);
+  memcpy(old, tmp, vec->data_size);
 
-  memcpy((unsigned char *)vector->data + (pos * vector->data_size), element, vector->data_size);
+  memcpy((unsigned char *)vec->data + (pos * vec->data_size), element,
+         vec->data_size);
   return old;
 }
 
-size_t vector_shrink(struct vector *vector) {
-  if (!vector) return 0;
-  if (!vector->data) return 0;
+size_t vec_shrink(struct vec *vec) {
+  if (!vec) return 0;
+  if (!vec->data) return 0;
 
-  size_t new_capacity = vector->size;
-  void *tmp = realloc(vector->data, new_capacity * vector->data_size);
-  if (!tmp) return vector->capacity;
+  size_t new_capacity = vec->size;
+  void *tmp = realloc(vec->data, new_capacity * vec->data_size);
+  if (!tmp) return vec->capacity;
 
-  vector->capacity = new_capacity;
-  vector->data = tmp;
-  return vector->capacity;
+  vec->capacity = new_capacity;
+  vec->data = tmp;
+  return vec->capacity;
 }
 
-size_t vector_index_of(struct vector *vector, const void *element, int (*cmpr)(const void *, const void *)) {
-  if (!vector) return -1;
-  if (!vector->data) return -1;
+size_t vec_index_of(struct vec *vec, const void *element,
+                    int (*cmpr)(const void *, const void *)) {
+  if (!vec) return -1;
+  if (!vec->data) return -1;
 
-  for (size_t i = 0; i < vector->size * vector->data_size; i += vector->data_size) {
-    if (cmpr(element, vector->data + i) == 0) return i / vector->data_size;
+  for (size_t i = 0; i < vec->size * vec->data_size; i += vec->data_size) {
+    if (cmpr(element, vec->data + i) == 0) return i / vec->data_size;
   }
 
   return GENERICS_EINVAL;
 }
 
-void vector_sort(struct vector *vector, int (*cmpr)(const void *, const void *)) {
-  if (!vector) return;
-  if (!vector->data) return;
+void vec_sort(struct vec *vec, int (*cmpr)(const void *, const void *)) {
+  if (!vec) return;
+  if (!vec->data) return;
 
-  qsort(vector->data, vector->size, vector->data_size, cmpr);
+  qsort(vec->data, vec->size, vec->data_size, cmpr);
 }
+
+struct vec_iter *vec_iter_begin(struct vec *vec) {
+  if (!vec) return NULL;
+
+  vec->iter = (struct vec_iter){.pos = 0,
+                                .num_elements = vec->size,
+                                .elem_size = vec->data_size,
+                                .elem = vec->size ? vec->data : NULL};
+  return &vec->iter;
+}
+
+struct vec_iter *vec_iter_end(struct vec *vec) {
+  if (!vec) return NULL;
+
+  // even if vec::size is 0 - vec_at will return NULL for vec::size - 1
+  vec->iter = (struct vec_iter){.pos = vec->size ? vec->size - 1 : 0,
+                                .num_elements = vec->size,
+                                .elem_size = vec->data_size,
+                                .elem = vec_at(vec, vec->size - 1)};
+  return &vec->iter;
+}
+
+bool vec_iter_has_next(struct vec_iter *iter) {
+  return iter ? iter->pos < iter->num_elements : false;
+}
+
+struct vec_iter *vec_iter_next(struct vec_iter *iter) {
+  if (!iter) return NULL;
+
+  if (vec_iter_has_next(iter)) {
+    iter->pos++;
+    iter->elem += iter->elem_size;
+  }
+  return iter;
+}
+
+bool vec_iter_has_prev(struct vec_iter *iter) {
+  return iter ? iter->pos > 0 : false;
+}
+
+struct vec_iter *vec_iter_prev(struct vec_iter *iter) {
+  if (!iter) return NULL;
+
+  if (vec_iter_has_prev(iter)) {
+    iter->pos--;
+    iter->elem -= iter->elem_size;
+  }
+  return iter;
+}
+
+void *vec_iter_get(struct vec_iter *iter) { return iter ? iter->elem : NULL; }

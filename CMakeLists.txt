@@ -26,4 +26,6 @@ set_target_properties(
   PUBLIC_HEADER include/hash_table.h
   PUBLIC_HEADER include/bst.h
 )
-target_include_directories(generics PRIVATE .)
+target_include_directories(generics 
+                          PRIVATE .
+                          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -16,30 +16,28 @@ int cmpr(const void *a, const void *b) {
   return (*i_a > *i_b) - (*i_a < *i_b);
 }
 
-struct vector *before(int *arr, size_t arr_size) {
-  struct vector *vect = vector_init(sizeof *arr);
+struct vec *before(int *arr, size_t arr_size) {
+  struct vec *vect = vec_init(sizeof *arr);
   for (size_t i = 0; i < arr_size; i++) {
-    vector_push(vect, arr + i);
+    vec_push(vect, arr + i);
   }
   return vect;
 }
 
-void after(struct vector *vect) {
-  vector_destroy(vect, NULL);
-}
+void after(struct vec *vect) { vec_destroy(vect, NULL); }
 
-void vector_push_sanity_test(int num) {
+void vec_push_sanity_test(int num) {
   // given
-  struct vector *vect = vector_init(sizeof num);
-  assert(vector_empty(vect));
+  struct vec *vect = vec_init(sizeof num);
+  assert(vec_empty(vect));
 
   // when
-  bool res = vector_push(vect, &num);
+  bool res = vec_push(vect, &num);
 
   // then
-  int *stored = vector_at(vect, 0);
+  int *stored = vec_at(vect, 0);
   assert(res);
-  assert(!vector_empty(vect));
+  assert(!vec_empty(vect));
   assert(stored);
   assert(*stored == num);
 
@@ -47,17 +45,17 @@ void vector_push_sanity_test(int num) {
   after(vect);
 }
 
-void vector_pop_sanity_test(int *arr, size_t arr_size) {
+void vec_pop_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
 
-  assert(vector_size(vect) == arr_size);
+  assert(vec_size(vect) == arr_size);
 
   // when
-  int *poped = vector_pop(vect);
+  int *poped = vec_pop(vect);
 
   // then
-  assert(vector_size(vect) == arr_size - 1);
+  assert(vec_size(vect) == arr_size - 1);
   assert(poped);
   assert(*poped == arr[arr_size - 1]);
 
@@ -65,14 +63,14 @@ void vector_pop_sanity_test(int *arr, size_t arr_size) {
   after(vect);
 }
 
-void vector_at_sanity_test(int *arr, size_t arr_size) {
+void vec_at_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
 
   // when
-  int *first = vector_at(vect, 0);
-  int *last = vector_at(vect, arr_size - 1);
-  int *middle = vector_at(vect, arr_size / 2);
+  int *first = vec_at(vect, 0);
+  int *last = vec_at(vect, arr_size - 1);
+  int *middle = vec_at(vect, arr_size / 2);
 
   // then
   assert(first);
@@ -86,13 +84,13 @@ void vector_at_sanity_test(int *arr, size_t arr_size) {
   after(vect);
 }
 
-void vector_find_sanity_test(int *arr, size_t arr_size) {
+void vec_find_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
 
   // when
   int original = arr[arr_size / 2];
-  int *elem = vector_find(vect, &original, cmpr);
+  int *elem = vec_find(vect, &original, cmpr);
 
   // then
   assert(elem);
@@ -102,15 +100,15 @@ void vector_find_sanity_test(int *arr, size_t arr_size) {
   after(vect);
 }
 
-void vector_reserve_sanity_test(int *arr, size_t arr_size) {
+void vec_reserve_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
 
-  size_t init_capacity = vector_capacity(vect);
+  size_t init_capacity = vec_capacity(vect);
   assert(init_capacity > 0);
 
   // when
-  size_t new_capacity = vector_reserve(vect, init_capacity * 4);
+  size_t new_capacity = vec_reserve(vect, init_capacity * 4);
 
   // then
   assert(new_capacity > init_capacity);
@@ -120,57 +118,57 @@ void vector_reserve_sanity_test(int *arr, size_t arr_size) {
   after(vect);
 }
 
-void vector_remove_at_sanity_test(int *arr, size_t arr_size) {
+void vec_remove_at_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
-  assert(vector_size(vect) == arr_size);
+  struct vec *vect = before(arr, arr_size);
+  assert(vec_size(vect) == arr_size);
 
   // when
-  int *removed = vector_remove_at(vect, arr_size / 2);
+  int *removed = vec_remove_at(vect, arr_size / 2);
 
   // then
   assert(removed);
   assert(*removed == arr[arr_size / 2]);
-  assert(vector_find(vect, &arr[arr_size / 2], cmpr) == NULL);
+  assert(vec_find(vect, &arr[arr_size / 2], cmpr) == NULL);
 
   // cleanup
   free(removed);
   after(vect);
 }
 
-void vector_replace_sanity_test(int *arr, size_t arr_size) {
+void vec_replace_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
   int num = -1;
 
   // when
-  int *replaced = vector_replace(vect, &num, arr_size / 2);
+  int *replaced = vec_replace(vect, &num, arr_size / 2);
 
   // then
   assert(replaced);
   assert(*replaced == arr[arr_size / 2]);
-  assert(vector_find(vect, arr + arr_size / 2, cmpr) == NULL);
+  assert(vec_find(vect, arr + arr_size / 2, cmpr) == NULL);
 
   // cleanup
   free(replaced);
   after(vect);
 }
 
-void vector_shrink_sanity_test(int *arr, size_t arr_size) {
+void vec_shrink_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
-  size_t init_capacity = vector_capacity(vect);
-  size_t vect_init_size = vector_size(vect);
+  struct vec *vect = before(arr, arr_size);
+  size_t init_capacity = vec_capacity(vect);
+  size_t vect_init_size = vec_size(vect);
 
   // force a resize
   if (vect_init_size == init_capacity) {
-    vector_push(vect, &arr[0]);
-    init_capacity = vector_capacity(vect);
+    vec_push(vect, &arr[0]);
+    init_capacity = vec_capacity(vect);
   }
 
   // when
-  size_t new_capacity = vector_shrink(vect);
-  size_t vect_size = vector_size(vect);
+  size_t new_capacity = vec_shrink(vect);
+  size_t vect_size = vec_size(vect);
 
   // then
   assert(init_capacity > new_capacity);
@@ -180,12 +178,12 @@ void vector_shrink_sanity_test(int *arr, size_t arr_size) {
   after(vect);
 }
 
-void vector_index_of_sanity_test(int *arr, size_t arr_size) {
+void vec_index_of_sanity_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
 
   // when
-  size_t index = vector_index_of(vect, &arr[arr_size / 2], cmpr);
+  size_t index = vec_index_of(vect, &arr[arr_size / 2], cmpr);
 
   // then
   assert(index != GENERICS_EINVAL);
@@ -195,17 +193,69 @@ void vector_index_of_sanity_test(int *arr, size_t arr_size) {
   after(vect);
 }
 
-void vector_sort_santiy_test(int *arr, size_t arr_size) {
+void vec_sort_santiy_test(int *arr, size_t arr_size) {
   // given
-  struct vector *vect = before(arr, arr_size);
+  struct vec *vect = before(arr, arr_size);
 
   // when
-  vector_sort(vect, cmpr);
+  vec_sort(vect, cmpr);
 
   // then
-  size_t vect_size = vector_size(vect);
+  size_t vect_size = vec_size(vect);
   for (size_t i = 0; i < vect_size - 1; i++) {
-    assert(*(int *)vector_at(vect, i) < *(int *)vector_at(vect, i + 1));
+    assert(*(int *)vec_at(vect, i) < *(int *)vec_at(vect, i + 1));
+  }
+
+  // cleanup
+  after(vect);
+}
+
+void vec_iter_empty_vec_test(void) {
+  // given
+  struct vec *vect = vec_init(sizeof(int));
+
+  // when
+  struct vec_iter *iter = vec_iter_begin(vect);
+
+  // then
+  assert(!vec_iter_has_next(iter));
+  assert(!vec_iter_has_prev(iter));
+  assert(!vec_iter_get(iter));
+
+  // cleanup
+  after(vect);
+}
+
+void vec_iter_forward_iteration_test(int *arr, size_t arr_size) {
+  // given
+  struct vec *vect = before(arr, arr_size);
+
+  // when
+  struct vec_iter *iter = vec_iter_begin(vect);
+
+  // then
+  for (size_t i = 0; i < arr_size && vec_iter_has_next(iter);
+       i++, iter = vec_iter_next(iter)) {
+    int *elem = vec_iter_get(iter);
+    assert(*elem == arr[i]);
+  }
+
+  // cleanup
+  after(vect);
+}
+
+void vec_iter_backwards_iteration_test(int *arr, size_t arr_size) {
+  // given
+  struct vec *vect = before(arr, arr_size);
+
+  // when
+  struct vec_iter *iter = vec_iter_end(vect);
+
+  // then
+  for (size_t i = arr_size - 1; i >= 0 && vec_iter_has_prev(iter);
+       i--, iter = vec_iter_prev(iter)) {
+    int *elem = vec_iter_get(iter);
+    assert(*elem == arr[i]);
   }
 
   // cleanup
@@ -225,16 +275,20 @@ int main(void) {
   size_t arr_size = sizeof arr / sizeof *arr;
   populate_array(arr, arr_size);
 
-  vector_push_sanity_test(1);
-  vector_pop_sanity_test(arr, arr_size);
-  vector_at_sanity_test(arr, arr_size);
-  vector_find_sanity_test(arr, arr_size);
-  vector_reserve_sanity_test(arr, arr_size);
-  vector_remove_at_sanity_test(arr, arr_size);
-  vector_replace_sanity_test(arr, arr_size);
-  vector_shrink_sanity_test(arr, arr_size);
-  vector_index_of_sanity_test(arr, arr_size);
-  vector_sort_santiy_test(arr, arr_size);
+  vec_push_sanity_test(1);
+  vec_pop_sanity_test(arr, arr_size);
+  vec_at_sanity_test(arr, arr_size);
+  vec_find_sanity_test(arr, arr_size);
+  vec_reserve_sanity_test(arr, arr_size);
+  vec_remove_at_sanity_test(arr, arr_size);
+  vec_replace_sanity_test(arr, arr_size);
+  vec_shrink_sanity_test(arr, arr_size);
+  vec_index_of_sanity_test(arr, arr_size);
+  vec_sort_santiy_test(arr, arr_size);
+
+  vec_iter_empty_vec_test();
+  vec_iter_forward_iteration_test(arr, arr_size);
+  vec_iter_backwards_iteration_test(arr, arr_size);
 
   return 0;
 }

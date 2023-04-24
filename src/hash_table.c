@@ -38,7 +38,7 @@ struct hash_table {
   // total number of 'buckets'
   size_t num_of_elements;
 
-  struct vector *entries;
+  struct vec *entries;
 
   int (*cmpr)(const void *key, const void *other);
   void (*destroy_key)(void *key);
@@ -53,7 +53,7 @@ struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
   struct hash_table *table = calloc(1, sizeof *table);
   if (!table) return NULL;
 
-  table->entries = vector_init(vector_struct_size(table->entries));
+  table->entries = vec_init(vec_struct_size(table->entries));
   if (!table->entries) {
     free(table);
     return NULL;
@@ -64,9 +64,9 @@ struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
   table->destroy_key = destroy_key;
   table->destroy_value = destroy_value;
 
-  // table::capacity is at least INIT_CAPACITY (might be higher if vector init
+  // table::capacity is at least INIT_CAPACITY (might be higher if vec init
   // capacity > INIT_CAPACITY)
-  table->capacity = vector_resize(table->entries, TABLE_INIT_CAPACITY);
+  table->capacity = vec_resize(table->entries, TABLE_INIT_CAPACITY);
   return table;
 }
 
@@ -76,7 +76,7 @@ void table_destroy(struct hash_table *table) {
 
   for (size_t i = 0; i < table->capacity; i++) {
     // destroy all buckets in an entry
-    struct entry *entry = vector_at(table->entries, i);
+    struct entry *entry = vec_at(table->entries, i);
     for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
       bucket = bucket->next;
 
@@ -93,7 +93,7 @@ void table_destroy(struct hash_table *table) {
       free(entry->head);
     }
   }
-  vector_destroy(table->entries, NULL);
+  vec_destroy(table->entries, NULL);
   free(table);
 }
 
@@ -214,14 +214,14 @@ static bool resize_table(struct hash_table *table) {
   if (!table->entries) return false;
 
   size_t new_capacity =
-      vector_resize(table->entries, table->capacity << TABLE_GROWTH);
+      vec_resize(table->entries, table->capacity << TABLE_GROWTH);
   if (new_capacity == table->capacity) return false;
 
   table->capacity = new_capacity;
 
   // rehash every key-value pair
   for (size_t pos = 0; pos < table->capacity; pos++) {
-    struct entry *entry = vector_at(table->entries, pos);
+    struct entry *entry = vec_at(table->entries, pos);
     if (!entry->head) continue;  // entry is empty
 
     /* stopping condition. we will iterate over every bucket until we reach
@@ -239,7 +239,7 @@ static bool resize_table(struct hash_table *table) {
       }
 
       size_t new_pos = hash(tmp->key, tmp->key_size) % table->capacity;
-      struct entry *new_entry = vector_at(table->entries, new_pos);
+      struct entry *new_entry = vec_at(table->entries, new_pos);
 
       if (!new_entry->head) {  // new entry is empty
         new_entry->head = new_entry->tail = tmp;
@@ -274,7 +274,7 @@ void *table_put(struct hash_table *table, const void *key, size_t key_size,
 
   // get the entry index from the hash
   size_t pos = hash(key, key_size) % table->capacity;
-  struct entry *entry = vector_at(table->entries, pos);
+  struct entry *entry = vec_at(table->entries, pos);
   if (!entry) return NULL;
 
   // there's an existing mapping for this key
@@ -297,7 +297,7 @@ void *table_remove(struct hash_table *table, const void *key, size_t key_size) {
   if (!key && !key_size) return NULL;
 
   size_t pos = hash(key, key_size) % table->capacity;
-  struct entry *entry = vector_at(table->entries, pos);
+  struct entry *entry = vec_at(table->entries, pos);
   if (!entry) return NULL;
 
   struct node *removed = entry_contains(entry, key, table->cmpr);
@@ -335,7 +335,7 @@ void *table_get(struct hash_table *table, const void *key, size_t key_size) {
   if (!key && !key_size) return NULL;
 
   size_t pos = hash(key, key_size) % table->capacity;
-  struct entry *entry = vector_at(table->entries, pos);
+  struct entry *entry = vec_at(table->entries, pos);
   if (!entry) return NULL;
 
   struct node *looked_for = entry_contains(entry, key, table->cmpr);
