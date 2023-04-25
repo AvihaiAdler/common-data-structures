@@ -1,7 +1,7 @@
 #pragma once
 #include <stddef.h>
 
-#include "vector.h"
+#include "vec.h"
 
 struct hash_table;
 
@@ -33,8 +33,7 @@ size_t table_capacity(struct hash_table *table);
  * previous value for that key (which has to be free'd) or NULL if there was no
  * mapping for that key. key_size - the size of key in bytes, value_size - the
  * size of value in bytes */
-void *table_put(struct hash_table *table, const void *key, size_t key_size,
-                const void *value, size_t value_size);
+void *table_put(struct hash_table *table, const void *key, size_t key_size, const void *value, size_t value_size);
 
 /* removes the mapping for a specific key if present. returns the previous value
  * (which has to be free'd) or NULL if there was no mapping for that key.

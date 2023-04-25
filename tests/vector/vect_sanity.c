@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/vector.h"
+#include "include/vec.h"
 
 bool equals(const void *a, const void *b) {
   int i_a = *(int *)a;
@@ -24,7 +24,9 @@ struct vec *before(int *arr, size_t arr_size) {
   return vect;
 }
 
-void after(struct vec *vect) { vec_destroy(vect, NULL); }
+void after(struct vec *vect) {
+  vec_destroy(vect, NULL);
+}
 
 void vec_push_sanity_test(int num) {
   // given
@@ -52,7 +54,7 @@ void vec_pop_sanity_test(int *arr, size_t arr_size) {
   assert(vec_size(vect) == arr_size);
 
   // when
-  int *poped = vec_pop(vect);
+  const int *poped = vec_pop(vect);
 
   // then
   assert(vec_size(vect) == arr_size - 1);
@@ -234,8 +236,7 @@ void vec_iter_forward_iteration_test(int *arr, size_t arr_size) {
   struct vec_iter *iter = vec_iter_begin(vect);
 
   // then
-  for (size_t i = 0; i < arr_size && vec_iter_has_next(iter);
-       i++, iter = vec_iter_next(iter)) {
+  for (size_t i = 0; i < arr_size && vec_iter_has_next(iter); i++, iter = vec_iter_next(iter)) {
     int *elem = vec_iter_get(iter);
     assert(*elem == arr[i]);
   }
@@ -252,8 +253,7 @@ void vec_iter_backwards_iteration_test(int *arr, size_t arr_size) {
   struct vec_iter *iter = vec_iter_end(vect);
 
   // then
-  for (size_t i = arr_size - 1; i >= 0 && vec_iter_has_prev(iter);
-       i--, iter = vec_iter_prev(iter)) {
+  for (size_t i = arr_size - 1; i >= 0 && vec_iter_has_prev(iter); i--, iter = vec_iter_prev(iter)) {
     int *elem = vec_iter_get(iter);
     assert(*elem == arr[i]);
   }

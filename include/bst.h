@@ -23,8 +23,7 @@ struct bst *bst_create(int (*cmpr)(void *key, void *other),
  * assosiate the key with the new value.
  *
  * returns true on success, false on failure */
-bool bst_upsert(struct bst *bst, const void *const key, size_t key_size,
-                const void *const value, size_t value_size);
+bool bst_upsert(struct bst *bst, const void *const key, size_t key_size, const void *const value, size_t value_size);
 
 /* find the value assosiated with a key
  *
@@ -37,8 +36,7 @@ void *bst_find(struct bst *bst, void *key);
 bool bst_delete(struct bst *bst, void *key);
 
 /* prints the tree (in order traversal)*/
-void bst_print(struct bst *bst, void (*print_key)(void *key),
-               void (*print_value)(void *value));
+void bst_print(struct bst *bst, void (*print_key)(void *key), void (*print_value)(void *value));
 
 /* destroy the tree and all of its data */
 void bst_destroy(struct bst *bst);

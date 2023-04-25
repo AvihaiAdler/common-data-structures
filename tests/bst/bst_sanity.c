@@ -29,14 +29,15 @@ static struct bst *before(struct pair *pairs, size_t size) {
   struct bst *bst = bst_create(cmpr, NULL, NULL);
 
   for (size_t i = 0; i < size; i++) {
-    assert(bst_upsert(bst, &pairs[i].id, sizeof pairs[i].id, pairs[i].str,
-                      strlen(pairs[i].str) + 1));
+    assert(bst_upsert(bst, &pairs[i].id, sizeof pairs[i].id, pairs[i].str, strlen(pairs[i].str) + 1));
   }
 
   return bst;
 }
 
-static void after(struct bst *bst) { bst_destroy(bst); }
+static void after(struct bst *bst) {
+  bst_destroy(bst);
+}
 
 static void bst_insert_sanity(struct pair *pairs, size_t size) {
   // given
@@ -85,8 +86,7 @@ static void bst_replace_sanity(struct pair *pairs, size_t size) {
   assert(strcmp(val, pairs[i].str) == 0);
 
   // when
-  bool ret = bst_upsert(bst, &pairs[i].id, sizeof pairs[i].id, new_str,
-                        strlen(new_str) + 1);
+  bool ret = bst_upsert(bst, &pairs[i].id, sizeof pairs[i].id, new_str, strlen(new_str) + 1);
   assert(ret);
 
   // and
@@ -124,9 +124,12 @@ static void bst_delete_sanity(struct pair *pairs, size_t size) {
 }
 
 int main(void) {
-  struct pair pairs[] = {{.id = 5, .str = "five"},  {.id = 2, .str = "two"},
-                         {.id = 8, .str = "eight"}, {.id = 4, .str = "four"},
-                         {.id = 3, .str = "three"}, {.id = 7, .str = "seven"},
+  struct pair pairs[] = {{.id = 5, .str = "five"},
+                         {.id = 2, .str = "two"},
+                         {.id = 8, .str = "eight"},
+                         {.id = 4, .str = "four"},
+                         {.id = 3, .str = "three"},
+                         {.id = 7, .str = "seven"},
                          {.id = 1, .str = "one"}};
   size_t size = sizeof pairs / sizeof *pairs;
 
