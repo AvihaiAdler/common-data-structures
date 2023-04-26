@@ -5,6 +5,11 @@
 
 #include "defines.h"
 
+/**
+ * @file vec.h
+ * @brief the definition of vector
+ */
+
 struct vec;
 
 struct vec_iter;

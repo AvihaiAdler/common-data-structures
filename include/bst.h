@@ -2,6 +2,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+/**
+ * @file bst.h
+ * @brief the definition of a binary search tree
+ */
+
 struct bst;
 
 /**

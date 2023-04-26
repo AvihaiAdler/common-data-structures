@@ -1,7 +1,13 @@
 #pragma once
+
 #include <stddef.h>
 
 #include "vec.h"
+
+/**
+ * @file hash_table.h
+ * @brief the definition of a hash table
+ */
 
 struct hash_table;
 
