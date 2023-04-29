@@ -217,12 +217,12 @@ void vec_iter_empty_vec_test(void) {
   struct vec *vect = vec_init(sizeof(int));
 
   // when
-  struct vec_iter *iter = vec_iter_begin(vect);
+  void *begin = vec_iter_begin(vect);
+  void *end = vec_iter_end(vect);
 
   // then
-  assert(!vec_iter_has_next(iter));
-  assert(!vec_iter_has_prev(iter));
-  assert(!vec_iter_get(iter));
+  assert(begin == end);
+  assert(vec_iter_next(vect, begin) == end);
 
   // cleanup
   after(vect);
@@ -233,28 +233,12 @@ void vec_iter_forward_iteration_test(int *arr, size_t arr_size) {
   struct vec *vect = before(arr, arr_size);
 
   // when
-  struct vec_iter *iter = vec_iter_begin(vect);
+  void *begin = vec_iter_begin(vect);
+  void *end = vec_iter_begin(vect);
 
   // then
-  for (size_t i = 0; i < arr_size && vec_iter_has_next(iter); i++, iter = vec_iter_next(iter)) {
-    int *elem = vec_iter_get(iter);
-    assert(*elem == arr[i]);
-  }
-
-  // cleanup
-  after(vect);
-}
-
-void vec_iter_backwards_iteration_test(int *arr, size_t arr_size) {
-  // given
-  struct vec *vect = before(arr, arr_size);
-
-  // when
-  struct vec_iter *iter = vec_iter_end(vect);
-
-  // then
-  for (size_t i = arr_size - 1; i >= 0 && vec_iter_has_prev(iter); i--, iter = vec_iter_prev(iter)) {
-    int *elem = vec_iter_get(iter);
+  for (size_t i = 0; i < arr_size && begin != end; i++, begin = vec_iter_next(vect, begin)) {
+    int *elem = begin;
     assert(*elem == arr[i]);
   }
 
@@ -288,7 +272,5 @@ int main(void) {
 
   vec_iter_empty_vec_test();
   vec_iter_forward_iteration_test(arr, arr_size);
-  vec_iter_backwards_iteration_test(arr, arr_size);
-
   return 0;
 }

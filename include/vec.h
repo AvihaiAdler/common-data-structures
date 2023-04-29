@@ -12,8 +12,6 @@
 
 struct vec;
 
-struct vec_iter;
-
 /**
  * @brief constructs a `vec` object. each element in the `vec` must be of size `data_size`.
  *
@@ -236,66 +234,25 @@ void vec_sort(struct vec *vec, int (*cmpr)(const void *, const void *));
  *
  * @param[in] vec a `vec` object.
  *
- * @return `struct vec_iter *` the iterator. if `vec` is `NULL` a `NULL` pointer will be returned.
+ * @return `void *` the iterator. if `vec` is `NULL` a `NULL` pointer will be returned.
  */
-struct vec_iter *vec_iter_begin(struct vec *vec);
+void *vec_iter_begin(struct vec *vec);
 
 /**
  * @brief returns an iterator to the end of the `vec`.
  *
  * @param[in] vec a `vec` object.
  *
- * @return `struct vec_iter *` the iterator. if `vec` is `NULL` a `NULL` pointer will be returned.
+ * @return `void *` the iterator. if `vec` is `NULL` a `NULL` pointer will be returned.
  */
-struct vec_iter *vec_iter_end(struct vec *vec);
-
-/**
- * @brief returns whether or not the iterator has more elements to iterate over forwards.
- *
- * @param[in] iter an iterator object.
- *
- * @return `true` if the iterator has more elements to iterate over.
- * @return `false` if the iterator has no more elements to itearte over or if `iter` is `NULL`.
- */
-bool vec_iter_has_next(struct vec_iter *iter);
+void *vec_iter_end(struct vec *vec);
 
 /**
  * @brief advances the iterator to the next element.
  *
  * @param[in] iter an iterator object.
  *
- * @return `struct vec_iter *` the new tramsformed iterator object. if `iter` is `NULL` a `NULL` pointer will be
+ * @return `void *` the new tramsformed iterator object. if `iter` is `NULL` or `vec` are `NULL` pointer will be
  * returned.
  */
-struct vec_iter *vec_iter_next(struct vec_iter *iter);
-
-/**
- * @brief returns whether or not the iterator has more elements to iterate over backwards.
- *
- * @param[in] iter an iterator object.
- *
- * @return `true` if the iterator has more elements to iterate over.
- * @return `false` if the iterator has no more elements to iterate over of is `iter` is `NULL`.
- */
-bool vec_iter_has_prev(struct vec_iter *iter);
-
-/**
- * @brief advances the iterator to the previous element.
- *
- * @param[in] iter an iterator object.
- * @return `struct vec_iter *` the new transformed iterator object. if `iter` is `NULL` a `NULL` pointer will be
- * returned.
- */
-struct vec_iter *vec_iter_prev(struct vec_iter *iter);
-
-/**
- * @brief returns apointer tot the element pointed to by the iterator.
- *
- * this function should be used with care as any changes to the element will change the data stored on the `vec`.
- * moreover, certain operation on the returned pointer might corrupt other elements' data.
- *
- * @param[in] iter an iterator object.
- * @return `void *` a pointer to the element currently pointed by the iterator. if `iter` is `NULL` a `NULL` pointer
- * will be returned.
- */
-void *vec_iter_get(struct vec_iter *iter);
+void *vec_iter_next(struct vec *vec, void *iter);

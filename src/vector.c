@@ -4,22 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct vec_iter {
-  size_t pos;
-  size_t num_elements;
-
-  size_t elem_size;
-  void *elem;
-};
-
 struct vec {
   // both size and capacity can never exceed SIZE_MAX / 2
   size_t size;
   size_t capacity;
   size_t data_size;
   void *data;
-
-  struct vec_iter iter;
 };
 
 struct vec *vec_init(size_t data_size) {
@@ -227,55 +217,20 @@ void vec_sort(struct vec *vec, int (*cmpr)(const void *, const void *)) {
   qsort(vec->data, vec->size, vec->data_size, cmpr);
 }
 
-struct vec_iter *vec_iter_begin(struct vec *vec) {
+void *vec_iter_begin(struct vec *vec) {
   if (!vec) return NULL;
 
-  vec->iter = (struct vec_iter){.pos = 0,
-                                .num_elements = vec->size,
-                                .elem_size = vec->data_size,
-                                .elem = vec->size ? vec->data : NULL};
-  return &vec->iter;
+  return (vec_empty(vec)) ? vec_iter_end(vec) : vec->data;
 }
 
-struct vec_iter *vec_iter_end(struct vec *vec) {
+void *vec_iter_end(struct vec *vec) {
   if (!vec) return NULL;
 
-  // even if vec::size is 0 - vec_at will return NULL for vec::size - 1
-  vec->iter = (struct vec_iter){.pos = vec->size ? vec->size - 1 : 0,
-                                .num_elements = vec->size,
-                                .elem_size = vec->data_size,
-                                .elem = vec_at(vec, vec->size - 1)};
-  return &vec->iter;
+  return (char *)vec->data + vec->size * vec->data_size;
 }
 
-bool vec_iter_has_next(struct vec_iter *iter) {
-  return iter ? iter->pos < iter->num_elements : false;
-}
+void *vec_iter_next(struct vec *vec, void *iter) {
+  if (!vec || !iter) return NULL;
 
-struct vec_iter *vec_iter_next(struct vec_iter *iter) {
-  if (!iter) return NULL;
-
-  if (vec_iter_has_next(iter)) {
-    iter->pos++;
-    iter->elem += iter->elem_size;
-  }
-  return iter;
-}
-
-bool vec_iter_has_prev(struct vec_iter *iter) {
-  return iter ? iter->pos > 0 : false;
-}
-
-struct vec_iter *vec_iter_prev(struct vec_iter *iter) {
-  if (!iter) return NULL;
-
-  if (vec_iter_has_prev(iter)) {
-    iter->pos--;
-    iter->elem -= iter->elem_size;
-  }
-  return iter;
-}
-
-void *vec_iter_get(struct vec_iter *iter) {
-  return iter ? iter->elem : NULL;
+  return (vec_empty(vec)) ? vec_iter_end(vec) : (char *)iter + vec->data_size;
 }
