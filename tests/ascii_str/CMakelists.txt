@@ -1,11 +1,10 @@
-set(BST_TEST bst_sanity)
-foreach(TEST ${BST_TEST})
+set(ASCII_STR_TEST ascii_str_sanity)
+foreach(TEST ${ASCII_STR_TEST})
   add_executable(${TEST} ${TEST}.c)
-  add_test(NAME ${TEST} COMMAND ${PROJECT_BINARY_DIR}/tests/bst/${TEST})
+  add_test(NAME ${TEST} COMMAND ${PROJECT_BINARY_DIR}/tests/ascii_str/${TEST})
 
   target_compile_options(${TEST} PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address,undefined)
   target_link_options(${TEST} PRIVATE -fsanitize=address,undefined)
 
-  target_link_libraries(${TEST} PRIVATE generics)
   target_include_directories(${TEST} PRIVATE ${CMAKE_SOURCE_DIR})  
 endforeach()
