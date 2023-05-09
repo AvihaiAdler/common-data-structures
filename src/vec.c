@@ -10,9 +10,11 @@ struct vec {
   size_t capacity;
   size_t data_size;
   void *data;
+
+  void (*destroy)(void *element);
 };
 
-struct vec *vec_init(size_t data_size) {
+struct vec *vec_init(size_t data_size, void (*destroy)(void *element)) {
   // limit check
   if (data_size == 0) return NULL;
   if ((SIZE_MAX >> 1) / data_size < VECT_INIT_CAPACITY) return NULL;
@@ -24,7 +26,7 @@ struct vec *vec_init(size_t data_size) {
   vec->data = calloc(VECT_INIT_CAPACITY * vec->data_size, 1);
   if (!vec->data) {
     free(vec);
-    return NULL;
+    return vec;
   }
 
   vec->capacity = VECT_INIT_CAPACITY;
@@ -32,11 +34,11 @@ struct vec *vec_init(size_t data_size) {
   return vec;
 }
 
-void vec_destroy(struct vec *vec, void (*destroy)(void *element)) {
+void vec_destroy(struct vec *vec) {
   if (!vec) return;
   if (vec->data) {
     for (size_t i = 0; i < vec->size * vec->data_size; i += vec->data_size) {
-      if (destroy) { destroy((unsigned char *)vec->data + i); }
+      if (vec->destroy) { vec->destroy((unsigned char *)vec->data + i); }
     }
     free(vec->data);
   }

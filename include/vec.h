@@ -9,28 +9,27 @@
  * @file vec.h
  * @brief the definition of vector
  */
-
 struct vec;
 
 /**
  * @brief constructs a `vec` object. each element in the `vec` must be of size `data_size`.
  *
  * @param[in] data_size the size of each element in the `vec`.
+ * @param[in] destroy a pointer to a function which takes a `void *` and returns `void`. if the pointer isn't `NULL` -
+ * the function will be called on each of the `vec`'s elements. make sure to pass a `destroy` function if your elements
+ * contains a pointer to some heap allocated data.
  *
- * @return `struct vec *` - a vec handle on success, or `NULL` on failure.
+ * @return `struct vec` - a vec object. if data_size is 0 an empty vector will be returned
  */
-struct vec *vec_init(size_t data_size);
+struct vec *vec_init(size_t data_size, void (*destroy)(void *element));
 
 /**
  * @brief destroys a `vec` object and all of its undelaying data. if `destroy` isn't `NULL` - calls it on each of the
  * elements in the `vec`.
  *
  * @param[in] vec a `vec` object to be destroyed.
- * @param[in] destroy a pointer to a function which takes a `void *` and returns a `void`. if the pointer isn't `NULL` -
- * the function will be called on each of the `vec`'s elements. make sure to pass a `destroy` function if your elements
- * contains a pointer to some heap allocated data.
  */
-void vec_destroy(struct vec *vec, void (*destroy)(void *element));
+void vec_destroy(struct vec *vec);
 
 /**
  * @brief returns the number of elements in the `vec`.

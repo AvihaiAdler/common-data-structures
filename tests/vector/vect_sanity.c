@@ -17,7 +17,7 @@ int cmpr(const void *a, const void *b) {
 }
 
 struct vec *before(int *arr, size_t arr_size) {
-  struct vec *vect = vec_init(sizeof *arr);
+  struct vec *vect = vec_init(sizeof *arr, NULL);
   for (size_t i = 0; i < arr_size; i++) {
     vec_push(vect, arr + i);
   }
@@ -25,12 +25,12 @@ struct vec *before(int *arr, size_t arr_size) {
 }
 
 void after(struct vec *vect) {
-  vec_destroy(vect, NULL);
+  vec_destroy(vect);
 }
 
 void vec_push_sanity_test(int num) {
   // given
-  struct vec *vect = vec_init(sizeof num);
+  struct vec *vect = vec_init(sizeof num, NULL);
   assert(vec_empty(vect));
 
   // when
@@ -214,7 +214,7 @@ void vec_sort_santiy_test(int *arr, size_t arr_size) {
 
 void vec_iter_empty_vec_test(void) {
   // given
-  struct vec *vect = vec_init(sizeof(int));
+  struct vec *vect = vec_init(sizeof(int), NULL);
 
   // when
   void *begin = vec_iter_begin(vect);
