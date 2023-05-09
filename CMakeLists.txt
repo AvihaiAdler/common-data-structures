@@ -13,18 +13,20 @@ add_subdirectory(tests/bst)
 
 add_library(
   generics
-  src/vector.c
+  src/vec.c
   src/list.c
   src/hash_table.c
   src/bst.c
+  src/ascii_str.c
 )
 set_target_properties(
   generics PROPERTIES 
   VERSION ${PROJECT_VERSION}
-  PUBLIC_HEADER include/vector.h 
+  PUBLIC_HEADER include/vec.h 
   PUBLIC_HEADER include/list.h
   PUBLIC_HEADER include/hash_table.h
   PUBLIC_HEADER include/bst.h
+  PUBLIC_HEADER include/ascii_str.h
 )
 target_include_directories(generics 
                           PRIVATE .
