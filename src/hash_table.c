@@ -53,7 +53,7 @@ struct hash_table *table_init(int (*cmpr)(const void *key, const void *other),
   struct hash_table *table = calloc(1, sizeof *table);
   if (!table) return NULL;
 
-  table->entries = vec_init(vec_struct_size(table->entries));
+  table->entries = vec_init(sizeof(struct entry), NULL);
   if (!table->entries) {
     free(table);
     return NULL;
@@ -89,7 +89,8 @@ void table_destroy(struct hash_table *table) {
       free(entry->head);
     }
   }
-  vec_destroy(table->entries, NULL);
+  // vec_destroy(table->entries, NULL);
+  vec_destroy(table->entries);
   free(table);
 }
 
