@@ -8,16 +8,27 @@
 #include <stddef.h>
 #include "ascii_str_internal.h"
 #include "defines.h"
+#include "vec.h"
 
 /**
  * @brief constructs and initializes a string object from a c-string
  *
  * @param[in] c_str a c-string or NULL
  *
- * @return the string object initializes with the content of c_str. if c_str is a NULL pointer the object will be
- * initialized as an empty string
+ * @return the string object initialized with the content of c_str. if c_str is a NULL pointer the object will be
+ * an empty string will be returned
  */
-struct ascii_str ascii_str_init(const char *c_str);
+struct ascii_str ascii_str_from_str(char const *c_str);
+
+/**
+ * @brief constructs a string from an array
+ *
+ * @param[in] arr a char array
+ * @param[in] len the length of the array in bytes
+ * @return struct ascii_str - the string object initialized with the content of arr. if arr is a NULL pointer or len is
+ * 0 an empty string will be returned
+ */
+struct ascii_str ascii_str_from_arr(char const *arr, size_t len);
 
 /**
  * @brief destroys a string object
@@ -48,10 +59,10 @@ size_t ascii_str_len(struct ascii_str *ascii_str);
  * @brief returns a const pointer to the underlying data
  *
  * @param[in] ascii_str an ascii_str object
- * @return const char* - a pointer to the underlying data of the string. modiying the ptr in any way might result in
+ * @return char const * - a pointer to the underlying data of the string. modiying the ptr in any way might result in
  * undefined behavior
  */
-const char *ascii_str_c_str(struct ascii_str *ascii_str);
+char const *ascii_str_c_str(struct ascii_str *ascii_str);
 
 /**
  * @brief clears the string (effectively any ascii_str object to hold an empty string)
@@ -66,7 +77,7 @@ void ascii_str_clear(struct ascii_str *ascii_str);
  * @param[in] ascii_str an ascii_str object
  * @param[in] c a char to append to the end of the string
  */
-void ascii_str_push(struct ascii_str *ascii_str, const char c);
+void ascii_str_push(struct ascii_str *ascii_str, char const c);
 
 /**
  * @brief pops (removes) the last char from an ascii_str object
@@ -84,7 +95,7 @@ char ascii_str_pop(struct ascii_str *ascii_str);
  * @param[in] ascii_str an ascii_str object
  * @param[in] c_str a null terminated c-string. passing a NULL pointer will result in the function silently failing
  */
-void ascii_str_append(struct ascii_str *ascii_str, const char *c_str);
+void ascii_str_append(struct ascii_str *restrict ascii_str, char const *restrict c_str);
 
 /**
  * @brief erases `count` bytes (chars) from the string from position `pos` up to `pos + count - 1` [pos, min(count,
@@ -107,17 +118,17 @@ void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count)
  * @param[in] c_str a null terminated c-string to be inserted into the ascii_str object. passing a NULL pointer will
  * result in the function silently failing
  */
-void ascii_str_insert(struct ascii_str *ascii_str, size_t pos, const char *c_str);
+void ascii_str_insert(struct ascii_str *restrict ascii_str, size_t pos, char const *restrict c_str);
 
 /**
  * @brief finds the *first ocurrence* (from the right) of a substring within an ascii_str object
  *
  * @param[in] haystack an ascii_str object
  * @param[in] needle a null terminated c-string
- * @return const char* - a pointer to the (beginning) of substring or NULL if no such string has been found. if `needle`
- * is `NULL` a `NULL` pointer will be returned
+ * @return char const * - a pointer to the (beginning) of substring or NULL if no such string has been found. if
+ * `needle` is `NULL` a `NULL` pointer will be returned
  */
-const char *ascii_str_find(struct ascii_str *haystack, const char *needle);
+char const *ascii_str_find(struct ascii_str *haystack, const char *needle);
 
 /**
  * @brief returns the index of the *first occurence* of a char in the string. if no such char is found -
@@ -128,7 +139,7 @@ const char *ascii_str_find(struct ascii_str *haystack, const char *needle);
  * @return size_t the index of said char or `GENERICS_EINVAL` if no such char is found. if `ascii_str` is a `NULL`
  * pointer `GENERIC_EINVAL` will be returned
  */
-size_t ascii_str_index_of(struct ascii_str *ascii_str, const char c);
+size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c);
 
 /**
  * @brief returns a 'slice' from an ascii_str object. the slice will hold the contents of the substring starting at
@@ -143,3 +154,13 @@ size_t ascii_str_index_of(struct ascii_str *ascii_str, const char c);
  * @return struct ascii_str - an ascii_str object holding the content of the specified 'slice'
  */
 struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, size_t count);
+
+/**
+ * @brief splits an ascii string on each char in `pattern`. returns a struct vec containing each sub-string
+ *
+ * @param[in] ascii_str the string to stlit. this string may not change after this function call
+ * @param[in] pattern a valid c-string
+ * @return struct vec - a vec containing all substrings. this vec might be empty if `ascii_str` doesn't contain any
+ * chars which match the `pattern`
+ */
+struct vec *ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern);

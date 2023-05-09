@@ -11,7 +11,7 @@ struct ascii_str_long {
 
 struct ascii_str_short {
   // room for 23 chars the 24th byte represent the number of available chars left
-  unsigned char data[sizeof(struct ascii_str_long)];
+  char data[sizeof(struct ascii_str_long)];
 };
 
 struct ascii_str {

@@ -9,12 +9,75 @@
 
 #define MIN(a, b) (a) < (b) ? (a) : (b)
 
-struct ascii_str ascii_str_init(const char *c_str) {
+static inline char *ascii_str_c_str_internal(struct ascii_str *ascii_str) {
+  return ascii_str->is_sso ? ascii_str->short_.data : ascii_str->long_.data;
+}
+
+static inline bool ascii_str_resize_internal(struct ascii_str *ascii_str) {
+  if (ascii_str->is_sso) {
+    char *buf = malloc(INIT_BUFFER_SIZE);
+    if (!buf) return false;
+
+    memcpy(buf, ascii_str->short_.data, SHORT_BUFFER_SIZE + 1);
+
+    ascii_str->is_sso = false;
+    ascii_str->long_ = (struct ascii_str_long){.capacity = INIT_BUFFER_SIZE, .size = SHORT_BUFFER_SIZE, .data = buf};
+
+    return true;
+  }
+
+  char *buf = realloc(ascii_str->long_.data, ascii_str->long_.capacity << 1);
+  if (!buf) return false;
+
+  ascii_str->long_ =
+    (struct ascii_str_long){.capacity = ascii_str->long_.capacity << 1, .size = ascii_str->long_.size, .data = buf};
+  return true;
+}
+
+static inline void ascii_str_append_iternal(struct ascii_str *restrict ascii_str,
+                                            char const *restrict arr,
+                                            size_t len) {
+  if (ascii_str->is_sso && ascii_str->short_.data[SHORT_BUFFER_SIZE] >= len) {
+    size_t ascii_strlen = ascii_str_len(ascii_str);
+
+    // there's enough room in the buffer for c_str
+    memcpy(ascii_str->short_.data + ascii_strlen, arr, len);
+    ascii_str->short_.data[SHORT_BUFFER_SIZE] -= len;
+    return;
+  }
+
+  // not enough room in the buffer for c_str
+  if (ascii_str->is_sso && ascii_str->short_.data[SHORT_BUFFER_SIZE] < len ||
+      !ascii_str->is_sso && ascii_str->long_.capacity - ascii_str->long_.size < len + 1) {
+    do {
+      ascii_str_resize_internal(ascii_str);
+    } while (ascii_str->long_.capacity - ascii_str->long_.size < len + 1);
+  }
+
+  // copy all of the chars in arr
+  memcpy(ascii_str->long_.data + ascii_str->long_.size, arr, len);
+  ascii_str->long_.size += len;
+
+  // add a null terminator
+  ascii_str_push(ascii_str, 0);
+}
+
+struct ascii_str ascii_str_from_str(char const *c_str) {
   struct ascii_str str = {.is_sso = true, .short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
 
+  // technically not needed due to the current implementation of ascii_str_append
   if (!c_str) return str;
 
   ascii_str_append(&str, c_str);
+  return str;
+}
+
+struct ascii_str ascii_str_from_arr(char const *arr, size_t len) {
+  struct ascii_str str = {.is_sso = true, .short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
+
+  if (!arr || !len) return str;
+
+  ascii_str_append_iternal(&str, arr, len);
   return str;
 }
 
@@ -38,11 +101,7 @@ size_t ascii_str_len(struct ascii_str *ascii_str) {
   return ascii_str->is_sso ? SHORT_BUFFER_SIZE - ascii_str->short_.data[SHORT_BUFFER_SIZE] : ascii_str->long_.size;
 }
 
-static char *ascii_str_c_str_internal(struct ascii_str *ascii_str) {
-  return ascii_str->is_sso ? ascii_str->short_.data : ascii_str->long_.data;
-}
-
-const char *ascii_str_c_str(struct ascii_str *ascii_str) {
+char const *ascii_str_c_str(struct ascii_str *ascii_str) {
   if (!ascii_str) return NULL;
 
   return ascii_str_c_str_internal(ascii_str);
@@ -59,28 +118,7 @@ void ascii_str_clear(struct ascii_str *ascii_str) {
   *(ascii_str->long_.data) = 0;
 }
 
-static bool ascii_str_resize_internal(struct ascii_str *ascii_str) {
-  if (ascii_str->is_sso) {
-    unsigned char *buf = malloc(INIT_BUFFER_SIZE);
-    if (!buf) return false;
-
-    memcpy(buf, ascii_str->short_.data, SHORT_BUFFER_SIZE + 1);
-
-    ascii_str->is_sso = false;
-    ascii_str->long_ = (struct ascii_str_long){.capacity = INIT_BUFFER_SIZE, .size = SHORT_BUFFER_SIZE, .data = buf};
-
-    return true;
-  }
-
-  unsigned char *buf = realloc(ascii_str->long_.data, ascii_str->long_.capacity << 1);
-  if (!buf) return false;
-
-  ascii_str->long_ =
-    (struct ascii_str_long){.capacity = ascii_str->long_.capacity << 1, .size = ascii_str->long_.size, .data = buf};
-  return true;
-}
-
-void ascii_str_push(struct ascii_str *ascii_str, const char c) {
+void ascii_str_push(struct ascii_str *ascii_str, char const c) {
   if (!ascii_str) return;
 
   if (ascii_str->is_sso) {
@@ -104,7 +142,7 @@ void ascii_str_push(struct ascii_str *ascii_str, const char c) {
 char ascii_str_pop(struct ascii_str *ascii_str) {
   if (!ascii_str || ascii_str_empty(ascii_str)) return (char)-1;
 
-  unsigned char *buf = ascii_str_c_str_internal(ascii_str);
+  char *buf = ascii_str_c_str_internal(ascii_str);
 
   char ret = buf[ascii_str_len(ascii_str) - 1];
   buf[ascii_str_len(ascii_str) - 1] = 0;
@@ -118,30 +156,13 @@ char ascii_str_pop(struct ascii_str *ascii_str) {
   return ret;
 }
 
-void ascii_str_append(struct ascii_str *ascii_str, const char *c_str) {
+void ascii_str_append(struct ascii_str *restrict ascii_str, char const *restrict c_str) {
   if (!ascii_str || !c_str) return;
 
   size_t len = strlen(c_str);
-  if (ascii_str->is_sso && ascii_str->short_.data[SHORT_BUFFER_SIZE] >= len) {
-    size_t ascii_strlen = ascii_str_len(ascii_str);
+  if (!len) return;
 
-    // there's enough room in the buffer for c_str
-    memcpy(ascii_str->short_.data + ascii_strlen, c_str, len);
-    ascii_str->short_.data[SHORT_BUFFER_SIZE] -= len;
-    return;
-  }
-
-  // not enough room in the buffer for c_str
-  if (ascii_str->is_sso && ascii_str->short_.data[SHORT_BUFFER_SIZE] < len ||
-      !ascii_str->is_sso && ascii_str->long_.capacity - ascii_str->long_.size < len + 1) {
-    do {
-      ascii_str_resize_internal(ascii_str);
-    } while (ascii_str->long_.capacity - ascii_str->long_.size < len + 1);
-  }
-
-  // copy all of the char in c_str including the null terminator
-  memcpy(ascii_str->long_.data + ascii_str->long_.size, c_str, len + 1);
-  ascii_str->long_.size += len;
+  ascii_str_append_iternal(ascii_str, c_str, len);
 }
 
 void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count) {
@@ -154,7 +175,7 @@ void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count)
   size_t end_pos = MIN(from_pos + count, len);
   size_t actual_count = end_pos - from_pos;
 
-  unsigned char *buf = ascii_str_c_str_internal(ascii_str);
+  char *buf = ascii_str_c_str_internal(ascii_str);
   memmove(buf + from_pos, buf + end_pos, len - end_pos);
 
   if (ascii_str->is_sso) {
@@ -169,7 +190,7 @@ void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count)
   }
 }
 
-void ascii_str_insert(struct ascii_str *ascii_str, size_t pos, const char *c_str) {
+void ascii_str_insert(struct ascii_str *restrict ascii_str, size_t pos, char const *restrict c_str) {
   if (!ascii_str || !c_str) return;
 
   if (pos >= ascii_str_len(ascii_str)) {
@@ -187,13 +208,14 @@ void ascii_str_insert(struct ascii_str *ascii_str, size_t pos, const char *c_str
   }
 
   size_t end_pos = pos + len;
-  unsigned char *buf = ascii_str_c_str_internal(ascii_str);
+  char *buf = ascii_str_c_str_internal(ascii_str);
   memmove(buf + end_pos,
           buf + pos,
           ascii_str_len(ascii_str) - pos);  // shift the right hand side of the slice to the right
 
   // avoid cases where the user wish to insert the original string in itself (take the performance hit)
-  memmove(buf + pos, c_str, len);
+  // memmove(buf + pos, c_str, len);
+  memcpy(buf + pos, c_str, len);
 
   if (ascii_str->is_sso) {
     ascii_str->short_.data[SHORT_BUFFER_SIZE] = available_chars - len;
@@ -203,37 +225,46 @@ void ascii_str_insert(struct ascii_str *ascii_str, size_t pos, const char *c_str
   }
 }
 
-const char *ascii_str_find(struct ascii_str *haystack, const char *needle) {
+char const *ascii_str_find(struct ascii_str *haystack, char const *needle) {
   if (!haystack || !needle) return NULL;
 
   return strstr(ascii_str_c_str(haystack), needle);
 }
 
-size_t ascii_str_index_of(struct ascii_str *ascii_str, const char c) {
+size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c) {
   if (!ascii_str) return GENERICS_EINVAL;
 
-  unsigned char *buf = ascii_str_c_str(ascii_str);
-  const char *needle = strchr(buf, c);
-  return needle ? needle - buf : needle;
+  char const *buf = ascii_str_c_str(ascii_str);
+  char const *needle = strchr(buf, c);
+  return needle ? needle - buf : GENERICS_EINVAL;
 }
 
 struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, size_t count) {
-  if (!ascii_str || !count) return ascii_str_init(NULL);
+  if (!ascii_str || !count) return ascii_str_from_str(NULL);
 
-  if (from_pos >= ascii_str_len(ascii_str)) return ascii_str_init(NULL);
+  if (from_pos >= ascii_str_len(ascii_str)) return ascii_str_from_str(NULL);
 
   size_t end_pos = MIN(from_pos + count, ascii_str_len(ascii_str));
   // the string is empty
-  if (!end_pos) return ascii_str_init(NULL);
+  if (!end_pos) return ascii_str_from_str(NULL);
 
   // questionable at best. get the desired slice without allocating a new buffer
   char *slice = ascii_str_c_str_internal(ascii_str) + from_pos;
   char past_end = slice[end_pos + 1];
   slice[end_pos + 1] = 0;
 
-  struct ascii_str ret = ascii_str_init(slice);
+  struct ascii_str ret = ascii_str_from_str(slice);
   // restore the string
   slice[end_pos + 1] = past_end;
 
   return ret;
+}
+
+static inline void ascii_str_destroy_internal(void *ascii_str) {
+  ascii_str_destroy(ascii_str);
+}
+
+struct vec *ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern) {
+  struct vec *splitted = vec_init(sizeof *ascii_str, ascii_str_destroy_internal);
+  return splitted;
 }
