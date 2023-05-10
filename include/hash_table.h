@@ -27,7 +27,7 @@ struct hash_table;
  *
  * @return `struct hash_table *` - a pointer to a hash table object on success or `NULL` on failure
  */
-struct hash_table *table_init(int (*cmpr)(const void *, const void *),
+struct hash_table *table_init(int (*cmpr)(void const *, void const *),
                               void (*destroy_key)(void *),
                               void (*destroy_value)(void *));
 
@@ -78,7 +78,7 @@ size_t table_capacity(struct hash_table *table);
  * @return `void *` - a pointer to a copy of the old `value` which has to be free'd intependently. if no such `key`
  * exists - `NULL` will be returned
  */
-void *table_put(struct hash_table *table, const void *key, size_t key_size, const void *value, size_t value_size);
+void *table_put(struct hash_table *table, void const *key, size_t key_size, void const *value, size_t value_size);
 
 /**
  * @brief removes the mapping for a specific `key` if present. returns a copy of the previous `value`
@@ -90,7 +90,7 @@ void *table_put(struct hash_table *table, const void *key, size_t key_size, cons
  * @return `void *` - a pointer to a copy of the old `value` which has to be free'd intependently if no such `key`
  * exists - `NULL` will be returned
  */
-void *table_remove(struct hash_table *table, const void *key, size_t key_size);
+void *table_remove(struct hash_table *table, void const *key, size_t key_size);
 
 /* returns the mapping for a specific key if present or NULL if there was no
  * mapping for that key. the value must not be free'd. key_size - the size of
@@ -108,4 +108,4 @@ void *table_remove(struct hash_table *table, const void *key, size_t key_size);
  *
  * @return `void *` - a pointer the `value` associated with key `key`. the pointer must not be free'd
  */
-void *table_get(struct hash_table *table, const void *key, size_t key_size);
+void *table_get(struct hash_table *table, void const *key, size_t key_size);
