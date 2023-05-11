@@ -2,7 +2,8 @@
 
 /**
  * @file ascii_str.h
- * @brief an implementation of fbstring https://www.youtube.com/watch?v=kPR8h4-qZdk
+ * @brief an implementation of fbstring https://www.youtube.com/watch?v=kPR8h4-qZdk. all functions recieve a pointer as
+ * their first argument to maintain consistency.
  */
 
 #include <stddef.h>
@@ -98,10 +99,10 @@ char ascii_str_pop(struct ascii_str *ascii_str);
 void ascii_str_append(struct ascii_str *restrict ascii_str, char const *restrict c_str);
 
 /**
- * @brief erases `count` bytes (chars) from the string from position `pos` up to `pos + count - 1` [pos, min(count,
+ * @brief erases @count bytes (chars) from the string from position @pos up to @pos + @count - 1 [pos, min(count,
  * ascii_str::len))
  *
- * if `count` exceeds the string size - all the chars from pos up to the string length will be removed
+ * if @count exceeds the string size - all the chars from @from_pos up to the string length will be removed
  *
  * @param[in] ascii_str an ascii_str object
  * @param[in] from_pos the position to start deleting the chars from
@@ -110,10 +111,10 @@ void ascii_str_append(struct ascii_str *restrict ascii_str, char const *restrict
 void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count);
 
 /**
- * @brief inserts a string an position `pos`
+ * @brief inserts a string an position @pos
  *
  * @param[in] ascii_str an ascii_str object
- * @param[in] pos the position to insert the string in. is `pos` exceeds ascii_str's length - the result will be as if
+ * @param[in] pos the position to insert the string in. is @pos exceeds ascii_str's length - the result will be as if
  * ascii_str_append was called
  * @param[in] c_str a null terminated c-string to be inserted into the ascii_str object. passing a NULL pointer will
  * result in the function silently failing
@@ -121,14 +122,13 @@ void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count)
 void ascii_str_insert(struct ascii_str *restrict ascii_str, size_t pos, char const *restrict c_str);
 
 /**
- * @brief finds the *first ocurrence* (from the right) of a substring within an ascii_str object
+ * @brief checks whether an ascii_str object contains the substring @needle
  *
  * @param[in] haystack an ascii_str object
  * @param[in] needle a null terminated c-string
- * @return char const * - a pointer to the (beginning) of substring or NULL if no such string has been found. if
- * `needle` is `NULL` a `NULL` pointer will be returned
+ * @return bool - true if @haystack contains the substring, false otherwise
  */
-char const *ascii_str_find(struct ascii_str *haystack, const char *needle);
+bool ascii_str_contains(struct ascii_str *haystack, const char *needle);
 
 /**
  * @brief returns the index of the *first occurence* of a char in the string. if no such char is found -
@@ -136,17 +136,17 @@ char const *ascii_str_find(struct ascii_str *haystack, const char *needle);
  *
  * @param[in] ascii_str an ascii_str object
  * @param[in] c the char to look for
- * @return size_t the index of said char or `GENERICS_EINVAL` if no such char is found. if `ascii_str` is a `NULL`
+ * @return size_t the index of said char or `GENERICS_EINVAL` if no such char is found. if @ascii_str is a `NULL`
  * pointer `GENERIC_EINVAL` will be returned
  */
 size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c);
 
 /**
  * @brief returns a 'slice' from an ascii_str object. the slice will hold the contents of the substring starting at
- * position `pos` up to count - 1 [pos, count).
- * if `pos` isn't a valid index - an empty slice will be returned.
- * if `count` exceeds the string length - the returned slice will be truncated
- * if `count` is 0 - an empty slice will be returned
+ * position @from_pos up to @count - 1 [pos, pos + count).
+ * if @from_pos isn't a valid index - an empty slice will be returned.
+ * if @count exceeds the string length - the returned slice will be truncated
+ * if @count is 0 - an empty slice will be returned
  *
  * @param[in] ascii_str an ascii_str object
  * @param[in] from_pos the start position the slice
@@ -156,11 +156,11 @@ size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c);
 struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, size_t count);
 
 /**
- * @brief splits an ascii string on each char in `pattern`. returns a struct vec containing each sub-string
+ * @brief splits an ascii string on each char in @pattern. returns a struct vec containing each sub-string
  *
  * @param[in] ascii_str the string to stlit. this string may not change after this function call
  * @param[in] pattern a valid c-string
- * @return struct vec - a vec containing all substrings. this vec might be empty if `ascii_str` doesn't contain any
- * chars which match the `pattern`
+ * @return struct vec - a vec containing all substrings. this vec might be empty if @ascii_str doesn't contain any
+ * chars which match the @pattern
  */
 struct vec *ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern);

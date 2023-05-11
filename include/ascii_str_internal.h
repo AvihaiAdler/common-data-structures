@@ -18,6 +18,6 @@ struct ascii_str {
   union {
     struct ascii_str_long long_;
     struct ascii_str_short short_;
-  };
+  } str_internal;
   bool is_sso;
 };

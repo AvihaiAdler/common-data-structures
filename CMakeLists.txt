@@ -10,6 +10,7 @@ add_subdirectory(tests/vector)
 add_subdirectory(tests/linked_list)
 add_subdirectory(tests/hash_table)
 add_subdirectory(tests/bst)
+add_subdirectory(tests/ascii_str)
 
 add_library(
   generics
