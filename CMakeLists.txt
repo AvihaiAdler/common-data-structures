@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(generic_ds VERSION 0.0.1)
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED True)
-
 # add_subdirectory(dev)
 include(CTest)
 add_subdirectory(tests/vector)
@@ -29,6 +26,10 @@ set_target_properties(
   PUBLIC_HEADER include/bst.h
   PUBLIC_HEADER include/ascii_str.h
 )
+
 target_include_directories(generics 
                           PRIVATE .
                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_compile_features(generics PRIVATE c_std_99)
+target_compile_options(generics PRIVATE -Wall -Wextra -pedantic -O3)
