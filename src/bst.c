@@ -166,7 +166,6 @@ static struct node *node_delete(struct node *node,
       smallest->parent->left = NULL;
 
       node_destroy(smallest, destroy_key, destroy_value);
-      free(smallest);
     }
   } else if (cmpr_ret > 0) {
     // key < node::key
