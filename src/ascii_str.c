@@ -40,7 +40,7 @@ static inline bool ascii_str_resize_internal(struct ascii_str *ascii_str) {
 static inline void ascii_str_append_internal(struct ascii_str *restrict ascii_str,
                                              char const *restrict arr,
                                              size_t len) {
-  if (ascii_str->is_sso && ascii_str->str_internal.short_.data[SHORT_BUFFER_SIZE] >= len) {
+  if (ascii_str->is_sso && (size_t)ascii_str->str_internal.short_.data[SHORT_BUFFER_SIZE] >= len) {
     size_t ascii_strlen = ascii_str_len(ascii_str);
 
     // there's enough room in the buffer for c_str
@@ -50,8 +50,8 @@ static inline void ascii_str_append_internal(struct ascii_str *restrict ascii_st
   }
 
   // not enough room in the buffer for c_str
-  if (ascii_str->is_sso && ascii_str->str_internal.short_.data[SHORT_BUFFER_SIZE] < len ||
-      !ascii_str->is_sso && ascii_str->str_internal.long_.capacity - ascii_str->str_internal.long_.size < len + 1) {
+  if ((ascii_str->is_sso && (size_t)ascii_str->str_internal.short_.data[SHORT_BUFFER_SIZE] < len) ||
+      (!ascii_str->is_sso && ascii_str->str_internal.long_.capacity - ascii_str->str_internal.long_.size < len + 1)) {
     do {
       ascii_str_resize_internal(ascii_str);
     } while (ascii_str->str_internal.long_.capacity - ascii_str->str_internal.long_.size < len + 1);
