@@ -3,16 +3,6 @@ project(generic_ds VERSION 0.0.1)
 
 add_library(generics)
 
-set_target_properties(
-  generics PROPERTIES 
-  VERSION ${PROJECT_VERSION}
-  PUBLIC_HEADER include/vec.h 
-  PUBLIC_HEADER include/list.h
-  PUBLIC_HEADER include/hash_table.h
-  PUBLIC_HEADER include/bst.h
-  PUBLIC_HEADER include/ascii_str.h
-)
-
 target_sources(generics 
   PRIVATE src/vec.c
   PRIVATE src/list.c
