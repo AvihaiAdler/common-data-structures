@@ -242,7 +242,7 @@ size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c) {
 
   char const *buf = ascii_str_c_str(ascii_str);
   char const *needle = strchr(buf, c);
-  return needle ? needle - buf : GENERICS_EINVAL;
+  return needle ? (size_t)(needle - buf) : GENERICS_EINVAL;
 }
 
 struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, size_t count) {
