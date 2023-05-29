@@ -20,8 +20,7 @@ struct bst {
   void (*destroy_value)(void *value);
 };
 
-static struct node *node_create(const void *const key, size_t key_size,
-                                const void *const value, size_t value_size) {
+static struct node *node_create(const void *const key, size_t key_size, const void *const value, size_t value_size) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
@@ -60,8 +59,7 @@ static void node_swap(struct node *node, struct node *other) {
   other->value = value;
 }
 
-static void node_destroy(struct node *node, void (*destroy_key)(void *key),
-                         void (*destroy_value)(void *value)) {
+static void node_destroy(struct node *node, void (*destroy_key)(void *key), void (*destroy_value)(void *value)) {
   if (!node) return;
 
   node_destroy(node->left, destroy_key, destroy_value);
@@ -74,7 +72,8 @@ static void node_destroy(struct node *node, void (*destroy_key)(void *key),
   free(node);
 }
 
-static struct node *node_insert(struct node *root, struct node *node,
+static struct node *node_insert(struct node *root,
+                                struct node *node,
                                 int (*cmpr)(void *key, void *other),
                                 void (*destroy_key)(void *key),
                                 void (*destroy_value)(void *value)) {
@@ -96,16 +95,14 @@ static struct node *node_insert(struct node *root, struct node *node,
     ret->left->parent = ret;
   } else if (cmpr_res < 0) {
     // node::key > root::key
-    ret->right =
-        node_insert(root->right, node, cmpr, destroy_key, destroy_value);
+    ret->right = node_insert(root->right, node, cmpr, destroy_key, destroy_value);
     ret->right->parent = ret;
   }
 
   return ret;
 }
 
-static void *node_find(struct node *node, void *key,
-                       int (*cmpr)(void *key, void *other)) {
+static void *node_find(struct node *node, void *key, int (*cmpr)(void *key, void *other)) {
   if (!node) return NULL;
 
   // if cmpr_ptr == 0 - the function will return node::value
@@ -138,7 +135,8 @@ static struct node *find_successor(struct node *node) {
   return find_successor(node->left);
 }
 
-static struct node *node_delete(struct node *node, void *key,
+static struct node *node_delete(struct node *node,
+                                void *key,
                                 int (*cmpr)(void *key, void *other),
                                 void (*destroy_key)(void *key),
                                 void (*destroy_value)(void *value)) {
@@ -175,8 +173,7 @@ static struct node *node_delete(struct node *node, void *key,
     node->left = node_delete(node->left, key, cmpr, destroy_key, destroy_value);
   } else {
     // key > node::key
-    node->right =
-        node_delete(node->right, key, cmpr, destroy_key, destroy_value);
+    node->right = node_delete(node->right, key, cmpr, destroy_key, destroy_value);
   }
 
   return ret;
@@ -196,8 +193,7 @@ struct bst *bst_create(int (*cmpr)(void *key, void *other),
   return bst;
 }
 
-static void node_print(struct node *node, void (*print_key)(void *key),
-                       void (*print_value)(void *value)) {
+static void node_print(struct node *node, void (*print_key)(void *key), void (*print_value)(void *value)) {
   if (!node) return;
 
   node_print(node->left, print_key, print_value);
@@ -213,8 +209,7 @@ void bst_destroy(struct bst *bst) {
   free(bst);
 }
 
-bool bst_upsert(struct bst *bst, const void *const key, size_t key_size,
-                const void *const value, size_t value_size) {
+bool bst_upsert(struct bst *bst, const void *const key, size_t key_size, const void *const value, size_t value_size) {
   if (!bst) return false;
 
   if (!key || !key_size) return false;
@@ -222,8 +217,7 @@ bool bst_upsert(struct bst *bst, const void *const key, size_t key_size,
   struct node *tmp = node_create(key, key_size, value, value_size);
   if (!tmp) return false;
 
-  bst->root = node_insert(bst->root, tmp, bst->cmpr, bst->destroy_key,
-                          bst->destroy_value);
+  bst->root = node_insert(bst->root, tmp, bst->cmpr, bst->destroy_key, bst->destroy_value);
 
   return true;
 }
@@ -237,14 +231,12 @@ void *bst_find(struct bst *bst, void *key) {
 bool bst_delete(struct bst *bst, void *key) {
   if (!bst || !key) return NULL;
 
-  bst->root = node_delete(bst->root, key, bst->cmpr, bst->destroy_key,
-                          bst->destroy_value);
+  bst->root = node_delete(bst->root, key, bst->cmpr, bst->destroy_key, bst->destroy_value);
 
   return true;
 }
 
-void bst_print(struct bst *bst, void (*print_key)(void *key),
-               void (*print_value)(void *value)) {
+void bst_print(struct bst *bst, void (*print_key)(void *key), void (*print_value)(void *value)) {
   if (!bst) return;
 
   node_print(bst->root, print_key, print_value);
