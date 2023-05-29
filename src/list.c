@@ -268,7 +268,6 @@ size_t list_index_of(struct list *list, const void *data, int (*cmpr)(const void
 void *list_replace_at(struct list *list, const void *data, size_t data_size, size_t pos) {
   if (!list) return NULL;
   if (!list->head) return NULL;
-  if (pos < 0) return NULL;
   if (pos >= list->size) return NULL;
   if (data_size == 0) return NULL;
 
@@ -304,7 +303,6 @@ void *list_replace(struct list *list,
                    size_t new_data_size,
                    int (*cmpr)(const void *, const void *)) {
   size_t pos = list_index_of(list, old_data, cmpr);
-  if (pos < 0) return NULL;
 
   return list_replace_at(list, new_data, new_data_size, pos);
 }
