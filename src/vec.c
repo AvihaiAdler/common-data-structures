@@ -31,6 +31,7 @@ struct vec *vec_init(size_t data_size, void (*destroy)(void *element)) {
 
   vec->capacity = VECT_INIT_CAPACITY;
   vec->size = 0;
+  vec->destroy = destroy;
   return vec;
 }
 
@@ -38,7 +39,7 @@ void vec_destroy(struct vec *vec) {
   if (!vec) return;
   if (vec->data) {
     for (size_t i = 0; i < vec->size * vec->data_size; i += vec->data_size) {
-      if (vec->destroy) { vec->destroy((unsigned char *)vec->data + i); }
+      if (vec->destroy) { vec->destroy((char *)vec->data + i); }
     }
     free(vec->data);
   }
@@ -99,7 +100,7 @@ static bool vec_resize_internal(struct vec *vec) {
   void *tmp = realloc(vec->data, new_capacity * vec->data_size);
   if (!tmp) return false;
 
-  memset(tmp + vec->size * vec->data_size, 0, new_capacity * vec->data_size - vec->size * vec->data_size);
+  memset((char *)tmp + vec->size * vec->data_size, 0, new_capacity * vec->data_size - vec->size * vec->data_size);
 
   vec->capacity = new_capacity;
   vec->data = tmp;
@@ -114,7 +115,7 @@ size_t vec_reserve(struct vec *vec, size_t size) {
   void *tmp = realloc(vec->data, size * vec->data_size);
   if (!tmp) return vec->capacity;
 
-  memset(tmp + vec->size * vec->data_size, 0, size * vec->data_size - vec->size * vec->data_size);
+  memset((char *)tmp + vec->size * vec->data_size, 0, size * vec->data_size - vec->size * vec->data_size);
 
   vec->capacity = size;
   vec->data = tmp;
@@ -206,7 +207,7 @@ size_t vec_index_of(struct vec *vec, const void *element, int (*cmpr)(const void
   if (!vec->data) return -1;
 
   for (size_t i = 0; i < vec->size * vec->data_size; i += vec->data_size) {
-    if (cmpr(element, vec->data + i) == 0) return i / vec->data_size;
+    if (cmpr(element, (char *)vec->data + i) == 0) return i / vec->data_size;
   }
 
   return GENERICS_EINVAL;
