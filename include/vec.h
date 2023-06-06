@@ -19,7 +19,8 @@ struct vec;
  * the function will be called on each of the `vec`'s elements. make sure to pass a `destroy` function if your elements
  * contains a pointer to some heap allocated data.
  *
- * @return `struct vec` - a vec object. if data_size is 0 an empty vector will be returned
+ * @return `struct vec` - a vec object. if `data_size` is 0 a NULL will be returned. if `data_size` is too big to fit
+ * `VEC_INIT_CAPACITY` elements withing the vector - a `NULL` will be returned
  */
 struct vec *vec_init(size_t data_size, void (*destroy)(void *element));
 
@@ -147,7 +148,7 @@ size_t vec_resize(struct vec *vec, size_t num_elements);
  * @param[in] element a pointer to the element to be pushed in.
  *
  * @return `true` on success.
- * @return `false` on faliure.
+ * @return `false` on failure.
  */
 bool vec_push(struct vec *vec, const void *element);
 

@@ -60,8 +60,8 @@ size_t ascii_str_len(struct ascii_str *ascii_str);
  * @brief returns a const pointer to the underlying data
  *
  * @param[in] ascii_str an ascii_str object
- * @return char const * - a pointer to the underlying data of the string. modiying the ptr in any way might result in
- * undefined behavior
+ * @return char const * - a pointer to the underlying data of the string. the ptr behaves as a c-string and guarantee to
+ * be null terminated
  */
 char const *ascii_str_c_str(struct ascii_str *ascii_str);
 
