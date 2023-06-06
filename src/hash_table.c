@@ -111,7 +111,7 @@ size_t table_capacity(struct hash_table *table) {
 
 /* used internally to hash the keys (slightly modified djd2 by Dan Bernstein)
  */
-static size_t hash(void const *key, size_t key_size) {
+static inline size_t hash(void const *key, size_t key_size) {
   const unsigned char *k = key;
   size_t hash = 5381;
   for (size_t i = 0; i < key_size; i++, k++) {
@@ -126,7 +126,7 @@ static size_t hash(void const *key, size_t key_size) {
  * both node::key, node::value and node must be free'd. the function assumes
  * key
  * != NULL and key_size > 0 */
-static struct node *init_node(void const *key, size_t key_size, void const *value, size_t value_size) {
+static inline struct node *init_node(void const *key, size_t key_size, void const *value, size_t value_size) {
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
@@ -157,7 +157,7 @@ static struct node *init_node(void const *key, size_t key_size, void const *valu
 /* used internally to replace an existing mapping for a certain key. returns a
  * pointer to the previous key which has to be free'd. the
  * function assumes the node passed in isn't NULL */
-static void *node_replace_value(struct node *node, void const *value, size_t value_size) {
+static inline void *node_replace_value(struct node *node, void const *value, size_t value_size) {
   void *old_value = node->value;
   if (value_size) {
     void *tmp_value = calloc(value_size, 1);
@@ -174,7 +174,11 @@ static void *node_replace_value(struct node *node, void const *value, size_t val
 
 /* used internally to prepend a bucket to an entry. retuns true on success,
  * NULL on failure */
-static bool entry_prepend(struct entry *entry, void const *key, size_t key_size, void const *value, size_t value_size) {
+static inline bool entry_prepend(struct entry *entry,
+                                 void const *key,
+                                 size_t key_size,
+                                 void const *value,
+                                 size_t value_size) {
   struct node *node = init_node(key, key_size, value, value_size);
   if (!node) return false;
 
@@ -191,9 +195,9 @@ static bool entry_prepend(struct entry *entry, void const *key, size_t key_size,
 /* used internally to check whether an entry contains a mapping for a certain
  * key. returns a pointer to the node which contains the same key, or NULL if
  * no such node found */
-static struct node *entry_contains(struct entry *entry,
-                                   void const *key,
-                                   int (*cmpr)(void const *key, void const *other)) {
+static inline struct node *entry_contains(struct entry *entry,
+                                          void const *key,
+                                          int (*cmpr)(void const *key, void const *other)) {
   if (!entry->head) return NULL;
   for (struct node *tmp = entry->head; tmp; tmp = tmp->next) {
     if (cmpr(key, tmp->key) == 0) return tmp;
@@ -203,7 +207,7 @@ static struct node *entry_contains(struct entry *entry,
 
 /* used internally to resize (and rehash) the table with minimum
  * allocations/frees */
-static bool resize_table(struct hash_table *table) {
+static inline bool resize_table(struct hash_table *table) {
   if (!table) return false;
   if (!table->entries) return false;
 
