@@ -65,19 +65,24 @@ static inline void ascii_str_append_internal(struct ascii_str *restrict ascii_st
   ascii_str->str_internal.long_.data[ascii_str->str_internal.long_.size] = 0;
 }
 
+static inline struct ascii_str ascii_str_init_short_internal(void) {
+  struct ascii_str str = {0};
+  memset(&str, 0, sizeof str);
+  str.is_sso = true;
+  str.str_internal.short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE;
+
+  return str;
+}
+
 struct ascii_str ascii_str_from_str(char const *c_str) {
-  // struct ascii_str str = {.is_sso = true, .str_internal.short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
+  if (!c_str) { return ascii_str_from_arr(c_str, 0); }
 
-  if (!c_str) {
-    return (struct ascii_str){.is_sso = true, .str_internal.short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
-  }
-
-  // ascii_str_append(&str, c_str);
   return ascii_str_from_arr(c_str, strlen(c_str));
 }
 
 struct ascii_str ascii_str_from_arr(char const *arr, size_t len) {
-  struct ascii_str str = {.is_sso = true, .str_internal.short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
+  // struct ascii_str str = {.is_sso = true, .str_internal.short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
+  struct ascii_str str = ascii_str_init_short_internal();
 
   if (!arr || !len) return str;
 
