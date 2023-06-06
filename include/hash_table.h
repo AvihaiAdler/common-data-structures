@@ -70,7 +70,8 @@ size_t table_capacity(struct hash_table *table);
  *
  * @param[in] table creates a copy of the data passed in - and store it in the table. returns the previous value for
  * that key (which has to be free'd) or NULL if there was no mapping for that key
- * @param[in] key the `key` associated with the data
+ * @param[in] key the `key` associated with the data. `key` must not contain any padding bits. in case one not sure -
+ * one shouldn't use structs as keys
  * @param[in] key_size the size of the `key` in bytes
  * @param[in] value the value
  * @param[in] value_size the size of the `value` in bytes
