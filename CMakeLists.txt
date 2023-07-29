@@ -16,11 +16,21 @@ target_include_directories(generics
                           INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_compile_features(generics PRIVATE c_std_99)
-target_compile_options(generics PRIVATE -Wall -Wextra -pedantic -O3)
 
-include(CTest)
-add_subdirectory(tests/vector)
-add_subdirectory(tests/linked_list)
-add_subdirectory(tests/hash_table)
-add_subdirectory(tests/bst)
-add_subdirectory(tests/ascii_str)
+set(compile_flags "")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+  set(compile_flags -Wall -Wextra -pedantic -O3)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  set(compile_flags -W4)
+endif()
+
+target_compile_options(generics PRIVATE ${compile_flags})
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  include(CTest)
+  add_subdirectory(tests/vector)
+  add_subdirectory(tests/linked_list)
+  add_subdirectory(tests/hash_table)
+  add_subdirectory(tests/bst)
+  add_subdirectory(tests/ascii_str)
+endif()
