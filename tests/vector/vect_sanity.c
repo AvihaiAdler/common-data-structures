@@ -37,8 +37,8 @@ void vec_push_sanity_test(int num) {
   bool res = vec_push(vect, &num);
 
   // then
-  int *stored = vec_at(vect, 0);
   assert(res);
+  int *stored = vec_at(vect, 0);
   assert(!vec_empty(vect));
   assert(stored);
   assert(*stored == num);
