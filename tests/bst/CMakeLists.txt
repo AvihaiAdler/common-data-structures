@@ -6,6 +6,5 @@ foreach(TEST ${BST_TEST})
   target_compile_options(${TEST} PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address,undefined)
   target_link_options(${TEST} PRIVATE -fsanitize=address,undefined)
 
-  target_link_libraries(${TEST} PRIVATE generics)
-  target_include_directories(${TEST} PRIVATE ${CMAKE_SOURCE_DIR})  
+  target_link_libraries(${TEST} PRIVATE ds)
 endforeach()

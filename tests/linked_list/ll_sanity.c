@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "include/list.h"
+#include "list.h"
 
 struct point {
   int x, y;

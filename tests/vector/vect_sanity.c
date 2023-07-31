@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "include/vec.h"
+#include "vec.h"
 
 bool equals(const void *a, const void *b) {
   int i_a = *(int *)a;

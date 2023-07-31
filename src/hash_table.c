@@ -1,9 +1,9 @@
-#include "include/hash_table.h"
+#include "hash_table.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/vec.h"
+#include "vec.h"
 
 #define LOAD_FACTOR 0.7
 #define TABLE_GROWTH 1

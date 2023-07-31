@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
-project(generic_ds VERSION 0.0.1)
+project(ds VERSION 0.0.1)
 
-add_library(generics)
+add_library(ds)
 
-target_sources(generics 
+target_sources(ds 
   PRIVATE src/vec.c
   PRIVATE src/list.c
   PRIVATE src/hash_table.c
@@ -11,11 +11,13 @@ target_sources(generics
   PRIVATE src/ascii_str.c
 )
 
-target_include_directories(generics 
-                          PRIVATE .
-                          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(ds 
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-target_compile_features(generics PRIVATE c_std_99)
+target_compile_features(ds 
+  PRIVATE c_std_99
+)
 
 set(compile_flags "")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -24,7 +26,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   set(compile_flags -W4)
 endif()
 
-target_compile_options(generics PRIVATE ${compile_flags})
+target_compile_options(ds PRIVATE ${compile_flags})
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   include(CTest)

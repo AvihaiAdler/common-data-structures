@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "include/bst.h"
+#include "bst.h"
 
 struct pair {
   int id;

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "include/ascii_str.h"
+#include "ascii_str.h"
 
 #define MIN_SSO_LEN (size_t)12 - 1
 

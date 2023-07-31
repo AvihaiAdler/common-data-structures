@@ -1,4 +1,4 @@
-#include "include/ascii_str.h"
+#include "ascii_str.h"
 #include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>

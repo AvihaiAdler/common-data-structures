@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "include/hash_table.h"
+#include "hash_table.h"
 
 #define LOAD_FACTOR 0.7
 #define TABLE_GROWTH 1
@@ -94,26 +94,25 @@ void str_destroy(void *str) {
 }
 
 // unit tests
-struct hash_table *before(char **keys, size_t keys_size, struct string *strings,
-                          size_t strings_size) {
+struct hash_table *before(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
   assert(keys_size == strings_size);
   struct hash_table *table = table_init(cmpr_keys, NULL, NULL);
   assert(table);
   assert(table_size(table) == 0);
 
   for (size_t i = 0; i < keys_size; i++) {
-    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1,
-                                   &strings[i], sizeof strings[i]);
+    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1, &strings[i], sizeof strings[i]);
     assert(!old);
   }
 
   return table;
 }
 
-void after(struct hash_table *table) { table_destroy(table); }
+void after(struct hash_table *table) {
+  table_destroy(table);
+}
 
-void table_put_empty_table_test(char **keys, size_t keys_size,
-                                struct string *strings, size_t strings_size) {
+void table_put_empty_table_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
   // given
   struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
@@ -124,19 +123,15 @@ void table_put_empty_table_test(char **keys, size_t keys_size,
   after(table);
 }
 
-void table_put_with_replace_value_test(char **keys, size_t keys_size,
-                                       struct string *strings,
-                                       size_t strings_size) {
+void table_put_with_replace_value_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
   // given
   struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
   char *another_str = "not the original string";
-  struct string another_string_same_key = {.str_size = strlen(another_str),
-                                           .str = another_str};
+  struct string another_string_same_key = {.str_size = strlen(another_str), .str = another_str};
   // when
   struct string *old =
-      table_put(table, keys[0], strlen(keys[0]), &another_string_same_key,
-                sizeof another_string_same_key);
+    table_put(table, keys[0], strlen(keys[0]), &another_string_same_key, sizeof another_string_same_key);
   // then
   assert(old);
   assert(cmpr_values(old, strings) == 0);
@@ -159,8 +154,7 @@ void table_put_with_resize_test(size_t size) {
 
   // when
   for (size_t i = 0; i < size; i++) {
-    table_put(table, keys[i], strlen(keys[i]) + 1, &strings[i],
-              sizeof strings[i]);
+    table_put(table, keys[i], strlen(keys[i]) + 1, &strings[i], sizeof strings[i]);
   }
 
   // then
@@ -176,8 +170,7 @@ void table_put_with_resize_test(size_t size) {
   destroy_keys(keys, size);
 }
 
-void table_remove_test(char **keys, size_t keys_size, struct string *strings,
-                       size_t strings_size) {
+void table_remove_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
   // given
   struct hash_table *table = before(keys, keys_size, strings, strings_size);
 
@@ -185,10 +178,8 @@ void table_remove_test(char **keys, size_t keys_size, struct string *strings,
 
   // when
   struct string *first = table_remove(table, keys[0], strlen(keys[0]) + 1);
-  struct string *last =
-      table_remove(table, keys[keys_size - 1], strlen(keys[keys_size - 1]) + 1);
-  struct string *mid =
-      table_remove(table, keys[keys_size / 2], strlen(keys[keys_size / 2]) + 1);
+  struct string *last = table_remove(table, keys[keys_size - 1], strlen(keys[keys_size - 1]) + 1);
+  struct string *mid = table_remove(table, keys[keys_size / 2], strlen(keys[keys_size / 2]) + 1);
 
   // then
   assert(first && last && mid);
@@ -205,8 +196,7 @@ void table_remove_test(char **keys, size_t keys_size, struct string *strings,
   after(table);
 }
 
-void table_get_test(char **keys, size_t keys_size, struct string *strings,
-                    size_t strings_size) {
+void table_get_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
   // given
   struct hash_table *table = before(keys, keys_size, strings, strings_size);
 

@@ -51,7 +51,7 @@ bool ascii_str_empty(struct ascii_str *ascii_str);
  * @brief returns the length of an ascii_str
  *
  * @param[in] ascii_str an secii_str object
- * @return the number of bytes in the string. for ascii string that would be equal to the number of character in the
+ * @return the number of bytes in the string. for ascii string that would be equal to the number of characters in the
  * string *excluding* the null terminator
  */
 size_t ascii_str_len(struct ascii_str *ascii_str);
