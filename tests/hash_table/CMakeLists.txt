@@ -1,11 +1,33 @@
 set(HT_UNIT_TESTS ht_sanity)
 
-foreach(TEST ${HT_UNIT_TESTS})
-  add_executable(${TEST} ${TEST}.c)
-  add_test(NAME ${TEST} COMMAND ${PROJECT_BINARY_DIR}/tests/hash_table/${TEST})
+foreach(test ${HT_UNIT_TESTS})
+  add_executable(${test})
+  target_sources(${test}
+    PRIVATE ${test}.c
+  )
 
-  target_compile_options(${TEST} PRIVATE -Wall -Wextra -pedantic -fsanitize=address,undefined)
-  target_link_options(${TEST} PRIVATE -fsanitize=address,undefined)
+  add_test(NAME ${test} COMMAND $<TARGET_FILE:${test}>)
 
-  target_link_libraries(${TEST} PRIVATE ds)
+  target_compile_features(${test}
+    PRIVATE c_std_99
+  )
+
+  target_compile_options(${test} 
+    PRIVATE 
+    -Wall 
+    -Wextra 
+    -Wpedantic 
+    -Og
+    -g
+    -fsanitize=address,undefined
+  )
+
+  target_link_options(${test} 
+    PRIVATE 
+    -fsanitize=address,undefined
+  )
+
+  target_link_libraries(${test} 
+    PRIVATE ds
+  )
 endforeach()
