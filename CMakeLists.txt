@@ -12,12 +12,10 @@ target_sources(ds
 )
 
 target_include_directories(ds 
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
+                          PRIVATE .
+                          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_compile_features(ds 
-  PRIVATE c_std_99
-)
+target_compile_features(ds PRIVATE c_std_99)
 
 set(compile_flags "")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
