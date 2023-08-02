@@ -73,6 +73,16 @@ static inline struct ascii_str ascii_str_init_short_internal(void) {
   return str;
 }
 
+struct ascii_str ascii_str_create(char const *str, int len) {
+  if (!str || !len) { return ascii_str_from_arr(str, 0); }
+
+  if (len < STR_C_STR) { return ascii_str_from_arr(str, 0); }
+
+  if (len == STR_C_STR) { return ascii_str_from_str(str); }
+
+  return ascii_str_from_arr(str, (size_t)len);
+}
+
 struct ascii_str ascii_str_from_str(char const *c_str) {
   if (!c_str) { return ascii_str_from_arr(c_str, 0); }
 

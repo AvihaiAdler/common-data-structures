@@ -12,22 +12,33 @@
 #include "vec.h"
 
 /**
+ * @brief constructs and initializes a string object from either a c-string or an array depending on th value of `len`
+ *
+ * @param[in] str - a c-string / `NULL` / a char array.
+ * @param[in] size - the size of the char array. if one pass `STR_C_STR` as `len` - the function will treat `str` as a
+ * c-string reading all chars until the first null terminator
+ * @return `struct ascii_str` - the string object initialized with the content of `str`. if `str` is a `NULL` pointer or
+ * `len` is `0` an empty string will be returned. if `len < 0` and `len != STR_C_STR` an empty string will be returned
+ */
+struct ascii_str ascii_str_create(char const *str, int len);
+
+/**
  * @brief constructs and initializes a string object from a c-string
  *
  * @param[in] c_str a c-string or NULL
  *
- * @return the string object initialized with the content of c_str. if c_str is a NULL pointer the object will be
- * an empty string will be returned
+ * @return `struct ascii_str` - the string object initialized with the content of `c_str`. if `c_str` is a `NULL`
+ * pointer the object will be an empty string will be returned
  */
 struct ascii_str ascii_str_from_str(char const *c_str);
 
 /**
  * @brief constructs a string from an array
  *
- * @param[in] arr a char array
+ * @param[in] arr a char array / `NULL`
  * @param[in] len the length of the array in bytes
- * @return struct ascii_str - the string object initialized with the content of arr. if arr is a NULL pointer or len is
- * 0 an empty string will be returned
+ * @return struct ascii_str - the string object initialized with the content of `arr`. if `arr` is a `NULL` pointer or
+ * `len` is `0` an empty string will be returned
  */
 struct ascii_str ascii_str_from_arr(char const *arr, size_t len);
 

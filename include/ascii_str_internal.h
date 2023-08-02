@@ -3,6 +3,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+enum ascii_str_codes {
+  STR_C_STR = -1,
+  STR_NEXISTS = -1,
+};
+
 struct ascii_str_long {
   size_t size;
   size_t capacity;
