@@ -12,10 +12,12 @@ target_sources(ds
 )
 
 target_include_directories(ds 
-                          PRIVATE .
-                          INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-target_compile_features(ds PRIVATE c_std_99)
+target_compile_features(ds 
+  PRIVATE c_std_99
+)
 
 set(compile_flags "")
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -24,7 +26,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   set(compile_flags -W4)
 endif()
 
-target_compile_options(ds PRIVATE ${compile_flags})
+target_compile_options(ds 
+  PRIVATE ${compile_flags}
+)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   include(CTest)
