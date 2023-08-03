@@ -249,12 +249,12 @@ bool ascii_str_contains(struct ascii_str *haystack, char const *needle) {
   return strstr(ascii_str_c_str(haystack), needle) != NULL;
 }
 
-size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c) {
-  if (!ascii_str) return DS_EINVAL;
+int ascii_str_index_of(struct ascii_str *ascii_str, char const c) {
+  if (!ascii_str) return STR_NEXISTS;
 
   char const *buf = ascii_str_c_str(ascii_str);
   char const *needle = strchr(buf, c);
-  return needle ? (size_t)(needle - buf) : DS_EINVAL;
+  return needle ? (size_t)(needle - buf) : STR_NEXISTS;
 }
 
 struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, size_t count) {

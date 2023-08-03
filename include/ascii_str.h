@@ -143,14 +143,14 @@ bool ascii_str_contains(struct ascii_str *haystack, const char *needle);
 
 /**
  * @brief returns the index of the *first occurence* of a char in the string. if no such char is found -
- * `DS_EINVAL` will be returned
+ * `STR_NEXISTS` will be returned
  *
  * @param[in] ascii_str an ascii_str object
  * @param[in] c the char to look for
- * @return size_t the index of said char or `DS_EINVAL` if no such char is found. if @ascii_str is a `NULL`
- * pointer `GENERIC_EINVAL` will be returned
+ * @return size_t the index of said char or `STR_NEXISTS` if no such char is found. if @ascii_str is a `NULL`
+ * pointer `STR_NEXISTS` will be returned
  */
-size_t ascii_str_index_of(struct ascii_str *ascii_str, char const c);
+int ascii_str_index_of(struct ascii_str *ascii_str, char const c);
 
 /**
  * @brief returns a 'slice' from an ascii_str object. the slice will hold the contents of the substring starting at
