@@ -5,6 +5,10 @@
 
 #include "defines.h"
 
+/**
+ * @file list.h
+ * @brief the definition of a list
+ */
 struct list;
 
 /* initialize a heap allocated linked list with a size of 0, where head and tail

@@ -250,6 +250,7 @@ void *vec_iter_end(struct vec *vec);
 /**
  * @brief advances the iterator to the next element.
  *
+ * @param[in] vec the `vec` to iterate over
  * @param[in] iter an iterator object.
  *
  * @return `void *` the new tramsformed iterator object. if `iter` is `NULL` or `vec` are `NULL` pointer will be
