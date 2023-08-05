@@ -19,22 +19,24 @@ target_compile_features(ds
   PRIVATE c_std_99
 )
 
-set(compile_flags "")
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  set(compile_flags -Wall -Wextra -Wpedantic -O3 -g)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  set(compile_flags -W4)
-endif()
-
 target_compile_options(ds 
-  PRIVATE ${compile_flags}
+  PRIVATE
+  $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID:GNU>>:-Wall -Wextra -Wpedantic -O3 -g>
+  $<$<C_COMPILER_ID:MSVC>:-W4>
 )
+
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   include(CTest)
-  add_subdirectory(tests/vector)
-  add_subdirectory(tests/linked_list)
-  add_subdirectory(tests/hash_table)
-  add_subdirectory(tests/bst)
-  add_subdirectory(tests/ascii_str)
+  add_subdirectory(tests)
+
+  target_compile_options(ds
+    PRIVATE
+    $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID>:GNU>:-fsanitize=address,undefined>
+  )
+
+  target_link_options(ds
+    PRIVATE
+    $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID>:GNU>:-fsanitize=address,undefined>
+  )
 endif()
