@@ -3,7 +3,7 @@ project(ds VERSION 0.1.0)
 
 add_library(ds)
 
-target_sources(ds 
+target_sources(ds
   PRIVATE src/vec.c
   PRIVATE src/list.c
   PRIVATE src/hash_table.c
@@ -11,20 +11,19 @@ target_sources(ds
   PRIVATE src/ascii_str.c
 )
 
-target_include_directories(ds 
+target_include_directories(ds
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_compile_features(ds 
+target_compile_features(ds
   PRIVATE c_std_99
 )
 
-target_compile_options(ds 
+target_compile_options(ds
   PRIVATE
-  $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID:GNU>>:-Wall -Wextra -Wpedantic -O3 -g>
-  $<$<C_COMPILER_ID:MSVC>:-W4>
+  $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -Wall -Wextra -Wpedantic -Og -g>
+  $<$<C_COMPILER_ID:MSVC>: -W4>
 )
-
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   include(CTest)
@@ -32,11 +31,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
   target_compile_options(ds
     PRIVATE
-    $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID>:GNU>:-fsanitize=address,undefined>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -fsanitize=address,undefined>
   )
 
   target_link_options(ds
     PRIVATE
-    $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID>:GNU>:-fsanitize=address,undefined>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -fsanitize=address,undefined>
   )
 endif()

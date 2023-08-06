@@ -1,9 +1,9 @@
-set(TESTS 
-    ascii_str_sanity 
-    bst_sanity 
-    ht_sanity 
-    ll_sanity 
-    vect_sanity
+set(TESTS
+  ascii_str_sanity
+  bst_sanity
+  ht_sanity
+  ll_sanity
+  vect_sanity
 )
 
 foreach(test ${TESTS})
@@ -18,19 +18,19 @@ foreach(test ${TESTS})
     PRIVATE c_std_99
   )
 
-  target_compile_options(${test} 
-    PRIVATE 
-    $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID:GNU>>:-Wall -Wextra -Wpedantic -Og -g -fsanitize=address,undefined>
-    $<$<C_COMPILER_ID:MSVC>:-W4 -fsanitize=address>
+  target_compile_options(${test}
+    PRIVATE
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -Wall -Wextra -Wpedantic -Og -g -fsanitize=address,undefined>
+    $<$<C_COMPILER_ID:MSVC>: -W4 -fsanitize=address>
   )
 
-  target_link_options(${test} 
-    PRIVATE 
-    $<$<OR:$<C_COMPILER_ID:Clang>,$<C_COMPILER_ID:GNU>>:-fsanitize=address,undefined>
-    $<$<C_COMPILER_ID:MSVC>:-fsanitize=address>
+  target_link_options(${test}
+    PRIVATE
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -fsanitize=address,undefined>
+    $<$<C_COMPILER_ID:MSVC>: -fsanitize=address>
   )
 
-  target_link_libraries(${test} 
+  target_link_libraries(${test}
     PRIVATE ds
   )
 endforeach()
