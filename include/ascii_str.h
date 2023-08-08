@@ -173,4 +173,4 @@ struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, 
  * @return `struct vec` - a `vec` containing all substrings. this `vec` might be empty if `ascii_str` doesn't contain
  * any chars which match the `pattern`
  */
-struct vec *ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern);
+struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern);

@@ -9,20 +9,32 @@
  * @file vec.h
  * @brief the definition of vector
  */
-struct vec;
+struct vec {
+  // both size and capacity can never exceed SIZE_MAX / 2
+  size_t _n_elem;
+  size_t _capacity;
+  size_t _data_size;
+  void *_data;
+
+  void (*_destroy)(void *_element);
+  int (*_cmpr)(void const *_a, void const *_b);
+};
 
 /**
  * @brief constructs a `vec` object. each element in the `vec` must be of size `data_size`.
  *
  * @param[in] data_size the size of each element in the `vec`.
- * @param[in] destroy a pointer to a function which takes a `void *` and returns `void`. if the pointer isn't `NULL` -
+ * @param[in] _destroy a pointer to a function which takes a `void *` and returns `void`. if the pointer isn't `NULL` -
  * the function will be called on each of the `vec`'s elements. make sure to pass a `destroy` function if your elements
  * contains a pointer to some heap allocated data.
+ * @param[in] _cmpr a pointer to a function comparing `2` elements in the vector. this function ptr must not be `NULL`.
+ * the function which takes `2` `void const *` and returns a *positive* integer if `_a > _b`,
+ * *negative* integer if `_a < _b` or `0` if `_a == _b`.
  *
  * @return `struct vec` - a vec object. if `data_size` is 0 a NULL will be returned. if `data_size` is too big to fit
  * `VEC_INIT_CAPACITY` elements withing the vector - a `NULL` will be returned
  */
-struct vec *vec_init(size_t data_size, void (*destroy)(void *element));
+struct vec vec_create(size_t data_size, void (*destroy)(void *_element), int (*cmpr)(void const *_a, void const *_b));
 
 /**
  * @brief destroys a `vec` object and all of its undelaying data. if `destroy` isn't `NULL` - calls it on each of the
@@ -39,7 +51,7 @@ void vec_destroy(struct vec *vec);
  *
  * @return `size_t` - the number of elements in the `vec`.
  */
-size_t vec_size(struct vec *vec);
+size_t vec_size(struct vec const *vec);
 
 /**
  * @brief returns the number of elements one can fit in the `vec` vec.
@@ -48,7 +60,7 @@ size_t vec_size(struct vec *vec);
  *
  * @return `size_t` - the number of elements the `vec` can fit in it's *current* buffer.
  */
-size_t vec_capacity(struct vec *vec);
+size_t vec_capacity(struct vec const *vec);
 
 /**
  * @brief returns the undelying buffer of the `vec`. this function should use with care, as certain changes to said
@@ -61,15 +73,6 @@ size_t vec_capacity(struct vec *vec);
 void *vec_data(struct vec *vec);
 
 /**
- * @brief returns the size, in bytes, of the `vec` object itself.
- *
- * @param[in] vec a `vec` object.
- *
- * @return `size_t` the size, in bytes, of the underlying struct the `vec` consists of.
- */
-size_t vec_struct_size(struct vec *vec);
-
-/**
  * @brief returns whether or not a `vec` object is empty.
  *
  * @param[in] vec a `vec` object.
@@ -77,7 +80,7 @@ size_t vec_struct_size(struct vec *vec);
  * @return `true` - if the `vec` is empty or is a `NULL` pointer.
  * @return `false` - if the `vec` holds at least one element.
  */
-bool vec_empty(struct vec *vec);
+bool vec_empty(struct vec const *vec);
 
 /**
  * @brief returns a pointer to the element at position `pos`. `pos` isn't a valid index - `NULL` will be returned. this
@@ -93,23 +96,19 @@ bool vec_empty(struct vec *vec);
 void *vec_at(struct vec *vec, size_t pos);
 
 /**
- * @brief finds the *first occurence* of an element in the `vec` and returns a pointer to it. note that this function
- * sorts the `vec` in the process. this function should be used with care as any changes to the element will change the
- * data stored on the `vec`. moreover, certain operation on the returned pointer might corrupt other elements' data.
+ * @brief finds the *first occurence* of an element in the `vec` and returns a pointer to it. this function should be
+ * used with care as any changes to the element will change the data stored on the `vec`. moreover, certain operation on
+ * the returned pointer might corrupt other elements' data.
  *
  * @param[in] vec a `vec` object to be searched in.
  * @param[in] element a *pointer* to an element to be looked for.
- * @param[in] cmpr a function pointer which takes in 2 `const void *` and returns the result of the comparison between
- * the 2. as `strcmp` this function should return `0` if both elements are equal. *a negative integer* if the first
- * element is smaller than the second or *a positive integer* if the first element is larger than the second.
- *
  * @return `void *` - a pointer to the first ocurrence of such element. if no such element was found - a `NULL` pointer
  * will be returned.
  */
-void *vec_find(struct vec *vec, const void *element, int (*cmpr)(const void *, const void *));
+void *vec_find(struct vec *vec, void const *element);
 
 /**
- * @brief reserves a space for `count`  elements. returns the new `vec::capacity`.
+ * @brief reserves a space for `count` elements. returns the new `vec::capacity`.
  *
  * @param[in] vec a `vec` object.
  * @param[in] count the number of elements the `vec` should hold.
@@ -119,17 +118,17 @@ void *vec_find(struct vec *vec, const void *element, int (*cmpr)(const void *, c
 size_t vec_reserve(struct vec *vec, size_t count);
 
 /**
- * @brief changes the size of the underlying buffer of a `vec`. returns the new `vec::size`.
+ * @brief changes the capacity of the underlying buffer of a `vec`. returns the new `vec::capacity`.
  *
- * if `num_elements` < `vec::size`: `vec::size` will decrease to the passed in `num_elements`.
+ * if `num_elements` < `vec::_n_elem`: `vec::capacity` will decrease to the passed in `num_elements`.
  * beware: if the `vec` contains elements with pointers to heap allocated data you might lose track of them causing a
  * memory leak.
  *
- * if `num_elements` > `vec::capacity`: the result will be as-if `vec_reserve` was called, followed by `vec_resize`.
+ * if `num_elements` > `vec::capacity`: the result will be as-if `vec_reserve` was called.
  *
- * if `vec::size` <= `num_elements` < `vec::capacity`: `vec::size` will be set to `num_elements` and
- * `vec::capacity` - `vec::size` `NULL` values will be pushed into the `vec` (in other words - `vec::size` will increase
- * to match `num_elements` and the 'emtpy' values will be `0` initialized).
+ * if `vec::_n_elem` <= `num_elements` < `vec::capacity`: `vec::_capacity` will be set to `num_elements` and
+ * `vec::capacity` - `vec::_n_elem` `NULL` values will be pushed into the `vec` (in other words - `vec::_n_elem` will
+ * increase to match `num_elements` and the 'emtpy' values will be `0` initialized).
  *
  * @param[in] vec a `vec` object to resize.
  * @param[in] num_elements the desired number of elements the `vec` should hold.
@@ -150,7 +149,7 @@ size_t vec_resize(struct vec *vec, size_t num_elements);
  * @return `true` on success.
  * @return `false` on failure.
  */
-bool vec_push(struct vec *vec, const void *element);
+bool vec_push(struct vec *vec, void const *element);
 
 /**
  * @brief pops the last element of the `vec`.
@@ -164,7 +163,7 @@ bool vec_push(struct vec *vec, const void *element);
  *
  * @return `void *` a pointer to the popped element.
  */
-const void *vec_pop(struct vec *vec);
+void const *vec_pop(struct vec *vec);
 
 /**
  * @brief removes an element from `vec` at position `pos`. returns a *copy* of said element. said copy must be free'd
@@ -189,11 +188,11 @@ void *vec_remove_at(struct vec *vec, size_t pos);
  * @return `void *` - a pointer to a *copy* of the replaced element. said copy must be free'd independently. if `pos`
  * exceeds `vec::size` - `NULL` pointer will be returned.
  */
-void *vec_replace(struct vec *vec, const void *element, size_t pos);
+void *vec_replace(struct vec *vec, void const *element, size_t pos);
 
 /**
- * @brief shrinks the underlying buffer to fit exaclty (depends on the allocator in use) `vec::size` elements. returns
- * the new `vec::capacity`.
+ * @brief shrinks the underlying buffer to fit exaclty (depends on the allocator in use) `vec::_n_elem` elements.
+ * returns the new `vec::capacity`.
  *
  * @param[in] vec a `vec` object.
  *
@@ -202,28 +201,11 @@ void *vec_replace(struct vec *vec, const void *element, size_t pos);
 size_t vec_shrink(struct vec *vec);
 
 /**
- * @brief finds and returns the *first ocuurence` of an element in the `vec`. this function, unlike `vec_find` *doesn't*
- * sorts the `vec`.
- *
- * @param[in] vec a `vec` object.
- * @param[in] element a pointer to the desired element.
- * @param[in] cmpr a function pointer which takes in 2 `const void *` and returns the result of the comparison between
- * the 2. as `strcmp` this function should return `0` if both elements are equal. *a negative integer* if the first
- * element is smaller than the second or *a positive integer* if the first element is larger than the second.
- *
- * @return `size_t` - the position of said element. if no such element is found `GENERICS_EIVAL` will be returned.
- */
-size_t vec_index_of(struct vec *vec, const void *element, int (*cmpr)(const void *, const void *));
-
-/**
  * @brief sorts the `vec`.
  *
  * @param[in] vec a `vec` object.
- * @param[in] cmpr a function pointer which takes in 2 `const void *` and returns the result of the comparison between
- * the 2. as `strcmp` this function should return `0` if both elements are equal. *a negative integer* if the first
- * element is smaller than the second or *a positive integer* if the first element is larger than the second.
  */
-void vec_sort(struct vec *vec, int (*cmpr)(const void *, const void *));
+void vec_sort(struct vec *vec);
 
 /* iterator related function. a vec can in any given moment have exactly 1
  * iterator. calling either vec_iter_begin or vec_iter_end to get a new iterator

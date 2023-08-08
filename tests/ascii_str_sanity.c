@@ -312,18 +312,18 @@ static void ascii_str_split_test(char const *str, char const *pattern) {
   struct ascii_str ascii_str = ascii_str_from_str(str);
 
   // when
-  struct vec *splitted = ascii_str_split(&ascii_str, pattern);
+  struct vec splitted = ascii_str_split(&ascii_str, pattern);
 
   // then
-  assert(splitted);
-  struct ascii_str *itr = vec_iter_begin(splitted);
+  assert(!vec_empty(&splitted));
+  struct ascii_str *itr = vec_iter_begin(&splitted);
   for (char *token = strtok(str_cpy, pattern); token;
-       token = strtok(NULL, pattern), itr = vec_iter_next(splitted, itr)) {
+       token = strtok(NULL, pattern), itr = vec_iter_next(&splitted, itr)) {
     assert(strcmp(ascii_str_c_str(itr), token) == 0);
   }
 
   // cleanup
-  vec_destroy(splitted);
+  vec_destroy(&splitted);
   ascii_str_destroy(&ascii_str);
   free(str_cpy);
 }

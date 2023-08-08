@@ -276,14 +276,21 @@ static inline void ascii_str_destroy_internal(void *ascii_str) {
   ascii_str_destroy(ascii_str);
 }
 
-struct vec *ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern) {
+static int ascii_str_cmpr(void const *_a, void const *_b) {
+  // problematic but necessary
+  struct ascii_str *a = (void *)_a;
+  struct ascii_str *b = (void *)_b;
+  return strcmp(ascii_str_c_str(a), ascii_str_c_str(b));
+}
+
+struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern) {
   // create a lookup table for all ascii chars
   bool lookup[UCHAR_MAX] = {0};
   for (; *pattern; pattern++) {
     lookup[(unsigned char)*pattern] = true;
   }
 
-  struct vec *slices = vec_init(sizeof *ascii_str, ascii_str_destroy_internal);
+  struct vec slices = vec_create(sizeof *ascii_str, ascii_str_destroy_internal, ascii_str_cmpr);
 
   char const *walker = ascii_str_c_str(ascii_str);
   if (!walker) return slices;
@@ -292,7 +299,7 @@ struct vec *ascii_str_split(struct ascii_str *restrict ascii_str, char const *re
   for (;; walker++) {  // while(true) is iffy here
     if (lookup[(unsigned char)*walker] || *walker == 0) {
       struct ascii_str tmp = ascii_str_from_arr(anchor, (size_t)(walker - anchor));
-      (void)vec_push(slices, &tmp);
+      (void)vec_push(&slices, &tmp);
       ascii_str_destroy(&tmp);
 
       anchor = walker + 1;
