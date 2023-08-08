@@ -3,12 +3,13 @@ project(ds VERSION 0.1.0)
 
 add_library(ds)
 
-target_sources(ds
-  PRIVATE src/vec.c
-  PRIVATE src/list.c
-  PRIVATE src/hash_table.c
-  PRIVATE src/bst.c
-  PRIVATE src/ascii_str.c
+target_sources(ds PRIVATE
+  src/vec.c
+  src/list.c
+  src/hash_table.c
+  src/bst.c
+  src/ascii_str.c
+  src/pair.c
 )
 
 target_include_directories(ds
