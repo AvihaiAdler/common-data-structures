@@ -12,44 +12,33 @@ struct node {
   struct node *prev;
 };
 
-/* doubly linked list object */
-struct list {
-  size_t size;  // can never exceeds SIZE_MAX / 2
-  struct node *head;
-  struct node *tail;
-};
-
-struct list *list_init(void) {
-  struct list *list = calloc(1, sizeof *list);
-  if (!list) return NULL;
-
-  return list;
+struct list list_create(void (*destroy)(void *data)) {
+  return (struct list){._destroy = destroy};
 }
 
-void list_destroy(struct list *list, void (*destroy)(void *data)) {
+void list_destroy(struct list *list) {
   if (!list) return;
 
-  for (struct node *tmp = list->head; list->head; tmp = list->head) {
-    list->head = list->head->next;
+  for (struct node *tmp = list->_head; list->_head; tmp = list->_head) {
+    list->_head = list->_head->next;
 
-    if (destroy) { destroy(tmp->data); }
+    if (list->_destroy) { list->_destroy(tmp->data); }
 
     if (tmp->data) { free(tmp->data); }
 
     free(tmp);
   }
-  free(list);
 }
 
 /* construct a node with the a copy of the data passed in. returns a heap
  * allocated node on success, NULL on failure. internal use only */
-static struct node *init_node(const void *data, size_t data_size) {
+static struct node *node_create(void const *data, size_t data_size) {
   if (data_size == 0) return NULL;
 
   struct node *node = calloc(1, sizeof *node);
   if (!node) return NULL;
 
-  node->data = calloc(data_size, 1);
+  node->data = malloc(data_size);
   node->data_size = data_size;
   if (!node->data) {
     free(node);
@@ -60,66 +49,64 @@ static struct node *init_node(const void *data, size_t data_size) {
   return node;
 }
 
-size_t list_size(struct list *list) {
-  if (!list) return 0;
-  return list->size;
+size_t list_size(struct list const *list) {
+  return list ? list->_n_elem : 0;
 }
 
-bool list_empty(struct list *list) {
-  if (!list) return true;
-  return list->size == 0;
+bool list_empty(struct list const *list) {
+  return list ? list->_n_elem == 0 : true;
 }
 
-bool list_prepend(struct list *list, const void *data, size_t data_size) {
+bool list_prepend(struct list *restrict list, void const *restrict data, size_t data_size) {
   if (!list) return false;
-  if (list->size == (SIZE_MAX >> 1)) return false;
+  if (list->_n_elem == (SIZE_MAX >> 1)) return false;
 
-  struct node *tmp = init_node(data, data_size);
+  struct node *tmp = node_create(data, data_size);
   if (!tmp) return false;
 
-  if (!list->head) {
-    list->tail = tmp;
+  if (!list->_head) {
+    list->_tail = tmp;
   } else {
-    list->head->prev = tmp;
+    list->_head->prev = tmp;
   }
 
-  tmp->next = list->head;
-  list->head = tmp;
-  list->size++;
+  tmp->next = list->_head;
+  list->_head = tmp;
+  list->_n_elem++;
   return true;
 }
 
-bool list_append(struct list *list, const void *data, size_t data_size) {
+bool list_append(struct list *restrict list, void const *restrict data, size_t data_size) {
   if (!list) return false;
-  if (list->size == (SIZE_MAX >> 1)) return false;
+  if (list->_n_elem == (SIZE_MAX >> 1)) return false;
 
-  struct node *tmp = init_node(data, data_size);
+  struct node *tmp = node_create(data, data_size);
   if (!tmp) return false;
 
-  if (!list->tail) {
-    list->head = tmp;
+  if (!list->_tail) {
+    list->_head = tmp;
   } else {
-    list->tail->next = tmp;
+    list->_tail->next = tmp;
   }
 
-  tmp->prev = list->tail;
-  list->tail = tmp;
-  list->size++;
+  tmp->prev = list->_tail;
+  list->_tail = tmp;
+  list->_n_elem++;
   return true;
 }
 
-bool list_insert_at(struct list *list, const void *data, size_t data_size, size_t pos) {
+bool list_insert_at(struct list *restrict list, void const *restrict data, size_t data_size, size_t pos) {
   if (!list) return false;
-  if (pos > list->size) return false;
-  if (list->size == (SIZE_MAX >> 1)) return false;
+  if (pos > list->_n_elem) return false;
+  if (list->_n_elem == (SIZE_MAX >> 1)) return false;
 
   if (pos == 0) return list_prepend(list, data, data_size);
-  if (pos == list->size) return list_append(list, data, data_size);
+  if (pos == list->_n_elem) return list_append(list, data, data_size);
 
-  struct node *new_node = init_node(data, data_size);
+  struct node *new_node = node_create(data, data_size);
   if (!new_node) return false;
 
-  struct node *tmp = list->head;
+  struct node *tmp = list->_head;
   for (size_t i = 0; i < pos - 1; i++) {
     tmp = tmp->next;
   }
@@ -128,23 +115,23 @@ bool list_insert_at(struct list *list, const void *data, size_t data_size, size_
   new_node->next = tmp->next;
   tmp->next->prev = tmp;
   tmp->next = new_node;
-  list->size++;
+  list->_n_elem++;
   return true;
 }
 
-bool list_insert_priority(struct list *list,
-                          const void *data,
+bool list_insert_priority(struct list *restrict list,
+                          const void *restrict data,
                           size_t data_size,
-                          int (*cmpr)(const void *, const void *)) {
+                          int (*cmpr)(void const *, void const *)) {
   if (!list) return false;
-  if (list->size == (SIZE_MAX >> 1)) return false;
+  if (list->_n_elem == (SIZE_MAX >> 1)) return false;
 
-  if (!list->head) return list_prepend(list, data, data_size);  // list is empty
+  if (!list->_head) return list_prepend(list, data, data_size);  // list is empty
 
   if (!cmpr) return false;
 
   // find the node where data > node::data
-  struct node *tmp = list->head;
+  struct node *tmp = list->_head;
   for (; tmp; tmp = tmp->next) {
     if (cmpr(data, tmp->data) > 0) break;
   }
@@ -153,39 +140,36 @@ bool list_insert_priority(struct list *list,
   if (!tmp) return list_append(list, data, data_size);
 
   // the first element is smaller than the new data
-  if (tmp == list->head) return list_prepend(list, data, data_size);
+  if (tmp == list->_head) return list_prepend(list, data, data_size);
 
-  struct node *new_node = init_node(data, data_size);
+  struct node *new_node = node_create(data, data_size);
   if (!new_node) return false;
 
   new_node->next = tmp;
   new_node->prev = tmp->prev;
   tmp->prev->next = new_node;
   tmp->prev = new_node;
-  list->size++;
+  list->_n_elem++;
   return true;
 }
 
 void *list_peek_first(struct list *list) {
-  if (!list) return NULL;
-  if (!list->head) return NULL;
+  if (!list || !list->_head) return NULL;
 
-  return list->head->data;
+  return list->_head->data;
 }
 
 void *list_peek_last(struct list *list) {
-  if (!list) return NULL;
-  if (!list->tail) return NULL;
+  if (!list || !list->_tail) return NULL;
 
-  return list->tail->data;
+  return list->_tail->data;
 }
 
 void *list_at(struct list *list, size_t pos) {
-  if (!list) return NULL;
-  if (!list->head) return NULL;
-  if (pos >= list->size) return NULL;
+  if (!list || !list->_head) return NULL;
+  if (pos >= list->_n_elem) return NULL;
 
-  struct node *tmp = list->head;
+  struct node *tmp = list->_head;
   for (size_t counter = 0; counter < pos; counter++) {
     tmp = tmp->next;
   }
@@ -193,19 +177,18 @@ void *list_at(struct list *list, size_t pos) {
 }
 
 void *list_remove_first(struct list *list) {
-  if (!list) return NULL;
-  if (!list->head) return NULL;
+  if (!list || !list->_head) return NULL;
 
-  struct node *tmp = list->head;
+  struct node *tmp = list->_head;
 
   // only has 1 element
-  if (list->head == list->tail) {
-    list->tail = list->head = NULL;
+  if (list->_head == list->_tail) {
+    list->_tail = list->_head = NULL;
   } else {
-    list->head = list->head->next;
-    list->head->prev = NULL;
+    list->_head = list->_head->next;
+    list->_head->prev = NULL;
   }
-  list->size--;
+  list->_n_elem--;
 
   void *data = tmp->data;
   free(tmp);
@@ -213,19 +196,18 @@ void *list_remove_first(struct list *list) {
 }
 
 void *list_remove_last(struct list *list) {
-  if (!list) return NULL;
-  if (!list->tail) return NULL;
+  if (!list || !list->_tail) return NULL;
 
-  struct node *tmp = list->tail;
+  struct node *tmp = list->_tail;
 
   // only 1 element
-  if (list->tail == list->head) {
-    list->head = list->tail = NULL;
+  if (list->_tail == list->_head) {
+    list->_head = list->_tail = NULL;
   } else {
-    list->tail = list->tail->prev;
-    list->tail->next = NULL;
+    list->_tail = list->_tail->prev;
+    list->_tail->next = NULL;
   }
-  list->size--;
+  list->_n_elem--;
 
   void *data = tmp->data;
   free(tmp);
@@ -234,49 +216,47 @@ void *list_remove_last(struct list *list) {
 
 void *list_remove_at(struct list *list, size_t pos) {
   if (!list) return NULL;
-  if (pos >= list->size) return NULL;
+  if (pos >= list->_n_elem) return NULL;
 
   if (pos == 0) return list_remove_first(list);
-  if (pos == list->size - 1) return list_remove_last(list);
+  if (pos == list->_n_elem - 1) return list_remove_last(list);
 
-  struct node *tmp = list->head;
+  struct node *tmp = list->_head;
   for (size_t i = 0; i < pos; i++) {
     tmp = tmp->next;
   }
 
   tmp->prev->next = tmp->next;
   tmp->next->prev = tmp->prev;
-  list->size--;
+  list->_n_elem--;
 
   void *data = tmp->data;
   free(tmp);
   return data;
 }
 
-size_t list_index_of(struct list *list, const void *data, int (*cmpr)(const void *, const void *)) {
-  if (!list) return DS_EINVAL;
-  if (!cmpr) return DS_EINVAL;
-  if (!list->head) return DS_EINVAL;
+int list_index_of(struct list *restrict list, const void *restrict data, int (*cmpr)(const void *, const void *)) {
+  if (!list || !list->_head) return DS_ERROR;
+  if (!cmpr) return DS_ERROR;
 
   size_t pos = 0;
-  for (struct node *tmp = list->head; tmp; tmp = tmp->next, pos++) {
+  for (struct node *tmp = list->_head; tmp; tmp = tmp->next, pos++) {
     if (cmpr(tmp->data, data) == 0) return pos;
   }
-  return DS_EINVAL;
+  return DS_ERROR;
 }
 
-void *list_replace_at(struct list *list, const void *data, size_t data_size, size_t pos) {
-  if (!list) return NULL;
-  if (!list->head) return NULL;
-  if (pos >= list->size) return NULL;
+void *list_replace_at(struct list *restrict list, const void *restrict data, size_t data_size, size_t pos) {
+  if (!list || !list->_head) return NULL;
+  if (pos >= list->_n_elem) return NULL;
   if (data_size == 0) return NULL;
 
-  struct node *tmp = list->head;
+  struct node *tmp = list->_head;
   for (size_t i = 0; i < pos; i++) {
     tmp = tmp->next;
   }
 
-  void *old_data = calloc(tmp->data_size, 1);
+  void *old_data = malloc(tmp->data_size);
   if (!old_data) return NULL;
 
   memcpy(old_data, tmp->data, tmp->data_size);
@@ -297,9 +277,9 @@ void *list_replace_at(struct list *list, const void *data, size_t data_size, siz
 
 /* replaces the first occurence of old_data with new_data. returns a pointer to
  * old_data on success, NULL otherwise */
-void *list_replace(struct list *list,
-                   const void *old_data,
-                   const void *new_data,
+void *list_replace(struct list *restrict list,
+                   void const *restrict old_data,
+                   void const *restrict new_data,
                    size_t new_data_size,
                    int (*cmpr)(const void *, const void *)) {
   size_t pos = list_index_of(list, old_data, cmpr);
@@ -338,7 +318,7 @@ static struct node *get_middle(struct node *head) {
   return slow;
 }
 
-static struct node *sort(struct node *head, int (*cmpr)(const void *, const void *)) {
+static struct node *sort(struct node *head, int (*cmpr)(void const *, void const *)) {
   if (!head || !head->next) { return head; }
 
   struct node *middle = get_middle(head);
@@ -356,10 +336,9 @@ static struct node *sort(struct node *head, int (*cmpr)(const void *, const void
 }
 
 /* sorts the list */
-void list_sort(struct list *list, int (*cmpr)(const void *, const void *)) {
-  if (!list) return;
+void list_sort(struct list *list, int (*cmpr)(void const *, void const *)) {
+  if (!list || !list->_head) return;
   if (!cmpr) return;
-  if (!list->head) return;
 
-  list->head = sort(list->head, cmpr);
+  list->_head = sort(list->_head, cmpr);
 }
