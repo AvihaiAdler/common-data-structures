@@ -17,7 +17,7 @@ int cmpr(const void *a, const void *b) {
 }
 
 struct vec before(int *arr, size_t arr_size) {
-  struct vec vect = vec_create(sizeof *arr, NULL, cmpr);
+  struct vec vect = vec_create(sizeof *arr, NULL);
   for (size_t i = 0; i < arr_size; i++) {
     assert(vec_push(&vect, arr + i));
   }
@@ -30,7 +30,7 @@ void after(struct vec *vect) {
 
 void vec_push_sanity_test(int num) {
   // given
-  struct vec vect = vec_create(sizeof num, NULL, cmpr);
+  struct vec vect = vec_create(sizeof num, NULL);
   assert(vec_empty(&vect));
 
   // when
@@ -92,7 +92,7 @@ void vec_find_sanity_test(int *arr, size_t arr_size) {
 
   // when
   int original = arr[arr_size / 2];
-  int *elem = vec_find(&vect, &original);
+  int *elem = vec_find(&vect, &original, cmpr);
 
   // then
   assert(elem);
@@ -132,7 +132,7 @@ void vec_remove_at_sanity_test(int *arr, size_t arr_size) {
   // then
   assert(removed);
   assert(*removed == arr[arr_size / 2]);
-  assert(vec_find(&vect, &arr[arr_size / 2]) == NULL);
+  assert(vec_find(&vect, &arr[arr_size / 2], cmpr) == NULL);
 
   // cleanup
   free(removed);
@@ -150,7 +150,7 @@ void vec_replace_sanity_test(int *arr, size_t arr_size) {
   // then
   assert(replaced);
   assert(*replaced == arr[arr_size / 2]);
-  assert(vec_find(&vect, arr + arr_size / 2) == NULL);
+  assert(vec_find(&vect, arr + arr_size / 2, cmpr) == NULL);
 
   // cleanup
   free(replaced);
@@ -186,7 +186,7 @@ void vec_sort_santiy_test(int *arr, size_t arr_size) {
   struct vec vect = before(arr, arr_size);
 
   // when
-  vec_sort(&vect);
+  vec_sort(&vect, cmpr);
 
   // then
   size_t vect_size = vec_size(&vect);
@@ -200,7 +200,7 @@ void vec_sort_santiy_test(int *arr, size_t arr_size) {
 
 void vec_iter_empty_vec_test(void) {
   // given
-  struct vec vect = vec_create(sizeof(int), NULL, cmpr);
+  struct vec vect = vec_create(sizeof(int), NULL);
 
   // when
   void *begin = vec_iter_begin(&vect);

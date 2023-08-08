@@ -276,13 +276,6 @@ static inline void ascii_str_destroy_internal(void *ascii_str) {
   ascii_str_destroy(ascii_str);
 }
 
-static int ascii_str_cmpr(void const *_a, void const *_b) {
-  // problematic but necessary
-  struct ascii_str *a = (void *)_a;
-  struct ascii_str *b = (void *)_b;
-  return strcmp(ascii_str_c_str(a), ascii_str_c_str(b));
-}
-
 struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern) {
   // create a lookup table for all ascii chars
   bool lookup[UCHAR_MAX] = {0};
@@ -290,7 +283,7 @@ struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *res
     lookup[(unsigned char)*pattern] = true;
   }
 
-  struct vec slices = vec_create(sizeof *ascii_str, ascii_str_destroy_internal, ascii_str_cmpr);
+  struct vec slices = vec_create(sizeof *ascii_str, ascii_str_destroy_internal);
 
   char const *walker = ascii_str_c_str(ascii_str);
   if (!walker) return slices;

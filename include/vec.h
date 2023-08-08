@@ -17,7 +17,6 @@ struct vec {
   void *_data;
 
   void (*_destroy)(void *_element);
-  int (*_cmpr)(void const *_a, void const *_b);
 };
 
 /**
@@ -27,14 +26,11 @@ struct vec {
  * @param[in] _destroy a pointer to a function which takes a `void *` and returns `void`. if the pointer isn't `NULL` -
  * the function will be called on each of the `vec`'s elements. make sure to pass a `destroy` function if your elements
  * contains a pointer to some heap allocated data.
- * @param[in] _cmpr a pointer to a function comparing `2` elements in the vector. this function ptr must not be `NULL`.
- * the function which takes `2` `void const *` and returns a *positive* integer if `_a > _b`,
- * *negative* integer if `_a < _b` or `0` if `_a == _b`.
  *
  * @return `struct vec` - a vec object. if `data_size` is 0 a NULL will be returned. if `data_size` is too big to fit
  * `VEC_INIT_CAPACITY` elements withing the vector - a `NULL` will be returned
  */
-struct vec vec_create(size_t data_size, void (*destroy)(void *_element), int (*cmpr)(void const *_a, void const *_b));
+struct vec vec_create(size_t data_size, void (*destroy)(void *_element));
 
 /**
  * @brief destroys a `vec` object and all of its undelaying data. if `destroy` isn't `NULL` - calls it on each of the
@@ -102,10 +98,14 @@ void *vec_at(struct vec *vec, size_t pos);
  *
  * @param[in] vec a `vec` object to be searched in.
  * @param[in] element a *pointer* to an element to be looked for.
+ * @param[in] cmpr a pointer to a function comparing `2` elements in the vector. this function ptr must not be `NULL`.
+ * the function which takes `2` `void const *` and returns a *positive* integer if `_a > _b`,
+ * *negative* integer if `_a < _b` or `0` if `_a == _b`.
+ *
  * @return `void *` - a pointer to the first ocurrence of such element. if no such element was found - a `NULL` pointer
  * will be returned.
  */
-void *vec_find(struct vec *vec, void const *element);
+void *vec_find(struct vec *restrict vec, void const *restrict element, int (*cmpr)(void const *_a, void const *_b));
 
 /**
  * @brief reserves a space for `count` elements. returns the new `vec::capacity`.
@@ -149,7 +149,7 @@ size_t vec_resize(struct vec *vec, size_t num_elements);
  * @return `true` on success.
  * @return `false` on failure.
  */
-bool vec_push(struct vec *vec, void const *element);
+bool vec_push(struct vec *restrict vec, void const *restrict element);
 
 /**
  * @brief pops the last element of the `vec`.
@@ -188,7 +188,7 @@ void *vec_remove_at(struct vec *vec, size_t pos);
  * @return `void *` - a pointer to a *copy* of the replaced element. said copy must be free'd independently. if `pos`
  * exceeds `vec::size` - `NULL` pointer will be returned.
  */
-void *vec_replace(struct vec *vec, void const *element, size_t pos);
+void *vec_replace(struct vec *restrict vec, void const *restrict element, size_t pos);
 
 /**
  * @brief shrinks the underlying buffer to fit exaclty (depends on the allocator in use) `vec::_n_elem` elements.
@@ -204,8 +204,11 @@ size_t vec_shrink(struct vec *vec);
  * @brief sorts the `vec`.
  *
  * @param[in] vec a `vec` object.
+ * @param[in] cmpr a pointer to a function comparing `2` elements in the vector. this function ptr must not be `NULL`.
+ * the function which takes `2` `void const *` and returns a *positive* integer if `_a > _b`,
+ * *negative* integer if `_a < _b` or `0` if `_a == _b`.
  */
-void vec_sort(struct vec *vec);
+void vec_sort(struct vec *vec, int (*cmpr)(void const *_a, void const *_b));
 
 /* iterator related function. a vec can in any given moment have exactly 1
  * iterator. calling either vec_iter_begin or vec_iter_end to get a new iterator
@@ -238,4 +241,4 @@ void *vec_iter_end(struct vec *vec);
  * @return `void *` the new tramsformed iterator object. if `iter` is `NULL` or `vec` are `NULL` pointer will be
  * returned.
  */
-void *vec_iter_next(struct vec *vec, void *iter);
+void *vec_iter_next(struct vec *restrict vec, void *restrict iter);

@@ -4,17 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct vec vec_create(size_t data_size, void (*destroy)(void *_element), int (*cmpr)(void const *_a, void const *_b)) {
+struct vec vec_create(size_t data_size, void (*destroy)(void *_element)) {
   // limit check
   if (data_size == 0) goto empty_vec;
-  if (!cmpr) goto empty_vec;
   if ((SIZE_MAX >> 1) / data_size < VECT_INIT_CAPACITY) goto empty_vec;
 
   void *data = calloc(VECT_INIT_CAPACITY * data_size, 1);
   if (!data) goto empty_vec;
 
   return (struct vec){._capacity = VECT_INIT_CAPACITY,
-                      ._cmpr = cmpr,
                       ._destroy = destroy,
                       ._data = data,
                       ._data_size = data_size,
@@ -52,19 +50,18 @@ bool vec_empty(struct vec const *vec) {
 }
 
 void *vec_at(struct vec *vec, size_t pos) {
-  if (!vec) return NULL;
-  if (!vec->_data) return NULL;
+  if (!vec || !vec->_data) return NULL;
   if (pos >= vec->_n_elem) return NULL;
 
   return (char *)vec->_data + (pos * vec->_data_size);
 }
 
-void *vec_find(struct vec *vec, void const *element) {
-  if (!vec) return NULL;
-  if (!vec->_data) return NULL;
+void *vec_find(struct vec *restrict vec, void const *restrict element, int (*cmpr)(void const *_a, void const *_b)) {
+  if (!vec || !vec->_data) return NULL;
+  if (!cmpr) return NULL;
 
   for (size_t i = 0; i < vec->_n_elem; i++) {
-    int ret = vec->_cmpr(element, (char *)vec->_data + (i * vec->_data_size));
+    int ret = cmpr(element, (char *)vec->_data + (i * vec->_data_size));
     if (ret == 0) return vec_at(vec, i);
   }
 
@@ -130,7 +127,7 @@ size_t vec_resize(struct vec *vec, size_t num_elements) {
   return vec->_capacity;
 }
 
-bool vec_push(struct vec *vec, void const *element) {
+bool vec_push(struct vec *restrict vec, void const *restrict element) {
   if (!vec || !vec->_data) return false;
   if (vec->_n_elem == vec->_capacity) {
     if (!vec_resize_internal(vec)) return false;
@@ -163,7 +160,7 @@ void *vec_remove_at(struct vec *vec, size_t pos) {
   return old;
 }
 
-void *vec_replace(struct vec *vec, void const *element, size_t pos) {
+void *vec_replace(struct vec *restrict vec, void const *restrict element, size_t pos) {
   void *tmp = vec_at(vec, pos);
   if (!tmp) return NULL;
 
@@ -188,10 +185,11 @@ size_t vec_shrink(struct vec *vec) {
   return vec->_capacity;
 }
 
-void vec_sort(struct vec *vec) {
+void vec_sort(struct vec *vec, int (*cmpr)(void const *_a, void const *_b)) {
   if (!vec || !vec->_data) return;
+  if (!cmpr) return;
 
-  qsort(vec->_data, vec->_n_elem, vec->_data_size, vec->_cmpr);
+  qsort(vec->_data, vec->_n_elem, vec->_data_size, cmpr);
 }
 
 void *vec_iter_begin(struct vec *vec) {
@@ -206,7 +204,7 @@ void *vec_iter_end(struct vec *vec) {
   return (char *)vec->_data + vec->_n_elem * vec->_data_size;
 }
 
-void *vec_iter_next(struct vec *vec, void *iter) {
+void *vec_iter_next(struct vec *restrict vec, void *restrict iter) {
   if (!vec || !iter) return NULL;
 
   return vec_empty(vec) ? vec_iter_end(vec) : (char *)iter + vec->_data_size;
