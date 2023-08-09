@@ -274,10 +274,10 @@ static void ascii_str_index_of_non_existing_char_test(char const *str, char cons
   struct ascii_str ascii_str = ascii_str_from_str(str);
 
   // when
-  size_t ret = ascii_str_index_of(&ascii_str, c);
+  int ret = ascii_str_index_of(&ascii_str, c);
 
   // then
-  assert(ret == DS_EINVAL);
+  assert(ret == DS_ERROR);
 
   // cleanup
   ascii_str_destroy(&ascii_str);
