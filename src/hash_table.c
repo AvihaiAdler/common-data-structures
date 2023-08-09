@@ -10,107 +10,80 @@
 #define TABLE_INIT_CAPACITY 32
 
 /* 'bucket' */
-struct node {
+struct kv_pair {
   void *key;
   void *value;
 
-  // the size of key in bytes
-  size_t key_size;
-  // the size of value in bytes
-  size_t value_size;
-
-  struct node *next;
-  struct node *prev;
+  struct kv_pair *next;
+  struct kv_pair *prev;
 };
 
 /* entry */
 struct entry {
-  struct node *head;
-  struct node *tail;
-  struct node *tmp;  // used internally in the rehash process
+  struct kv_pair *head;
+  struct kv_pair *tail;
+  struct kv_pair *tmp;  // used internally in the rehash process
 };
 
-/* hash table struct */
-struct hash_table {
-  // total number of entries
-  size_t capacity;
+struct hash_table table_create(size_t key_size,
+                               size_t value_size,
+                               int (*cmpr)(void const *, void const *),
+                               size_t (*hash)(void const *hashable, size_t size),
+                               void (*destroy_key)(void *),
+                               void (*destroy_value)(void *)) {
+  if (!key_size) goto empty_table;
+  if (!cmpr) goto empty_table;
 
-  // total number of 'buckets'
-  size_t num_of_elements;
+  struct vec entries = vec_create(sizeof(struct entry), NULL);
+  entries._n_elem = vec_resize(&entries, TABLE_INIT_CAPACITY);
 
-  struct vec *entries;
+  return (struct hash_table){._cmpr = cmpr,
+                             ._destroy_key = destroy_key,
+                             ._destroy_value = destroy_value,
+                             ._entries = entries,
+                             ._hash = hash,
+                             ._key_size = key_size,
+                             ._n_elem = 0,
+                             ._value_size = value_size};
 
-  int (*cmpr)(void const *key, void const *other);
-  void (*destroy_key)(void *key);
-  void (*destroy_value)(void *value);
-};
-
-struct hash_table *table_init(int (*cmpr)(void const *key, void const *other),
-                              void (*destroy_key)(void *key),
-                              void (*destroy_value)(void *value)) {
-  if (!cmpr) return NULL;
-
-  struct hash_table *table = calloc(1, sizeof *table);
-  if (!table) return NULL;
-
-  table->entries = vec_init(sizeof(struct entry), NULL);
-  if (!table->entries) {
-    free(table);
-    return NULL;
-  }
-
-  table->num_of_elements = 0;
-  table->cmpr = cmpr;
-  table->destroy_key = destroy_key;
-  table->destroy_value = destroy_value;
-
-  // table::capacity is at least INIT_CAPACITY (might be higher if vec init
-  // capacity > INIT_CAPACITY)
-  table->capacity = vec_resize(table->entries, TABLE_INIT_CAPACITY);
-  return table;
+empty_table:
+  return (struct hash_table){0};
 }
 
 void table_destroy(struct hash_table *table) {
-  if (!table) return;
-  if (!table->entries) return;
+  if (!table || !vec_data(&table->_entries)) return;
 
-  for (size_t i = 0; i < table->capacity; i++) {
+  for (size_t i = 0; i < vec_capacity(&table->_entries); i++) {
     // destroy all buckets in an entry
-    struct entry *entry = vec_at(table->entries, i);
-    for (struct node *bucket = entry->head; bucket; entry->head = bucket) {
+    struct entry *entry = vec_at(&table->_entries, i);
+    for (struct kv_pair *bucket = entry->head; bucket; entry->head = bucket) {
       bucket = bucket->next;
 
-      if (table->destroy_key) { table->destroy_key(entry->head->key); }
-
-      if (table->destroy_value) { table->destroy_value(entry->head->value); }
+      if (table->_destroy_key) { table->_destroy_key(entry->head->key); }
+      if (table->_destroy_value) { table->_destroy_value(entry->head->value); }
 
       if (entry->head->key) free(entry->head->key);
       if (entry->head->value) free(entry->head->value);
       free(entry->head);
     }
   }
-  // vec_destroy(table->entries, NULL);
-  vec_destroy(table->entries);
-  free(table);
+
+  vec_destroy(&table->_entries);
 }
 
-bool table_empty(struct hash_table *table) {
-  if (!table) return false;
-  return table->num_of_elements == 0;
+bool table_empty(struct hash_table const *table) {
+  return table ? table->_n_elem == 0 : true;
 }
 
-size_t table_size(struct hash_table *table) {
-  if (!table) return 0;
-  return table->num_of_elements;
+size_t table_size(struct hash_table const *table) {
+  return table ? table->_n_elem : 0;
 }
 
 size_t table_capacity(struct hash_table *table) {
-  if (!table) return 0;
-  return table->capacity;
+  return table ? vec_capacity(&table->_entries) : 0;
 }
 
-/* used internally to hash the keys (slightly modified djd2 by Dan Bernstein)
- */
+/* used internally to hash the keys (slightly modified djd2 by Dan Bernstein) */
 static inline size_t hash(void const *key, size_t key_size) {
   const unsigned char *k = key;
   size_t hash = 5381;
@@ -120,56 +93,60 @@ static inline size_t hash(void const *key, size_t key_size) {
   return hash;
 }
 
+static inline size_t hash_wrapper(struct hash_table const *table, void const *key) {
+  return (table->_hash ? table->_hash(key, table->_key_size) : hash(key, table->_key_size)) %
+         vec_capacity(&table->_entries);
+}
+
 /* util functions */
 /* used internally to create a node and init it with a key-value pair. returns
  * a pointer to a heap allocated node which holds the copies of key and value.
  * both node::key, node::value and node must be free'd. the function assumes
  * key
  * != NULL and key_size > 0 */
-static inline struct node *init_node(void const *key, size_t key_size, void const *value, size_t value_size) {
-  struct node *node = calloc(1, sizeof *node);
-  if (!node) return NULL;
+static inline struct kv_pair *kv_pair_create(void const *key, size_t key_size, void const *value, size_t value_size) {
+  void *_key = malloc(key_size);
+  if (!_key) { return NULL; }
 
-  node->key = calloc(key_size, 1);
-  if (!node->key) {
-    free(node);
-    return NULL;
-  }
-
-  // else - if value_size == 0: node::value will remain NULL
+  // else - if value_size == 0: kv_pair::value will remain NULL
+  void *_value = NULL;
   if (value_size) {
-    node->value = calloc(value_size, 1);
-    if (!node->value) {
-      free(node->key);
-      free(node);
+    _value = malloc(value_size);
+    if (!_value) {
+      free(_key);
       return NULL;
     }
-    memcpy(node->value, value, value_size);
+    memcpy(_value, value, value_size);
   }
 
-  node->key_size = key_size;
-  node->value_size = value_size;
+  memcpy(_key, key, key_size);
 
-  memcpy(node->key, key, node->key_size);
-  return node;
+  struct kv_pair *kv_pair = malloc(sizeof *kv_pair);
+  if (!kv_pair) {
+    free(_key);
+    free(_value);
+    return NULL;
+  }
+  *kv_pair = (struct kv_pair){.key = _key, .value = _value};
+
+  return kv_pair;
 }
 
 /* used internally to replace an existing mapping for a certain key. returns a
  * pointer to the previous key which has to be free'd. the
  * function assumes the node passed in isn't NULL */
-static inline void *node_replace_value(struct node *node, void const *value, size_t value_size) {
-  void *old_value = node->value;
-  if (value_size) {
-    void *tmp_value = calloc(value_size, 1);
-    if (!tmp_value) return NULL;
+static inline void kv_pair_replace_value(struct kv_pair *restrict kv_pair,
+                                         void const *restrict value,
+                                         size_t value_size,
+                                         void *old_value) {
+  void *_old_value = kv_pair->value;
+  if (_old_value && value_size) { memcpy(old_value, _old_value, value_size); }
 
-    memcpy(tmp_value, value, value_size);
-    node->value = tmp_value;
+  if (value_size) {
+    memcpy(kv_pair->value, value, value_size);
   } else {
-    node->value = NULL;
+    kv_pair->value = NULL;
   }
-  node->value_size = value_size;
-  return old_value;
 }
 
 /* used internally to prepend a bucket to an entry. retuns true on success,
@@ -179,27 +156,27 @@ static inline bool entry_prepend(struct entry *entry,
                                  size_t key_size,
                                  void const *value,
                                  size_t value_size) {
-  struct node *node = init_node(key, key_size, value, value_size);
-  if (!node) return false;
+  struct kv_pair *kv_pair = kv_pair_create(key, key_size, value, value_size);
+  if (!kv_pair) return false;
 
   if (!entry->head) {  // entry is empty
-    entry->tail = node;
+    entry->tail = kv_pair;
   } else {
-    entry->head->prev = node;
+    entry->head->prev = kv_pair;
   }
-  node->next = entry->head;
-  entry->head = node;
+  kv_pair->next = entry->head;
+  entry->head = kv_pair;
   return true;
 }
 
 /* used internally to check whether an entry contains a mapping for a certain
  * key. returns a pointer to the node which contains the same key, or NULL if
  * no such node found */
-static inline struct node *entry_contains(struct entry *entry,
-                                          void const *key,
-                                          int (*cmpr)(void const *key, void const *other)) {
+static inline struct kv_pair *entry_contains(struct entry *entry,
+                                             void const *key,
+                                             int (*cmpr)(void const *key, void const *other)) {
   if (!entry->head) return NULL;
-  for (struct node *tmp = entry->head; tmp; tmp = tmp->next) {
+  for (struct kv_pair *tmp = entry->head; tmp; tmp = tmp->next) {
     if (cmpr(key, tmp->key) == 0) return tmp;
   }
   return NULL;
@@ -208,17 +185,17 @@ static inline struct node *entry_contains(struct entry *entry,
 /* used internally to resize (and rehash) the table with minimum
  * allocations/frees */
 static inline bool resize_table(struct hash_table *table) {
-  if (!table) return false;
-  if (!table->entries) return false;
+  if (!table || !vec_data(&table->_entries)) return false;
 
-  size_t new_capacity = vec_resize(table->entries, table->capacity << TABLE_GROWTH);
-  if (new_capacity == table->capacity) return false;
+  size_t old_capacity = vec_capacity(&table->_entries);
+  size_t new_capacity = vec_resize(&table->_entries, old_capacity << TABLE_GROWTH);
+  if (new_capacity == old_capacity) return false;
 
-  table->capacity = new_capacity;
+  table->_entries._n_elem = new_capacity;
 
   // rehash every key-value pair
-  for (size_t pos = 0; pos < table->capacity; pos++) {
-    struct entry *entry = vec_at(table->entries, pos);
+  for (size_t pos = 0; pos < new_capacity; pos++) {
+    struct entry *entry = vec_at(&table->_entries, pos);
     if (!entry->head) continue;  // entry is empty
 
     /* stopping condition. we will iterate over every bucket until we reach
@@ -226,7 +203,7 @@ static inline bool resize_table(struct hash_table *table) {
     entry->tmp = entry->tail;
 
     // rehash every bucket in a given entry
-    for (struct node *tmp = entry->head; tmp; tmp = tmp->next) {
+    for (struct kv_pair *tmp = entry->head; tmp; tmp = tmp->next) {
       // fix node 'relations'
       if (!tmp->next) {  // this bucket is the only bucket in the entry
         entry->head = entry->tail = NULL;
@@ -235,8 +212,9 @@ static inline bool resize_table(struct hash_table *table) {
         entry->head->prev = NULL;
       }
 
-      size_t new_pos = hash(tmp->key, tmp->key_size) % table->capacity;
-      struct entry *new_entry = vec_at(table->entries, new_pos);
+      size_t new_pos = hash_wrapper(table, tmp->key);
+
+      struct entry *new_entry = vec_at(&table->_entries, new_pos);
 
       if (!new_entry->head) {  // new entry is empty
         new_entry->head = new_entry->tail = tmp;
@@ -258,47 +236,46 @@ static inline bool resize_table(struct hash_table *table) {
   return true;
 }
 
-void *table_put(struct hash_table *table, void const *key, size_t key_size, void const *value, size_t value_size) {
-  if (!table) return NULL;
-  if (!table->entries) return NULL;
-  if (!key && !key_size) return NULL;
+enum ds_error table_put(struct hash_table *restrict table, void const *key, void const *new_value, void *old_value) {
+  if (!table || !vec_data(&table->_entries)) return DS_ERROR;
+  if (!key || !old_value) return DS_ERROR;
 
   // load factor exceeded
-  if (table->capacity * LOAD_FACTOR < table->num_of_elements + 1) {
-    if (!resize_table(table)) return NULL;
+  if (vec_capacity(&table->_entries) * LOAD_FACTOR < table->_n_elem + 1) {
+    if (!resize_table(table)) return DS_ERROR;
   }
 
   // get the entry index from the hash
-  size_t pos = hash(key, key_size) % table->capacity;
-  struct entry *entry = vec_at(table->entries, pos);
-  if (!entry) return NULL;
+  size_t pos = hash_wrapper(table, key);
+
+  struct entry *entry = vec_at(&table->_entries, pos);
+  if (!entry) return DS_OUT_OF_BOUNDS;
 
   // there's an existing mapping for this key
-  struct node *contains_same_key = entry_contains(entry, key, table->cmpr);
-  if (contains_same_key) { return node_replace_value(contains_same_key, value, value_size); }
+  struct kv_pair *same_key = entry_contains(entry, key, table->_cmpr);
+  if (same_key) {
+    kv_pair_replace_value(same_key, new_value, table->_value_size, old_value);
+    return DS_VALUE_OK;
+  }
 
   // there isn't an existing mapping for this key
-  bool success = entry_prepend(entry, key, key_size, value, value_size);
-  if (!success) return NULL;
+  bool success = entry_prepend(entry, key, table->_key_size, new_value, table->_value_size);
+  if (!success) return DS_NO_MEM;
 
-  table->num_of_elements++;
-  return NULL;
+  table->_n_elem++;
+  return DS_OK;
 }
 
-size_t table_remove(struct hash_table *table, void const *key, size_t key_size, void *value, size_t value_size) {
-  if (!table) return DS_EINVAL;
-  if (!table->entries) return DS_EINVAL;
-  if (!key || !key_size) return DS_EINVAL;
-  if (!value || !value_size) return DS_EINVAL;
+enum ds_error table_remove(struct hash_table *restrict table, void const *restrict key, void *restrict old_value) {
+  if (!table || !vec_data(&table->_entries)) return DS_ERROR;
+  if (!key) return DS_ERROR;
 
-  size_t pos = hash(key, key_size) % table->capacity;
-  struct entry *entry = vec_at(table->entries, pos);
-  if (!entry) return DS_EINVAL;
+  size_t pos = hash_wrapper(table, key);
+  struct entry *entry = vec_at(&table->_entries, pos);
+  if (!entry) return DS_OUT_OF_BOUNDS;
 
-  struct node *removed = entry_contains(entry, key, table->cmpr);
-  if (!removed) return DS_EINVAL;  // the table doesn't contains the key `key`
-
-  if (removed->value_size != value_size) return DS_EINVAL;
+  struct kv_pair *removed = entry_contains(entry, key, table->_cmpr);
+  if (!removed) return DS_NOT_FOUND;  // the table doesn't contains the key `key`
 
   // the node is the only node in the entry
   if (!removed->next && !removed->prev) {
@@ -314,32 +291,34 @@ size_t table_remove(struct hash_table *table, void const *key, size_t key_size, 
     removed->next->prev = removed->prev;
   }
 
-  memcpy(value, removed->value, value_size);
+  enum ds_error ret = DS_OK;
+  if (!old_value && table->_destroy_value) {
+    table->_destroy_value(removed->value);
+  } else if (old_value) {
+    memcpy(old_value, removed->value, table->_value_size);
+    ret = DS_VALUE_OK;
+  }
 
-  if (table->destroy_key) { table->destroy_key(removed->key); }
+  if (table->_destroy_key) { table->_destroy_key(removed->key); }
   free(removed->key);
   free(removed->value);
   free(removed);
-  table->num_of_elements--;
+  table->_n_elem--;
 
-  return 0;
+  return ret;
 }
 
-size_t table_get(struct hash_table *table, void const *key, size_t key_size, void *value, size_t value_size) {
-  if (!table) return DS_EINVAL;
-  if (!table->entries) return DS_EINVAL;
-  if (!key || !key_size) return DS_EINVAL;
-  if (!value || !value_size) return DS_EINVAL;
+enum ds_error table_get(struct hash_table *restrict table, void const *restrict key, void *restrict value) {
+  if (!table || !vec_data(&table->_entries)) return DS_ERROR;
+  if (!key || !value) return DS_ERROR;
 
-  size_t pos = hash(key, key_size) % table->capacity;
-  struct entry *entry = vec_at(table->entries, pos);
-  if (!entry) return DS_EINVAL;
+  size_t pos = hash_wrapper(table, key);
+  struct entry *entry = vec_at(&table->_entries, pos);
+  if (!entry) return DS_OUT_OF_BOUNDS;
 
-  struct node *looked_for = entry_contains(entry, key, table->cmpr);
-  if (!looked_for) return DS_EINVAL;
+  struct kv_pair *looked_for = entry_contains(entry, key, table->_cmpr);
+  if (!looked_for) return DS_NOT_FOUND;
 
-  if (value_size != looked_for->value_size) return DS_EINVAL;
-
-  memcpy(value, looked_for->value, value_size);
-  return 0;
+  memcpy(value, looked_for->value, table->_value_size);
+  return DS_VALUE_OK;
 }

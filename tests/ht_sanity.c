@@ -1,237 +1,179 @@
 #include <assert.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+#include "ascii_str.h"
 #include "hash_table.h"
 
-#define LOAD_FACTOR 0.7
-#define TABLE_GROWTH 1
-#define TABLE_INIT_CAPACITY 32
+#define LOG(file, fmt, ...)                                                       \
+  do {                                                                            \
+    fprintf(file, "%s %s:%d\n\t" fmt, __FILE__, __func__, __LINE__, __VA_ARGS__); \
+  } while (0);
 
-struct string {
-  size_t str_size;
-  char *str;
-};
-
-// strings related functions
-int generate_random(int min, int max) {
-  int range = max - min + 1;
+static int generate_random(int min, int max) {
+  int range = max - min;
   double rand_val = rand() / (1.0 + RAND_MAX);
   return (int)(rand_val * range + min);
 }
 
-char *generate_random_str(size_t len) {
-  char *str = calloc(len + 1, 1);
-  assert(str);
-  for (size_t i = 0; i < len; i++) {
-    str[i] = 'a' + generate_random(0, 25);
+static size_t hash(void const *key, size_t size) {
+  (void)size;
+
+  struct ascii_str *str = (void *)key;
+  char const *c_str = ascii_str_c_str(str);
+
+  size_t hash = 5381;
+  for (size_t i = 0; i < ascii_str_len(str); i++) {
+    hash = hash * 33 + c_str[i];
   }
-  return str;
+  return hash;
 }
 
-char **generate_keys(size_t num_of_keys) {
-  char **keys = calloc(num_of_keys, sizeof *keys);
-  assert(keys);
-
-  for (size_t i = 0; i < num_of_keys; i++) {
-    size_t len = (size_t)generate_random(10, 20);
-    keys[i] = generate_random_str(len);
-    assert(keys[i]);
-  }
-  return keys;
+static int cmpr(void const *left, void const *right) {
+  struct ascii_str *_left = (void *)left;
+  struct ascii_str *_right = (void *)right;
+  return strcmp(ascii_str_c_str(_left), ascii_str_c_str(_right));
 }
 
-void destroy_keys(char **keys, size_t num_of_keys) {
-  if (!keys) return;
-  for (size_t i = 0; i < num_of_keys; i++) {
-    if (keys[i]) free(keys[i]);
-  }
-  free(keys);
+static void destroy_key(void *key) {
+  struct ascii_str *_key = key;
+  ascii_str_destroy(_key);
 }
 
-struct string generate_random_string(size_t len) {
-  char *str = generate_random_str(len);
-  return (struct string){.str_size = len, .str = str};
-}
+static struct hash_table before(struct ascii_str *keys, int *values, int *replaced, size_t count) {
+  char const *alphabet = "abcdefghijklmnopqrstuvwxyz";
+  size_t letters_count = strlen(alphabet);
 
-struct string *generate_strings(size_t num_of_values) {
-  struct string *strings = calloc(num_of_values, sizeof *strings);
-  assert(strings);
+  struct hash_table table = table_create(sizeof(struct ascii_str), sizeof(int), cmpr, hash, destroy_key, NULL);
+  for (size_t i = 0; i < count; i++) {
+    int rand_str_len = generate_random(1, 100);
+    int rand_value = generate_random(0, INT_MAX);
 
-  for (size_t i = 0; i < num_of_values; i++) {
-    size_t len = (size_t)generate_random(10, 20);
-    struct string str = generate_random_string(len);
-    memcpy(&strings[i], &str, sizeof strings[i]);
-  }
-  return strings;
-}
+    struct ascii_str str = ascii_str_create(NULL, 0);
+    for (int j = 0; j < rand_str_len; j++) {
+      int rand_idx = generate_random(0, letters_count);
+      ascii_str_push(&str, alphabet[rand_idx]);
+    }
 
-void destroy_strings(struct string *strings, size_t num_of_strings) {
-  if (!strings) return;
-  for (size_t i = 0; i < num_of_strings; i++) {
-    if (strings[i].str) free(strings[i].str);
-  }
-  free(strings);
-}
+    keys[i] = str;
+    values[i] = rand_value;
 
-int cmpr_keys(const void *key, const void *other) {
-  const char *str_key = key;
-  const char *str_other = other;
-  return strcmp(str_key, str_other);
-}
-
-int cmpr_values(const void *val, const void *other) {
-  const struct string *str = val;
-  const struct string *str_other = other;
-  if (str->str_size != str_other->str_size) return -1;
-  return strcmp(str->str, str_other->str);
-}
-
-void str_destroy(void *str) {
-  struct string *s = str;
-  if (s && s->str) free(s->str);
-}
-
-// unit tests
-struct hash_table *before(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
-  assert(keys_size == strings_size);
-  struct hash_table *table = table_init(cmpr_keys, NULL, NULL);
-  assert(table);
-  assert(table_size(table) == 0);
-
-  for (size_t i = 0; i < keys_size; i++) {
-    struct string *old = table_put(table, keys[i], strlen(keys[i]) + 1, &strings[i], sizeof strings[i]);
-    assert(!old);
+    int value;
+    enum ds_error err = table_put(&table, &str, &rand_value, &value);
+    LOG(stderr, "%s : %d\n", ascii_str_c_str(&str), err);
+    if (err == DS_VALUE_OK) { replaced[i] = 1; }
   }
 
   return table;
 }
 
-void after(struct hash_table *table) {
+void after(struct hash_table *table, struct ascii_str *keys, int *replaced, size_t count) {
   table_destroy(table);
-}
 
-void table_put_empty_table_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
-  // given
-  struct hash_table *table = before(keys, keys_size, strings, strings_size);
-
-  // then
-  assert(table_size(table) == keys_size);
-
-  // cleanup
-  after(table);
-}
-
-void table_put_with_replace_value_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
-  // given
-  struct hash_table *table = before(keys, keys_size, strings, strings_size);
-
-  char *another_str = "not the original string";
-  struct string another_string_same_key = {.str_size = strlen(another_str), .str = another_str};
-  // when
-  struct string *old =
-    table_put(table, keys[0], strlen(keys[0]), &another_string_same_key, sizeof another_string_same_key);
-  // then
-  assert(old);
-  assert(cmpr_values(old, strings) == 0);
-
-  // cleanup
-  free(old);
-  after(table);
-}
-
-void table_put_with_resize_test(size_t size) {
-  // precondition
-  assert(size > TABLE_INIT_CAPACITY * LOAD_FACTOR);
-
-  // given
-  char **keys = generate_keys(size);
-
-  struct string *strings = generate_strings(size);
-
-  struct hash_table *table = table_init(cmpr_keys, NULL, str_destroy);
-
-  // when
-  for (size_t i = 0; i < size; i++) {
-    table_put(table, keys[i], strlen(keys[i]) + 1, &strings[i], sizeof strings[i]);
+  for (size_t i = 0; i < count; i++) {
+    if (replaced[i]) ascii_str_destroy(keys + i);
   }
-
-  // then
-  assert(table_capacity(table) > TABLE_INIT_CAPACITY);
-  for (size_t i = 0; i < size; i++) {
-    struct string str = {0};
-    size_t ret = table_get(table, keys[i], strlen(keys[i]) + 1, &str, sizeof str);
-    if (ret == 0) assert(cmpr_values(&str, &strings[i]) == 0);
-  }
-
-  // cleanup
-  table_destroy(table);
-  free(strings);
-  destroy_keys(keys, size);
 }
 
-void table_remove_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
-  // given
-  struct hash_table *table = before(keys, keys_size, strings, strings_size);
+void table_put_empty_table_test(struct ascii_str key, int value) {
+  struct hash_table table = table_create(sizeof(struct ascii_str), sizeof(int), cmpr, hash, destroy_key, NULL);
 
-  size_t old_size = table_size(table);
+  int old;
+  assert(table_put(&table, &key, &value, &old) == DS_OK);
+  assert(!table_empty(&table));
+  assert(table_size(&table) == 1);
 
-  // when
-  struct string first = {0};
-  size_t ret = table_remove(table, keys[0], strlen(keys[0]) + 1, &first, sizeof first);
-  assert(ret != DS_EINVAL);
-
-  struct string last = {0};
-  ret = table_remove(table, keys[keys_size - 1], strlen(keys[keys_size - 1]) + 1, &last, sizeof last);
-  assert(ret != DS_EINVAL);
-
-  struct string mid = {0};
-  ret = table_remove(table, keys[keys_size / 2], strlen(keys[keys_size / 2]) + 1, &mid, sizeof mid);
-  assert(ret != DS_EINVAL);
-
-  // then
-  assert(table_size(table) < old_size);
-  assert(cmpr_values(&first, &strings[0]) == 0);
-  assert(cmpr_values(&last, &strings[strings_size - 1]) == 0);
-  assert(cmpr_values(&mid, &strings[strings_size / 2]) == 0);
-
-  after(table);
+  table_destroy(&table);
 }
 
-void table_get_test(char **keys, size_t keys_size, struct string *strings, size_t strings_size) {
-  // given
-  struct hash_table *table = before(keys, keys_size, strings, strings_size);
+void table_put_with_resize_test(void) {
+  enum local_size {
+    SIZE = 100,
+  };
 
-  // when
-  struct string val = {0};
-  size_t ret = table_get(table, keys[0], strlen(keys[0]) + 1, &val, sizeof val);
+  struct ascii_str keys[SIZE] = {0};
+  int values[SIZE] = {0};
+  int replaced[SIZE] = {0};
 
-  // then
-  assert(ret != DS_EINVAL);
-  assert(cmpr_values(&val, &strings[0]) == 0);
+  struct hash_table table = before(keys, values, replaced, SIZE);
 
-  // cleanup
-  after(table);
+  assert(!table_empty(&table));
+  assert(table_size(&table) >= SIZE);
+
+  after(&table, keys, replaced, SIZE);
+}
+
+void table_remove_test(void) {
+  enum local_size {
+    SIZE = 100,
+  };
+
+  struct ascii_str keys[SIZE] = {0};
+  int values[SIZE] = {0};
+  int replaced[SIZE] = {0};
+
+  struct hash_table table = before(keys, values, replaced, SIZE);
+
+  struct ascii_str removed = ascii_str_create(ascii_str_c_str(keys), (int)ascii_str_len(keys));
+
+  int old_first;
+  enum ds_error err = table_remove(&table, keys, &old_first);
+  LOG(stderr, "%s %d\n", ascii_str_c_str(&removed), err);
+
+  assert(err == DS_VALUE_OK);
+  assert(old_first == values[0]);
+
+  // key has already been removed
+  assert(table_remove(&table, &removed, &old_first) == DS_NOT_FOUND);
+
+  struct ascii_str non_existing_key = ascii_str_create(ascii_str_c_str(keys + SIZE / 2), STR_C_STR);
+  ascii_str_push(&non_existing_key, '.');
+  assert(table_remove(&table, &non_existing_key, &old_first) == DS_NOT_FOUND);
+
+  after(&table, keys, replaced, SIZE);
+  ascii_str_destroy(&non_existing_key);
+  ascii_str_destroy(&removed);
+}
+
+void table_get_test(void) {
+  enum local_size {
+    SIZE = 100,
+  };
+
+  struct ascii_str keys[SIZE] = {0};
+  int values[SIZE] = {0};
+  int replaced[SIZE] = {0};
+
+  struct hash_table table = before(keys, values, replaced, SIZE);
+
+  int old_first;
+  enum ds_error err = table_get(&table, keys, &old_first);
+  LOG(stderr, "%s : %d\n", ascii_str_c_str(keys), err);
+  assert(err == DS_VALUE_OK);
+  assert(old_first == values[0]);
+
+  struct ascii_str removed = ascii_str_create(ascii_str_c_str(keys), (int)ascii_str_len(keys));
+
+  // key has already been removed
+  assert(table_remove(&table, keys, &old_first) == DS_VALUE_OK);
+  assert(table_get(&table, &removed, &old_first) == DS_NOT_FOUND);
+
+  struct ascii_str non_existing_key = ascii_str_create(ascii_str_c_str(keys + SIZE / 2), STR_C_STR);
+  ascii_str_push(&non_existing_key, '.');
+  assert(table_get(&table, &non_existing_key, &old_first) == DS_NOT_FOUND);
+
+  after(&table, keys, replaced, SIZE);
+  ascii_str_destroy(&non_existing_key);
+  ascii_str_destroy(&removed);
 }
 
 int main(void) {
   srand(time(NULL));
-  size_t num_of_keys = 5;
-  size_t num_of_strings = 5;
 
-  char **keys = generate_keys(num_of_keys);
-  assert(keys);
-
-  struct string *strings = generate_strings(num_of_strings);
-  assert(strings);
-
-  table_put_empty_table_test(keys, num_of_keys, strings, num_of_strings);
-  table_put_with_replace_value_test(keys, num_of_keys, strings, num_of_strings);
-  table_put_with_resize_test(TABLE_INIT_CAPACITY * LOAD_FACTOR + 1);
-  table_remove_test(keys, num_of_keys, strings, num_of_strings);
-  table_get_test(keys, num_of_keys, strings, num_of_strings);
-
-  destroy_keys(keys, num_of_keys);
-  destroy_strings(strings, num_of_strings);
+  table_put_empty_table_test(ascii_str_create("hello, world", STR_C_STR), 1);
+  table_remove_test();
+  table_get_test();
 }

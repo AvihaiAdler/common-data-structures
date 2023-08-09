@@ -2,110 +2,118 @@
 
 #include <stddef.h>
 
+#include "defines.h"
 #include "vec.h"
 
 /**
  * @file hash_table.h
  * @brief the definition of a hash table
+ *
+ * important note:
+ * the table stores _copies_ of whatever is passed into it. this means that storing pointers in it must
+ * be accounted for when writing the destructor / hash function for said ptr. e.g. if a map looks like `map<int, int *>`
+ * - the destructor for the value _must_ cast the ptr it gets to an `int **`. i.e.
+ * ```
+ * void destroy_value(void *value) {
+ *  int **_value = value;
+ *  free(*_value);
+ * }```
+ *
+ * storing a ptr into the table means the table take ownership of said ptr
  */
 
-struct hash_table;
+struct hash_table {
+  size_t _n_elem;
+  size_t _key_size;
+  size_t _value_size;
+
+  struct vec _entries;
+
+  int (*_cmpr)(void const *key, void const *other);
+  size_t (*_hash)(void const *key, size_t size);
+  void (*_destroy_key)(void *key);
+  void (*_destroy_value)(void *value);
+};
 
 /**
- * @brief creates a hash table object. returns a pointer to a hash table object on success or `NULL` on failure
+ * @brief creates a hash table object `map<K, V>`
  *
- * the hash table will be created with `INIT_CAPACITY` capacity. the function expects a cmpr function to compare between
- * 2 keys. a cmpr function should return a negative int if `key < other`, 0 if both are equal or a positive int if `key
- * > other`
- * the function also expects 2 destroy functions (which may be `NULL`). if they're not `NULL`, `table_destory` will call
- * them for evey key-value pair in the table. one should only pass in a destroy function if `key` or `value` *contains*
- * a pointer to a heap allocated memory
- *
- * @param[in] cmpr a compare function to compare 2 keys
- * @param[in] destroy_key a destroy function. used to destroy any heap allocated data *within* `key`
- * @param[in] destroy_value a destroy function. used to destroy any heap allocated data *within* `value`
- *
- * @return `struct hash_table *` - a pointer to a hash table object on success or `NULL` on failure
+ * @param[in] key_size  the size of every `key` in bytes
+ * @param[in] value_size  the size of every `value` in bytes
+ * @param[in] cmpr  a function comparing `2` keys. the function must return a positive integer if the `left key > right
+ * key`, negative integer if `left key < right key` or `0` if `left key == right key`
+ * @param[in, optional] hash - a function generating a hash from a key. the function may be `NULL` in which case
+ * `http://www.cse.yorku.ca/~oz/hash.html` will be used
+ * @param[in, optional] destroy_key a destructor for `key`
+ * @param[in, optional] destroy_value a destructor for `value`
+ * @return `struct hash_table` hash table object
  */
-struct hash_table *table_init(int (*cmpr)(void const *, void const *),
-                              void (*destroy_key)(void *),
-                              void (*destroy_value)(void *));
+struct hash_table table_create(size_t key_size,
+                               size_t value_size,
+                               int (*cmpr)(void const *, void const *),
+                               size_t (*hash)(void const *hashable, size_t size),
+                               void (*destroy_key)(void *),
+                               void (*destroy_value)(void *));
 
 /**
- * @brief destroys a hash table object
+ * @brief destroys a table
  *
- * @param[in] table a hash table object
+ * @param[in] table the table to destroy. if the table was supplied destructors for its `key` / `value` - the function
+ * will call them for each `key` / `value` pair
  */
 void table_destroy(struct hash_table *table);
 
 /**
- * @brief checks whether or not a hash table contains any key-value pairs
+ * @brief returns the state of the table
  *
- * @param[in] table a hash table object
- *
- * @return `true` - if the hash table contains no key-value pairs
- * @return `false` - if the hash table contains at least one key-value pair
+ * @param[in] table
+ * @return `true` if there's no elements in the table
+ * @return `false` if there's at least one element in the table
  */
-bool table_empty(struct hash_table *table);
+bool table_empty(struct hash_table const *table);
 
 /**
- * @brief returns the number of key-value pairs in the table
+ * @brief returns the number of elements in the table
  *
- * @param[in] table a hash table object
- *
- * @return `size_t` - the number of key-value pairs the table holds
+ * @param[in] table
+ * @return `size_t` the number of elements the table contains
  */
-size_t table_size(struct hash_table *table);
+size_t table_size(struct hash_table const *table);
 
 /**
- * @brief returns the number of entries the table can hold
+ * @brief inserts `new_value` into the table and returns the `old_value` associated with `key` if there was any
  *
- * @param[in] table a hash table object
- * @return `size_t` - the number of entries the table can currently hold
+ * @param[in] table
+ * @param[in] key the mapping for `new_value`
+ * @param[in] new_value the value to insert into the table
+ * @param[out] old_value a pointer to the type of `value`. the old value will be copied into it
+ * @return `enum ds_error` - `DS_OK` if the operation succeded without replacing any old values. `DS_VALUE_OK` if the
+ * operation succeded & an old value was replaced and put into `old_value`. `DS_ERROR` otherwise
  */
-size_t table_capacity(struct hash_table *table);
+enum ds_error table_put(struct hash_table *restrict table,
+                        void const *key,
+                        void const *new_value,
+                        void *restrict old_value);
 
 /**
- * @brief
+ * @brief removed the mapping for `key` (deletes a `key / value` pair)
  *
- * @param[in] table creates a copy of the data passed in - and store it in the table. returns the previous value for
- * that key (which has to be free'd) or NULL if there was no mapping for that key
- * @param[in] key the `key` associated with the data. `key` must not contain any padding bits. in case one not sure -
- * one shouldn't use structs as keys
- * @param[in] key_size the size of the `key` in bytes
- * @param[in] value the value
- * @param[in] value_size the size of the `value` in bytes
- *
- * @return `void *` - a pointer to a copy of the old `value` which has to be free'd independently. if no such `key`
- * exists - `NULL` will be returned
+ * @param[in] table
+ * @param[in] key
+ * @param[out, optional] old_value a pointer to the type of `value`. if such pointer isn't `NULL` the old value will be
+ * copied into it. if such pointer is `NULL` and the table was assign a destructor for `value` - said destructor will be
+ * called on the removed value
+ * @return `enum ds_error` - `DS_OK` if the operation succeded. `DS_VALUE_OK` if the operation succeded & the old value
+ * was placed into `old_value`. `DS_ERROR` otherwise
  */
-void *table_put(struct hash_table *table, void const *key, size_t key_size, void const *value, size_t value_size);
+enum ds_error table_remove(struct hash_table *restrict table, void const *restrict key, void *restrict old_value);
 
 /**
- * @brief removes the mapping for a specific `key` if present. returns a copy of the previous `value`
+ * @brief gets the `value` associated with `key`
  *
- * @param[in] table a hash table object
- * @param[in] key the desired `key` to remove
- * @param[in] key_size the size of the `key` in bytes
- * @param[out] value a pointer to a `value` type. the returned value will be placed there
- * @param[in] value_size the size of the `value` type
- *
- * @return `size_t` - `0` on success, `DS_EINVAL` on failure
+ * @param[in] table
+ * @param[in] key
+ * @param[out] value a pointer to the type of `value`. the value will be copied into it
+ * @return `enum ds_error` - `DS_VALUE_OK` if the operation succeded. `DS_ERROR` otherwise
  */
-size_t table_remove(struct hash_table *table, void const *key, size_t key_size, void *value, size_t value_size);
-
-/**
- * @brief returns the mapping for a specific `key`
- *
- * this function should be used with care as changes to `value` will change its data if said `value` is a pointer type.
- * moreover.
- *
- * @param[in] table a hash table object
- * @param[in] key the desired `key`
- * @param[in] key_size the size of the `key` in bytes
- * @param[out] value a pointer to a `value` type. the returned value will be placed there
- * @param[in] value_size the size of the `value` type
- *
- * @return `size_t` - `0` on success, `DS_EINVAL` on failure
- */
-size_t table_get(struct hash_table *table, void const *key, size_t key_size, void *value, size_t value_size);
+enum ds_error table_get(struct hash_table *restrict table, void const *restrict key, void *restrict value);
