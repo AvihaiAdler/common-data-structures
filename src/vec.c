@@ -115,15 +115,11 @@ size_t vec_resize(struct vec *vec, size_t num_elements) {
 
   if (num_elements >= vec->_n_elem && num_elements <= vec->_capacity) {
     memset((char *)vec->_data + vec->_n_elem * vec->_data_size, 0, (num_elements - vec->_n_elem) * vec->_data_size);
+    vec->_capacity = num_elements;
   } else if (num_elements > vec->_capacity) {
-    size_t prev_capacity = vec->_capacity;
-    size_t new_capacity = vec_reserve(vec, num_elements - prev_capacity);
-
-    // vec_reserve failure
-    if (prev_capacity == new_capacity) { return vec->_capacity; }
+    (void)vec_reserve(vec, num_elements);
   }
 
-  vec->_capacity = num_elements;
   return vec->_capacity;
 }
 
