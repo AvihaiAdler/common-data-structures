@@ -219,7 +219,7 @@ static inline bool resize_table(struct hash_table *table) {
 
 enum ds_error table_put(struct hash_table *restrict table, void const *key, void const *new_value, void *old_value) {
   if (!table || !vec_data(&table->_entries)) return DS_ERROR;
-  if (!key || !old_value) return DS_ERROR;
+  if (!key) return DS_ERROR;
 
   // load factor exceeded
   if (table_capacity(table) * LOAD_FACTOR < table->_n_elem + 1) {
