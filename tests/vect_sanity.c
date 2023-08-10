@@ -4,13 +4,7 @@
 
 #include "vec.h"
 
-bool equals(const void *a, const void *b) {
-  int i_a = *(int *)a;
-  int i_b = *(int *)b;
-  return i_a == i_b;
-}
-
-int cmpr(const void *a, const void *b) {
+static int cmpr(const void *a, const void *b) {
   const int *i_a = a;
   const int *i_b = b;
   return (*i_a > *i_b) - (*i_a < *i_b);
@@ -24,11 +18,11 @@ struct vec before(int *arr, size_t arr_size) {
   return vect;
 }
 
-void after(struct vec *vect) {
+static void after(struct vec *vect) {
   vec_destroy(vect);
 }
 
-void vec_push_sanity_test(int num) {
+static void vec_push_sanity_test(int num) {
   // given
   struct vec vect = vec_create(sizeof num, NULL);
   assert(vec_empty(&vect));
@@ -47,7 +41,7 @@ void vec_push_sanity_test(int num) {
   after(&vect);
 }
 
-void vec_pop_sanity_test(int *arr, size_t arr_size) {
+static void vec_pop_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
 
@@ -65,7 +59,7 @@ void vec_pop_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_at_sanity_test(int *arr, size_t arr_size) {
+static void vec_at_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
 
@@ -86,7 +80,7 @@ void vec_at_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_find_sanity_test(int *arr, size_t arr_size) {
+static void vec_find_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
 
@@ -102,7 +96,7 @@ void vec_find_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_reserve_sanity_test(int *arr, size_t arr_size) {
+static void vec_reserve_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
 
@@ -121,7 +115,7 @@ void vec_reserve_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_remove_at_sanity_test(int *arr, size_t arr_size) {
+static void vec_remove_at_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
   assert(vec_size(&vect) == arr_size);
@@ -139,7 +133,7 @@ void vec_remove_at_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_replace_sanity_test(int *arr, size_t arr_size) {
+static void vec_replace_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
   int num = -1;
@@ -157,7 +151,7 @@ void vec_replace_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_shrink_sanity_test(int *arr, size_t arr_size) {
+static void vec_shrink_sanity_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
   size_t init_capacity = vec_capacity(&vect);
@@ -181,7 +175,7 @@ void vec_shrink_sanity_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_sort_santiy_test(int *arr, size_t arr_size) {
+static void vec_sort_santiy_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
 
@@ -198,7 +192,7 @@ void vec_sort_santiy_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
-void vec_iter_empty_vec_test(void) {
+static void vec_iter_empty_vec_test(void) {
   // given
   struct vec vect = vec_create(sizeof(int), NULL);
 
@@ -214,7 +208,7 @@ void vec_iter_empty_vec_test(void) {
   after(&vect);
 }
 
-void vec_iter_forward_iteration_test(int *arr, size_t arr_size) {
+static void vec_iter_forward_iteration_test(int *arr, size_t arr_size) {
   // given
   struct vec vect = before(arr, arr_size);
 
@@ -232,9 +226,30 @@ void vec_iter_forward_iteration_test(int *arr, size_t arr_size) {
   after(&vect);
 }
 
+static void vec_resize_test(void) {
+  struct vec vec = vec_create(1, NULL);
+
+  char *ptr = vec_data(&vec);
+  assert(ptr);
+
+  for (size_t i = 0; i < vec_capacity(&vec); i++) {
+    assert(ptr[i] == 0);
+  }
+
+  size_t old_capacity = vec_capacity(&vec);
+  assert(vec_resize(&vec, old_capacity * 2) == old_capacity * 2);
+
+  ptr = vec_data(&vec);
+  for (size_t i = 0; i < vec_capacity(&vec); i++) {
+    assert(ptr[i] == 0);
+  }
+
+  vec_destroy(&vec);
+}
+
 #define SIZE 20
 
-void populate_array(int *arr, size_t arr_size) {
+static void populate_array(int *arr, size_t arr_size) {
   for (size_t i = arr_size; i > 0; i--) {
     arr[SIZE - i] = i;
   }
@@ -254,6 +269,7 @@ int main(void) {
   vec_replace_sanity_test(arr, arr_size);
   vec_shrink_sanity_test(arr, arr_size);
   vec_sort_santiy_test(arr, arr_size);
+  vec_resize_test();
 
   vec_iter_empty_vec_test();
   vec_iter_forward_iteration_test(arr, arr_size);
