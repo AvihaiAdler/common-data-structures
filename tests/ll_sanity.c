@@ -58,11 +58,6 @@ static int cmpr(const void *a, const void *b) {
   return (p_a->x > p_b->x) - (p_a->x < p_b->x);
 }
 
-// static void destroy(void *data) {
-//   struct point *point = data;
-//   if (point) free(point);
-// }
-
 struct list before(struct point *points, size_t arr_size) {
   struct list list = list_create(NULL);
   for (size_t i = 0; i < arr_size; i++) {
