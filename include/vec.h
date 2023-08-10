@@ -118,22 +118,12 @@ void *vec_find(struct vec *restrict vec, void const *restrict element, int (*cmp
 size_t vec_reserve(struct vec *vec, size_t count);
 
 /**
- * @brief changes the capacity of the underlying buffer of a `vec`. returns the new `vec::capacity`.
- *
- * if `num_elements` < `vec::_n_elem`: `vec::capacity` will decrease to the passed in `num_elements`.
- * beware: if the `vec` contains elements with pointers to heap allocated data you might lose track of them causing a
- * memory leak.
- *
- * if `num_elements` > `vec::capacity`: the result will be as-if `vec_reserve` was called.
- *
- * if `vec::_n_elem` <= `num_elements` < `vec::capacity`: `vec::_capacity` will be set to `num_elements` and
- * `vec::capacity` - `vec::_n_elem` `NULL` values will be pushed into the `vec` (in other words - `vec::_n_elem` will
- * increase to match `num_elements` and the 'emtpy' values will be `0` initialized).
+ * @brief resize the ector to fit at least `num_elements` elements
  *
  * @param[in] vec a `vec` object to resize.
  * @param[in] num_elements the desired number of elements the `vec` should hold.
  *
- * @return `size_t` the new `vec::size`.
+ * @return `size_t` the new `vec::capacity`.
  */
 size_t vec_resize(struct vec *vec, size_t num_elements);
 

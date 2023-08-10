@@ -113,11 +113,15 @@ size_t vec_reserve(struct vec *vec, size_t count) {
 size_t vec_resize(struct vec *vec, size_t num_elements) {
   if (!vec || !vec->_data) return 0;
 
-  if (num_elements >= vec->_n_elem && num_elements <= vec->_capacity) {
-    memset((char *)vec->_data + vec->_n_elem * vec->_data_size, 0, (num_elements - vec->_n_elem) * vec->_data_size);
+  if (num_elements > vec->_capacity) {
+    if (num_elements * vec->_data_size > (SIZE_MAX >> 1)) return vec->_capacity;
+
+    void *tmp = realloc(vec->_data, num_elements * vec->_data_size);
+    if (!tmp) return vec->_capacity;
+
+    memset((char *)tmp + vec->_n_elem * vec->_data_size, 0, (num_elements - vec->_n_elem) * vec->_data_size);
+    vec->_data = tmp;
     vec->_capacity = num_elements;
-  } else if (num_elements > vec->_capacity) {
-    (void)vec_reserve(vec, num_elements);
   }
 
   return vec->_capacity;
