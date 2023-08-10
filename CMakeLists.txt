@@ -22,7 +22,7 @@ target_compile_features(ds
 
 target_compile_options(ds
   PRIVATE
-  $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -Wall -Wextra -Wpedantic -Og -g>
+  $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -Wall -Wextra -Wpedantic -g>
   $<$<C_COMPILER_ID:MSVC>: -W4>
 )
 
@@ -32,11 +32,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
   target_compile_options(ds
     PRIVATE
-    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -fsanitize=address,undefined>
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -Og -fsanitize=address,undefined>
   )
 
   target_link_options(ds
     PRIVATE
     $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -fsanitize=address,undefined>
+  )
+else()
+  target_compile_options(ds
+    PRIVATE
+    $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -O3>
   )
 endif()
