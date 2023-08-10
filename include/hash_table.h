@@ -81,12 +81,20 @@ bool table_empty(struct hash_table const *table);
 size_t table_size(struct hash_table const *table);
 
 /**
+ * @brief returns the number of entries in the table
+ *
+ * @param table
+ * @return `size_t` the number of entries in the table
+ */
+size_t table_capacity(struct hash_table const *table);
+
+/**
  * @brief inserts `new_value` into the table and returns the `old_value` associated with `key` if there was any
  *
  * @param[in] table
  * @param[in] key the mapping for `new_value`
  * @param[in] new_value the value to insert into the table
- * @param[out] old_value a pointer to the type of `value`. the old value will be copied into it
+ * @param[out, optional] old_value a pointer to the type of `value`. the old value will be copied into it
  * @return `enum ds_error` - `DS_OK` if the operation succeded without replacing any old values. `DS_VALUE_OK` if the
  * operation succeded & an old value was replaced and put into `old_value`. `DS_ERROR` otherwise
  */
@@ -117,3 +125,5 @@ enum ds_error table_remove(struct hash_table *restrict table, void const *restri
  * @return `enum ds_error` - `DS_VALUE_OK` if the operation succeded. `DS_ERROR` otherwise
  */
 enum ds_error table_get(struct hash_table *restrict table, void const *restrict key, void *restrict value);
+
+void print_table(struct hash_table *table, void (*print)(void const *, void const *, size_t));

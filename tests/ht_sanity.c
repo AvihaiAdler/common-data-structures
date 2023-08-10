@@ -35,7 +35,20 @@ static size_t hash(void const *key, size_t size) {
 static int cmpr(void const *left, void const *right) {
   struct ascii_str *_left = (void *)left;
   struct ascii_str *_right = (void *)right;
+
+  // LOG(stderr, "%s == %s?\n", ascii_str_c_str(_left), ascii_str_c_str(_right));
   return strcmp(ascii_str_c_str(_left), ascii_str_c_str(_right));
+}
+
+static void print(void const *key, void const *value, size_t entry_idx) {
+  static int counter = 0;
+
+  struct ascii_str *_key = (void *)key;
+  int const *_value = value;
+  fprintf(stderr, "%zu: [%s : %d]\n", entry_idx, ascii_str_c_str(_key), _value);
+
+  counter++;
+  if (counter == 100) { fprintf(stderr, "hit!"); }
 }
 
 static void destroy_key(void *key) {
@@ -63,7 +76,7 @@ static struct hash_table before(struct ascii_str *keys, int *values, int *replac
 
     int value;
     enum ds_error err = table_put(&table, &str, &rand_value, &value);
-    LOG(stderr, "%s : %d\n", ascii_str_c_str(&str), err);
+    if (i == 0) LOG(stderr, "%s : %d\n", ascii_str_c_str(&str), err);
     if (err == DS_VALUE_OK) { replaced[i] = 1; }
   }
 
@@ -119,19 +132,21 @@ void table_remove_test(void) {
 
   struct ascii_str removed = ascii_str_create(ascii_str_c_str(keys), (int)ascii_str_len(keys));
 
-  int old_first;
-  enum ds_error err = table_remove(&table, keys, &old_first);
+  LOG(stderr, "table: [capacity: %zu, num elements: %zu]\n", table_capacity(&table), table_size(&table));
+  print_table(&table, print);
+  int old;
+  enum ds_error err = table_remove(&table, keys, &old);
   LOG(stderr, "%s %d\n", ascii_str_c_str(&removed), err);
 
   assert(err == DS_VALUE_OK);
-  assert(old_first == values[0]);
+  assert(old == values[0]);
 
   // key has already been removed
-  assert(table_remove(&table, &removed, &old_first) == DS_NOT_FOUND);
+  assert(table_remove(&table, &removed, NULL) == DS_NOT_FOUND);
 
   struct ascii_str non_existing_key = ascii_str_create(ascii_str_c_str(keys + SIZE / 2), STR_C_STR);
   ascii_str_push(&non_existing_key, '.');
-  assert(table_remove(&table, &non_existing_key, &old_first) == DS_NOT_FOUND);
+  assert(table_remove(&table, &non_existing_key, NULL) == DS_NOT_FOUND);
 
   after(&table, keys, replaced, SIZE);
   ascii_str_destroy(&non_existing_key);
