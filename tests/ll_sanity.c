@@ -59,7 +59,7 @@ static int cmpr(const void *a, const void *b) {
 }
 
 struct list before(struct point *points, size_t arr_size) {
-  struct list list = list_create(NULL);
+  struct list list = list_create(sizeof *points, NULL);
   for (size_t i = 0; i < arr_size; i++) {
     list_append(&list, &points[i], sizeof points[i]);
   }
@@ -72,7 +72,7 @@ void after(struct list *list) {
 
 void list_prepend_and_peek_test(struct point *points, size_t arr_size) {
   // given
-  struct list list = list_create(NULL);
+  struct list list = list_create(sizeof *points, NULL);
 
   assert(list_empty(&list));
   assert(list_size(&list) == 0);
@@ -93,7 +93,7 @@ void list_prepend_and_peek_test(struct point *points, size_t arr_size) {
 
 void list_append_and_peek_test(struct point *points, size_t arr_size) {
   // given
-  struct list list = list_create(NULL);
+  struct list list = list_create(sizeof *points, NULL);
 
   assert(list_empty(&list));
   assert(list_size(&list) == 0);
@@ -134,7 +134,7 @@ void list_insert_at_test(struct point *points, size_t arr_size) {
 
 void list_insert_priority_test(struct point *points, size_t arr_size) {
   // given
-  struct list list = list_create(NULL);
+  struct list list = list_create(sizeof *points, NULL);
 
   // when
   for (size_t i = 0; i < arr_size; i++) {

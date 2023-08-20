@@ -14,6 +14,7 @@ struct node;
 /* doubly linked list object */
 struct list {
   size_t _n_elem;  // can never exceeds SIZE_MAX / 2
+  size_t data_size;
   struct node *_head;
   struct node *_tail;
 
@@ -23,7 +24,7 @@ struct list {
 /* initialize a heap allocated linked list with a size of 0, where head and tail
  * points to NULL. returns a list on success, NULL on failure
  */
-struct list list_create(void (*destroy)(void *data));
+struct list list_create(size_t data_size, void (*destroy)(void *data));
 
 /* destroy a list 'object'. if destroy isn't NULL, calls it for every
  * node::data. you should only pass in a destroy function if your object

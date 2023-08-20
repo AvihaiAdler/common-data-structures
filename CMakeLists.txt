@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(ds VERSION 0.2.0)
+project(ds VERSION 0.3.0)
 
 add_library(ds)
 

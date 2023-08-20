@@ -6,14 +6,13 @@
 
 /* node object */
 struct node {
-  void *data;
-  size_t data_size;
   struct node *next;
   struct node *prev;
+  void *data;
 };
 
-struct list list_create(void (*destroy)(void *data)) {
-  return (struct list){._destroy = destroy};
+struct list list_create(size_t data_size, void (*destroy)(void *data)) {
+  return (struct list){.data_size = data_size, ._destroy = destroy};
 }
 
 void list_destroy(struct list *list) {
@@ -39,13 +38,13 @@ static struct node *node_create(void const *data, size_t data_size) {
   if (!node) return NULL;
 
   node->data = malloc(data_size);
-  node->data_size = data_size;
+  // node->data_size = data_size;
   if (!node->data) {
     free(node);
     return NULL;
   }
 
-  memcpy(node->data, data, node->data_size);
+  memcpy(node->data, data, data_size);
   return node;
 }
 
@@ -60,6 +59,8 @@ bool list_empty(struct list const *list) {
 bool list_prepend(struct list *restrict list, void const *restrict data, size_t data_size) {
   if (!list) return false;
   if (list->_n_elem == (SIZE_MAX >> 1)) return false;
+
+  if (data_size != list->data_size) return false;
 
   struct node *tmp = node_create(data, data_size);
   if (!tmp) return false;
@@ -80,6 +81,8 @@ bool list_append(struct list *restrict list, void const *restrict data, size_t d
   if (!list) return false;
   if (list->_n_elem == (SIZE_MAX >> 1)) return false;
 
+  if (data_size != list->data_size) return false;
+
   struct node *tmp = node_create(data, data_size);
   if (!tmp) return false;
 
@@ -99,6 +102,8 @@ bool list_insert_at(struct list *restrict list, void const *restrict data, size_
   if (!list) return false;
   if (pos > list->_n_elem) return false;
   if (list->_n_elem == (SIZE_MAX >> 1)) return false;
+
+  if (data_size != list->data_size) return false;
 
   if (pos == 0) return list_prepend(list, data, data_size);
   if (pos == list->_n_elem) return list_append(list, data, data_size);
@@ -125,6 +130,8 @@ bool list_insert_priority(struct list *restrict list,
                           int (*cmpr)(void const *, void const *)) {
   if (!list) return false;
   if (list->_n_elem == (SIZE_MAX >> 1)) return false;
+
+  if (data_size != list->data_size) return false;
 
   if (!list->_head) return list_prepend(list, data, data_size);  // list is empty
 
@@ -249,6 +256,7 @@ int list_index_of(struct list *restrict list, const void *restrict data, int (*c
 void *list_replace_at(struct list *restrict list, const void *restrict data, size_t data_size, size_t pos) {
   if (!list || !list->_head) return NULL;
   if (pos >= list->_n_elem) return NULL;
+  if (data_size != list->data_size) return NULL;
   if (data_size == 0) return NULL;
 
   struct node *tmp = list->_head;
@@ -256,22 +264,22 @@ void *list_replace_at(struct list *restrict list, const void *restrict data, siz
     tmp = tmp->next;
   }
 
-  void *old_data = malloc(tmp->data_size);
+  void *old_data = malloc(list->data_size);
   if (!old_data) return NULL;
 
-  memcpy(old_data, tmp->data, tmp->data_size);
+  memcpy(old_data, tmp->data, list->data_size);
 
-  if (data_size != tmp->data_size) {
+  if (data_size != list->data_size) {
     void *tmp_buf = realloc(tmp->data, data_size);
     if (!tmp_buf) {
       free(old_data);
       return NULL;
     }
     tmp->data = tmp_buf;
-    tmp->data_size = data_size;
+    // tmp->data_size = data_size;
   }
 
-  memcpy(tmp->data, data, tmp->data_size);
+  memcpy(tmp->data, data, list->data_size);
   return old_data;
 }
 
