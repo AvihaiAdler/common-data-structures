@@ -318,3 +318,13 @@ void print_table(struct hash_table *table, void (*print)(void const *, void cons
     }
   }
 }
+
+bool table_contains(struct hash_table *restrict table, void const *restrict key) {
+  if (!table || !key) return false;
+
+  size_t pos = hash_wrapper(table, key);
+  struct entry *entry = vec_at(&table->_entries, pos);
+  if (!entry) return false;
+
+  return entry_contains(entry, key, table->_cmpr) != NULL;
+}

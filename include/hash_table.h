@@ -126,4 +126,14 @@ enum ds_error table_remove(struct hash_table *restrict table, void const *restri
  */
 enum ds_error table_get(struct hash_table *restrict table, void const *restrict key, void *restrict value);
 
+/**
+ * @brief checks if the table contains a mapping for the key `key`
+ *
+ * @param table
+ * @param key
+ * @return true if the table contain said key
+ * @return false if the table doesn't contain said key
+ */
+bool table_contains(struct hash_table *restrict table, void const *restrict key);
+
 void print_table(struct hash_table *table, void (*print)(void const *, void const *, size_t));

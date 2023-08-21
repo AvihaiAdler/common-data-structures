@@ -45,7 +45,7 @@ static void print(void const *key, void const *value, size_t entry_idx) {
 
   struct ascii_str *_key = (void *)key;
   int const *_value = value;
-  fprintf(stderr, "%zu: [%s : %d]\n", entry_idx, ascii_str_c_str(_key), _value);
+  fprintf(stderr, "%zu: [%s : %d]\n", entry_idx, ascii_str_c_str(_key), *_value);
 
   counter++;
   if (counter == 100) { fprintf(stderr, "hit!"); }
@@ -185,10 +185,29 @@ void table_get_test(void) {
   ascii_str_destroy(&removed);
 }
 
+static void table_contains_test(void) {
+  enum local_size {
+    SIZE = 100,
+  };
+
+  struct ascii_str keys[SIZE] = {0};
+  int values[SIZE] = {0};
+  int replaced[SIZE] = {0};
+
+  struct hash_table table = before(keys, values, replaced, SIZE);
+
+  for (size_t i = 0; i < (size_t)SIZE; i++) {
+    assert(table_contains(&table, &keys[i]));
+  }
+
+  after(&table, keys, replaced, SIZE);
+}
+
 int main(void) {
   srand(time(NULL));
 
   table_put_empty_table_test(ascii_str_create("hello, world", STR_C_STR), 1);
   table_remove_test();
   table_get_test();
+  table_contains_test();
 }
