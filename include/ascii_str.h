@@ -174,3 +174,17 @@ struct ascii_str ascii_str_substr(struct ascii_str *ascii_str, size_t from_pos, 
  * any chars which match the `pattern`
  */
 struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern);
+
+/**
+ * @brief converts all ascii chars within `string` to lower case
+ *
+ * @param string
+ */
+void ascii_str_tolower(struct ascii_str *string);
+
+/**
+ * @brief converts all ascii chars within `string` to upper case
+ *
+ * @param string
+ */
+void ascii_str_toupper(struct ascii_str *string);

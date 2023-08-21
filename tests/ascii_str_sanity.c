@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -267,6 +268,54 @@ static void ascii_str_index_of_existing_char_test(char const *str, char const c)
   ascii_str_destroy(&ascii_str);
 }
 
+static void ascii_str_tolower_test(char const *str) {
+  // given
+  size_t len = strlen(str);
+  struct ascii_str lc_string = ascii_str_create(str, len);
+
+  char *lc_str = calloc(len + 1, 1);
+  assert(lc_str);
+
+  for (size_t i = 0; i < len; i++) {
+    lc_str[i] = (char)tolower((int)str[i]);  // because C
+  }
+
+  // when
+  ascii_str_tolower(&lc_string);
+
+  // then
+  assert(!ascii_str_empty(&lc_string));
+  assert(ascii_str_contains(&lc_string, lc_str));
+
+  // cleanup
+  free(lc_str);
+  ascii_str_destroy(&lc_string);
+}
+
+static void ascii_str_toupper_test(char const *str) {
+  // given
+  size_t len = strlen(str);
+  struct ascii_str lc_string = ascii_str_create(str, len);
+
+  char *lc_str = calloc(len + 1, 1);
+  assert(lc_str);
+
+  for (size_t i = 0; i < len; i++) {
+    lc_str[i] = (char)toupper((int)str[i]);  // because C
+  }
+
+  // when
+  ascii_str_toupper(&lc_string);
+
+  // then
+  assert(!ascii_str_empty(&lc_string));
+  assert(ascii_str_contains(&lc_string, lc_str));
+
+  // cleanup
+  free(lc_str);
+  ascii_str_destroy(&lc_string);
+}
+
 static void ascii_str_index_of_non_existing_char_test(char const *str, char const c) {
   assert(!strchr(str, (int)c));
 
@@ -395,4 +444,10 @@ int main(void) {
   ascii_str_split_test(SHORT_STR, " ,!");
 
   ascii_str_split_test(LONG_STR, "o");
+
+  ascii_str_tolower_test("HELLO, WORLD!");
+  ascii_str_tolower_test("hELlo, WoRLD");
+
+  ascii_str_toupper_test("hellow, world!");
+  ascii_str_toupper_test("HEllO, wOrLD");
 }

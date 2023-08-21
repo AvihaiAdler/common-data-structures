@@ -1,4 +1,5 @@
 #include "ascii_str.h"
+#include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -302,4 +303,20 @@ struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *res
   }
 
   return slices;
+}
+
+void ascii_str_tolower(struct ascii_str *string) {
+  if (!string) return;
+
+  for (char *c_str = ascii_str_c_str_internal(string); *c_str; c_str++) {
+    *c_str = tolower((int)*c_str);
+  }
+}
+
+void ascii_str_toupper(struct ascii_str *string) {
+  if (!string) return;
+
+  for (char *c_str = ascii_str_c_str_internal(string); *c_str; c_str++) {
+    *c_str = toupper((int)*c_str);
+  }
 }
