@@ -63,3 +63,9 @@ void *list_replace_at(struct list *restrict list, void const *restrict data, siz
 intmax_t list_index_of(struct list const *restrict list,
                        void const *restrict data,
                        int (*cmpr)(void const *, void const *));
+
+void *list_iter_begin(struct list *list);
+
+void *list_iter_end(struct list *list);
+
+void *list_iter_next(struct list *restrict list, void *restrict iter);

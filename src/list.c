@@ -6,9 +6,9 @@
 
 /* node object */
 struct node {
+  void *data;
   intmax_t next;
   intmax_t prev;
-  void *data;
 };
 
 static struct l_vec l_vec_create(size_t data_size) {
@@ -54,13 +54,17 @@ static void *l_vec_at(struct l_vec *vec, size_t pos) {
 
 static bool idx_vec_resize(struct l_vec *vec) {
   if (!vec || !vec->_data) return false;
+  size_t old_capacity = vec->_capacity;
 
   if (!l_vec_resize(vec)) return false;
 
-  for (size_t i = vec->_n_elem; i < vec->_capacity; i++) {
+  vec->_n_elem = old_capacity;
+
+  for (size_t i = 0; i < old_capacity; i++) {
     intmax_t *curr = l_vec_at(vec, i);
-    if (curr) *curr = (intmax_t)i;
+    if (curr) *curr = (intmax_t)i + old_capacity;
   }
+
   return true;
 }
 
@@ -93,12 +97,13 @@ static bool nodes_vec_resize(struct l_vec *vec) {
 
   if (!l_vec_resize(vec)) return false;
 
+  vec->_n_elem = vec->_capacity;
+
   // populate the new allocated space with 'empty' nodes
   for (size_t i = vec->_n_elem; i < vec->_capacity; i++) {
     struct node *curr = l_vec_at(vec, i);
     if (curr) *curr = (struct node){.data = NULL, .next = -1, .prev = -1};
   }
-  vec->_n_elem = vec->_capacity;
 
   return true;
 }
@@ -177,7 +182,7 @@ bool list_empty(struct list const *list) {
 static bool list_resize(struct list *list) {
   if (!list) return false;
   // list will not exceed INTMAX_MAX
-  if (list->_free_idx._capacity << GROWTH_FACTOR >= INTMAX_MAX) return false;
+  if ((list->_free_idx._capacity << GROWTH_FACTOR) >= INTMAX_MAX) return false;
 
   if (!nodes_vec_resize(&list->_nodes)) return false;
   if (!idx_vec_resize(&list->_free_idx)) return false;
@@ -455,9 +460,24 @@ intmax_t list_index_of(struct list const *restrict list,
   size_t pos = 0;
   for (struct node *curr = l_vec_at((struct l_vec *)&list->_nodes, list->_head_idx); curr;
        curr = l_vec_at((struct l_vec *)&list->_nodes, curr->next)) {
-    if (curr->data && cmpr(data, curr->data)) return (intmax_t)pos;
+    if (curr->data && cmpr(data, curr->data) == 0) return (intmax_t)pos;
     pos++;
   }
 
   return -1;
+}
+
+void *list_iter_begin(struct list *list) {
+  return list ? l_vec_at(&list->_nodes, list->_head_idx) : NULL;
+}
+
+void *list_iter_end(struct list *list) {
+  return list ? l_vec_at(&list->_nodes, list->_tail_idx) : NULL;
+}
+
+void *list_iter_next(struct list *restrict list, void *restrict iter) {
+  if (!list || !iter) return NULL;
+
+  struct node *curr = iter;
+  return l_vec_at(&list->_nodes, curr->next);
 }

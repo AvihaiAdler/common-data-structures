@@ -1,337 +1,591 @@
 #include <assert.h>
+#include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
-
+#include "ascii_str.h"
 #include "list.h"
 
-struct point {
-  int x, y;
-};
+#define LOG(file, fmt, ...)                                                       \
+  do {                                                                            \
+    fprintf(file, "%s %s:%d\n\t" fmt, __FILE__, __func__, __LINE__, __VA_ARGS__); \
+  } while (0);
 
-// points related functions
 static int generate_random(int min, int max) {
-  int range = max - min + 1;
+  int range = max - min;
   double rand_val = rand() / (1.0 + RAND_MAX);
   return (int)(rand_val * range + min);
 }
 
-static void destroy_points(struct point *points) {
-  free(points);
+static void destroy_string(void *_string) {
+  struct ascii_str *string = _string;
+
+  ascii_str_destroy(string);
 }
 
-static struct point *create_points(size_t arr_size, int min, int max) {
-  struct point *points = calloc(arr_size, sizeof *points);
-  if (!points) return NULL;
+static struct ascii_str rand_string(size_t len) {
+  char const *alphabet = "abcdefghijklmnopqrstuvwxyz";
+  size_t alphabet_len = strlen(alphabet);
 
-  for (size_t i = 0; i < arr_size; i++) {
-    points[i].x = generate_random(min, max);
-    points[i].y = generate_random(min, max);
-  }
-  return points;
-}
-
-static struct point *copy_points(struct point *points, size_t arr_size) {
-  if (!points) return NULL;
-
-  struct point *copy = calloc(arr_size, sizeof *copy);
-  if (!copy) return NULL;
-
-  for (size_t i = 0; i < arr_size; i++) {
-    copy[i].x = points[i].x;
-    copy[i].y = points[i].y;
+  struct ascii_str str = ascii_str_create(NULL, 0);
+  for (size_t i = 0; i < len; i++) {
+    int rand_idx = generate_random(0, alphabet_len);
+    ascii_str_push(&str, alphabet[rand_idx]);
   }
 
-  return copy;
+  return str;
 }
 
-// linked list related functions
-static bool equals(const void *a, const void *b) {
-  const struct point *p_a = a;
-  const struct point *p_b = b;
-  return p_a->x == p_b->x && p_a->y == p_b->y;
-}
+static struct list before(struct ascii_str *strings, size_t size) {
 
-static int cmpr(const void *a, const void *b) {
-  const struct point *p_a = a;
-  const struct point *p_b = b;
-  if (p_a->x == p_b->x) return (p_a->y > p_b->y) - (p_a->y < p_b->y);
-  return (p_a->x > p_b->x) - (p_a->x < p_b->x);
-}
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+  for (size_t i = 0; i < size; i++) {
+    int rand_str_len = generate_random(1, 100);
 
-struct list before(struct point *points, size_t arr_size) {
-  struct list list = list_create(sizeof *points, NULL);
-  for (size_t i = 0; i < arr_size; i++) {
-    list_append(&list, &points[i], sizeof points[i]);
+    struct ascii_str str = rand_string((size_t)rand_str_len);
+    list_prepend(&list, &str);
+    strings[size - i - 1] = str;
   }
+
   return list;
 }
 
-void after(struct list *list) {
+static void after(struct list *list) {
   list_destroy(list);
 }
 
-void list_prepend_and_peek_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = list_create(sizeof *points, NULL);
+static int cmpr(void const *_a, void const *_b) {
+  // necessary evil
+  struct ascii_str *a = (void *)_a;
+  struct ascii_str *b = (void *)_b;
 
+  return strcmp(ascii_str_c_str(a), ascii_str_c_str(b));
+}
+
+static void list_prepend_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+
+  // when
+  for (size_t i = 0; i < size; i++) {
+    struct ascii_str str = rand_string(10);
+    assert(list_prepend(&list, &str));
+
+    strings[size - i - 1] = str;
+  }
+
+  // then
+  assert(list_size(&list) == size);
+  assert(!list_empty(&list));
+
+  struct ascii_str *first = list_peek_first(&list);
+  struct ascii_str *last = list_peek_last(&list);
+  assert(cmpr(first, strings) == 0);
+  assert(cmpr(last, strings + size - 1) == 0);
+
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_append_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+
+  // when
+  for (size_t i = 0; i < size; i++) {
+    struct ascii_str str = rand_string(10);
+    assert(list_append(&list, &str));
+
+    strings[i] = str;
+  }
+
+  // then
+  assert(list_size(&list) == size);
+  assert(!list_empty(&list));
+
+  struct ascii_str *first = list_peek_first(&list);
+  struct ascii_str *last = list_peek_last(&list);
+  assert(cmpr(first, strings) == 0);
+  assert(cmpr(last, strings + size - 1) == 0);
+
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_insert_at_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+
+  // when
+  struct ascii_str str = rand_string(10);
+  size_t pos = generate_random(0, size - 1);
+
+  LOG(stderr, "inserting [%s] at index %zu\n", ascii_str_c_str(&str), pos);
+  assert(list_insert_at(&list, &str, pos));
+
+  // then
+  assert(list_size(&list) == size + 1);
+  assert(cmpr(&str, list_at(&list, pos)) == 0);
+
+  // cleanup
+  after(&list);
+}
+
+static void list_peek_first_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+
+  // when
+  struct ascii_str *str = list_peek_first(&list);
+
+  // then
+  assert(str == NULL);
   assert(list_empty(&list));
   assert(list_size(&list) == 0);
 
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_peek_first_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+
   // when
-  for (size_t i = 0; i < arr_size; i++) {
-    list_prepend(&list, &points[i], sizeof points[i]);
-  }
+  struct ascii_str *str = list_peek_first(&list);
 
   // then
-  assert(list_size(&list) == arr_size);
-  assert(equals(list_peek_first(&list), &points[arr_size - 1]));
-  assert(equals(list_peek_last(&list), &points[0]));
+  assert(cmpr(str, strings) == 0);
 
   // cleanup
   after(&list);
 }
 
-void list_append_and_peek_test(struct point *points, size_t arr_size) {
+static void list_peek_last_empty_list_test(void) {
   // given
-  struct list list = list_create(sizeof *points, NULL);
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
 
+  // when
+  struct ascii_str *str = list_peek_last(&list);
+
+  // then
+  assert(str == NULL);
   assert(list_empty(&list));
   assert(list_size(&list) == 0);
 
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_peek_last_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+
   // when
-  for (size_t i = 0; i < arr_size; i++) {
-    list_append(&list, &points[i], sizeof points[i]);
+  struct ascii_str *str = list_peek_last(&list);
+
+  // then
+  assert(cmpr(str, strings + size - 1) == 0);
+
+  // cleanup
+  after(&list);
+}
+
+static void list_at_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+
+  // when
+  void *first = list_at(&list, 0);
+  void *rand = list_at(&list, (size_t)generate_random(1, 100));
+
+  // then
+  assert(!first && !rand);
+
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_at_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+
+  // when
+  struct ascii_str *first = list_at(&list, 0);
+  struct ascii_str *last = list_at(&list, size - 1);
+  struct ascii_str *middle = list_at(&list, size / 2);
+  struct ascii_str *one_past_last = list_at(&list, size);
+
+  // then
+  assert(!one_past_last);
+  assert(cmpr(first, strings) == 0);
+  assert(cmpr(last, strings + size - 1) == 0);
+  assert(cmpr(middle, strings + size / 2) == 0);
+
+  // cleanup
+  after(&list);
+}
+
+static void list_remove_first_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+  size_t size = list_size(&list);
+
+  // when
+  void *ptr = list_remove_first(&list);
+
+  // then
+  assert(size == list_size(&list));
+  assert(!ptr);
+
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_remove_first_test(struct ascii_str *strings, size_t size) {
+  assert(size >= 2);
+
+  // given
+  struct list list = before(strings, size);
+  size_t pre_size = list_size(&list);
+
+  // when
+  void *first = list_remove_first(&list);
+  void *second = list_remove_first(&list);
+
+  // then
+  assert(pre_size - 2 == list_size(&list));
+  assert(cmpr(first, strings) == 0);
+  assert(cmpr(second, strings + 1) == 0);
+
+  // cleanup
+  ascii_str_destroy(first);
+  ascii_str_destroy(second);
+
+  free(first);
+  free(second);
+
+  after(&list);
+}
+
+static void list_remove_last_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+  size_t size = list_size(&list);
+
+  // when
+  void *ptr = list_remove_last(&list);
+
+  // then
+  assert(size == list_size(&list));
+  assert(!ptr);
+
+  // cleanup
+  list_destroy(&list);
+}
+
+static void list_remove_last_test(struct ascii_str *strings, size_t size) {
+  assert(size >= 2);
+
+  // given
+  struct list list = before(strings, size);
+  size_t pre_size = list_size(&list);
+
+  // when
+  void *last = list_remove_last(&list);
+  void *second_to_last = list_remove_last(&list);
+
+  // then
+  assert(pre_size - 2 == list_size(&list));
+  assert(cmpr(last, strings + size - 1) == 0);
+  assert(cmpr(second_to_last, strings + size - 2) == 0);
+
+  // cleanup
+  ascii_str_destroy(last);
+  ascii_str_destroy(second_to_last);
+
+  free(last);
+  free(second_to_last);
+
+  after(&list);
+}
+
+static void list_remove_at_rand_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+  size_t pos = (size_t)generate_random(0, 100);
+
+  // when
+  LOG(stderr, "attempting to remove a string at index: %zu\n", pos);
+  void *ptr = list_remove_at(&list, pos);
+
+  // then
+  assert(!ptr);
+
+  list_destroy(&list);
+}
+
+static void list_remove_at_zero_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+  size_t pos = 0;
+
+  // when
+  LOG(stderr, "attempting to remove a string at index: %zu\n", pos);
+  void *ptr = list_remove_at(&list, pos);
+
+  // then
+  assert(!ptr);
+
+  list_destroy(&list);
+}
+
+static void list_remove_at_rand_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+  size_t pos = (size_t)generate_random(0, size);
+
+  // when
+  LOG(stderr, "attempting to remove a string at index: %zu\n", pos);
+  void *ptr = list_remove_at(&list, pos);
+
+  // then
+  assert(list_size(&list) == size - 1);
+  assert(cmpr(ptr, strings + pos) == 0);
+
+  // cleanup
+  ascii_str_destroy(ptr);
+  free(ptr);
+  after(&list);
+}
+
+static void list_remove_at_zero_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+  size_t pos = 0;
+
+  // when
+  LOG(stderr, "attempting to remove a string at index: %zu\n", pos);
+  void *ptr = list_remove_at(&list, pos);
+
+  // then
+  assert(list_size(&list) == size - 1);
+  assert(cmpr(ptr, strings + pos) == 0);
+
+  // cleanup
+  ascii_str_destroy(ptr);
+  free(ptr);
+  after(&list);
+}
+
+static void list_remove_at_size_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+  size_t pos = size - 1;
+
+  // when
+  LOG(stderr, "attempting to remove a string at index: %zu\n", pos);
+  void *ptr = list_remove_at(&list, pos);
+
+  // then
+  assert(list_size(&list) == size - 1);
+  assert(cmpr(ptr, strings + pos) == 0);
+
+  // cleanup
+  ascii_str_destroy(ptr);
+  free(ptr);
+  after(&list);
+}
+
+static void list_replace_at_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+  struct ascii_str str = rand_string(10);
+  size_t pos = (size_t)generate_random(1, 100);
+
+  // when
+  LOG(stderr, "attempting to replace a string at index: %d\n", 0);
+  void *first = list_replace_at(&list, &str, 0);
+
+  LOG(stderr, "attempting to replace a string at index: %zu\n", pos);
+  void *rand = list_replace_at(&list, &str, pos);
+
+  // then
+  assert(list_empty(&list));
+  assert(list_size(&list) == 0);
+  assert(!first);
+  assert(!rand);
+
+  ascii_str_destroy(&str);
+  list_destroy(&list);
+}
+
+static void list_replace_at_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+  struct ascii_str str = rand_string(10);
+
+  // when
+  LOG(stderr, "attempting to replace a string at index: %d\n", 0);
+  void *first = list_replace_at(&list, &str, 0);
+
+  LOG(stderr, "attempting to replace a string at index: %zu\n", size / 2);
+  void *middle = list_replace_at(&list, &str, size / 2);
+
+  LOG(stderr, "attempting to replace a string at index: %zu\n", size - 1);
+  void *last = list_replace_at(&list, &str, size - 1);
+
+  // then
+  assert(list_size(&list) == size);
+  assert(first && middle && last);
+  assert(cmpr(first, strings) == 0);
+  assert(cmpr(middle, strings + size / 2) == 0);
+  assert(cmpr(last, strings + size - 1) == 0);
+
+  assert(cmpr(list_peek_first(&list), &str) == 0);
+  assert(cmpr(list_peek_last(&list), &str) == 0);
+  assert(cmpr(list_at(&list, size / 2), &str) == 0);
+
+  // cleanup
+  ascii_str_destroy(first);
+  ascii_str_destroy(middle);
+  ascii_str_destroy(last);
+
+  free(first);
+  free(last);
+  free(middle);
+
+  after(&list);
+}
+
+static void list_index_of_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+
+  // when
+  LOG(stderr, "attempting to get the index of %s\n", ascii_str_c_str(strings));
+  intmax_t first_idx = list_index_of(&list, strings, cmpr);
+
+  LOG(stderr, "attempting to get the index of %s\n", ascii_str_c_str(strings + size / 2));
+  intmax_t mid_idx = list_index_of(&list, strings + size / 2, cmpr);
+
+  LOG(stderr, "attempting to get the index of %s\n", ascii_str_c_str(strings + size - 1));
+  intmax_t last_idx = list_index_of(&list, strings + size - 1, cmpr);
+
+  // then
+  assert(first_idx == 0);
+  assert(mid_idx == (intmax_t)size / 2);
+  assert(last_idx == (intmax_t)size - 1);
+
+  // cleanup
+  after(&list);
+}
+
+static void list_iterator_empty_list_test(void) {
+  // given
+  struct list list = list_create(sizeof(struct ascii_str), destroy_string);
+
+  // when
+  void *iter_begin = list_iter_begin(&list);
+  void *iter_end = list_iter_end(&list);
+
+  // then
+  assert(iter_begin == iter_end);
+
+  // cleanup
+  after(&list);
+}
+
+static void list_iterator_test(struct ascii_str *strings, size_t size) {
+  // given
+  struct list list = before(strings, size);
+
+  // when
+  void *iter_begin = list_iter_begin(&list);
+  void *iter_end = list_iter_end(&list);
+
+  // then
+  assert(iter_begin != iter_end);
+  assert(list_size(&list) == size);
+
+  for (size_t i = 0; i < size && iter_begin != iter_end; i++) {
+    LOG(stderr,
+        "strings[%zu]: %s == iter: %s?\n",
+        i,
+        ascii_str_c_str(strings + i),
+        ascii_str_c_str(*(struct ascii_str **)iter_begin));
+    assert(cmpr(*(struct ascii_str **)iter_begin, strings + i) == 0);
+    iter_begin = list_iter_next(&list, iter_begin);
   }
 
-  // then
-  assert(list_size(&list) == arr_size);
-  assert(equals(list_peek_first(&list), &points[0]));
-  assert(equals(list_peek_last(&list), &points[arr_size - 1]));
-
   // cleanup
-  after(&list);
-}
-
-void list_insert_at_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-  // and
-  struct point *point = calloc(1, sizeof *point);
-  point->y = point->x = -1;
-
-  // when
-  bool res = list_insert_at(&list, point, sizeof point, 1);
-
-  // then
-  assert(res);
-  assert(list_size(&list) == arr_size + 1);
-  assert(equals(list_at(&list, 1), point));
-
-  // cleanup
-  free(point);
-  after(&list);
-}
-
-void list_insert_priority_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = list_create(sizeof *points, NULL);
-
-  // when
-  for (size_t i = 0; i < arr_size; i++) {
-    list_insert_priority(&list, &points[i], sizeof points[i], cmpr);
-  }
-
-  // create aduplicate of the original array and sort it
-  struct point *sorted = copy_points(points, arr_size);
-  qsort(sorted, arr_size, sizeof *sorted, cmpr);
-
-  // then
-  assert(list_size(&list) == arr_size);
-  for (size_t i = arr_size; i > 0; i--) {
-    assert(equals(list_at(&list, arr_size - i), &sorted[i - 1]));
-  }
-
-  // cleanup
-  destroy_points(sorted);
-  after(&list);
-}
-
-void list_at_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-
-  // when
-  struct point *first = list_at(&list, 0);
-  struct point *last = list_at(&list, arr_size - 1);
-  struct point *middle = list_at(&list, arr_size / 2);
-
-  // then
-  assert(first && last && middle);
-  assert(equals(first, &points[0]));
-  assert(equals(last, &points[arr_size - 1]));
-  assert(equals(middle, &points[arr_size / 2]));
-
-  // cleanup
-  after(&list);
-}
-
-void list_remove_first_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-
-  // when
-  struct point *removed = list_remove_first(&list);
-
-  // then
-  assert(list_size(&list) == arr_size - 1);
-  assert(equals(removed, &points[0]));
-  assert(equals(list_peek_first(&list), &points[1]));
-  assert(list_index_of(&list, removed, cmpr) == DS_ERROR);
-
-  // cleanup
-  free(removed);
-  after(&list);
-}
-
-void list_remove_last_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-
-  // when
-  struct point *removed = list_remove_last(&list);
-
-  // then
-  assert(list_size(&list) == arr_size - 1);
-  assert(equals(list_peek_last(&list), &points[arr_size - 2]));
-  assert(equals(removed, &points[arr_size - 1]));
-  assert(list_index_of(&list, removed, cmpr) == DS_ERROR);
-
-  // cleaup
-  free(removed);
-  after(&list);
-}
-
-void list_remove_at_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-
-  // when
-  struct point *removed = list_remove_at(&list, arr_size / 2);
-
-  // then
-  assert(removed);
-  assert(list_size(&list) == arr_size - 1);
-  assert(equals(removed, &points[arr_size / 2]));
-  assert(list_index_of(&list, removed, cmpr) == DS_ERROR);
-
-  // cleanup
-  free(removed);
-  after(&list);
-}
-
-void list_index_of_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-
-  // when
-  size_t first = list_index_of(&list, &points[0], cmpr);
-  size_t last = list_index_of(&list, &points[arr_size - 1], cmpr);
-  size_t mid = list_index_of(&list, &points[arr_size / 2], cmpr);
-
-  // then
-  assert(first == 0);
-  assert(last == arr_size - 1);
-  assert(mid == arr_size / 2);
-
-  // cleanup
-  after(&list);
-}
-
-void list_replace_at_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-  struct point p = {.x = -1, .y = -1};
-
-  // when
-  struct point *replaced_first = list_replace_at(&list, &p, sizeof p, 0);
-  struct point *replaced_mid = list_replace_at(&list, &p, sizeof p, arr_size / 2);
-  struct point *replaced_last = list_replace_at(&list, &p, sizeof p, arr_size - 1);
-
-  // then
-  assert(replaced_first && replaced_mid && replaced_last);
-  assert(list_size(&list) == arr_size);
-  assert(equals(replaced_first, &points[0]));
-  assert(equals(replaced_mid, &points[arr_size / 2]));
-  assert(equals(replaced_last, &points[arr_size - 1]));
-  assert(equals(list_at(&list, 0), &p));
-  assert(equals(list_at(&list, arr_size / 2), &p));
-  assert(equals(list_at(&list, arr_size - 1), &p));
-
-  // cleanup
-  free(replaced_first);
-  free(replaced_last);
-  free(replaced_mid);
-  after(&list);
-}
-
-void list_replace_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-  struct point p = {.x = -1, .y = -1};
-
-  // when
-  struct point *replaced = list_replace(&list, &points[arr_size / 2], &p, sizeof p, cmpr);
-
-  // then
-  assert(replaced);
-  assert(list_size(&list) == arr_size);
-  assert((size_t)list_index_of(&list, &p, cmpr) == arr_size / 2);
-
-  // cleanup
-  free(replaced);
-  after(&list);
-}
-
-void list_sort_test(struct point *points, size_t arr_size) {
-  // given
-  struct list list = before(points, arr_size);
-  struct point *copy = copy_points(points, arr_size);
-  qsort(copy, arr_size, sizeof *copy, cmpr);
-
-  // when
-  list_sort(&list, cmpr);
-
-  // then
-  for (size_t i = 0; i < arr_size; i++) {
-    assert(equals(&copy[i], list_at(&list, i)));
-  }
-
-  // cleanup
-  destroy_points(copy);
   after(&list);
 }
 
 int main(void) {
-  srand(time(NULL));
+  enum local_sizes {
+    SMALL = 2,
+    LARGE = 100,
+  };
 
-  size_t arr_size = 20;
-  struct point *points = create_points(arr_size, 1, 100);
-  if (!points) return 1;
+  struct ascii_str strings_large[LARGE];
+  struct ascii_str strings_small[SMALL];
+  list_prepend_test(strings_large, LARGE);
+  list_prepend_test(strings_small, SMALL);
 
-  list_prepend_and_peek_test(points, arr_size);
-  list_append_and_peek_test(points, arr_size);
-  list_insert_at_test(points, arr_size);
-  list_insert_priority_test(points, arr_size);
-  list_at_test(points, arr_size);
-  list_remove_first_test(points, arr_size);
-  list_remove_last_test(points, arr_size);
-  list_remove_at_test(points, arr_size);
-  list_index_of_test(points, arr_size);
-  list_replace_at_test(points, arr_size);
-  list_replace_test(points, arr_size);
-  list_sort_test(points, arr_size);
+  list_append_test(strings_large, LARGE);
+  list_append_test(strings_small, SMALL);
 
-  destroy_points(points);
+  list_insert_at_test(strings_large, LARGE);
+  list_insert_at_test(strings_small, SMALL);
 
-  return 0;
+  list_peek_first_empty_list_test();
+
+  list_peek_first_test(strings_large, LARGE);
+  list_peek_first_test(strings_small, SMALL);
+
+  list_peek_last_empty_list_test();
+
+  list_peek_last_test(strings_large, LARGE);
+  list_peek_last_test(strings_small, SMALL);
+
+  list_at_empty_list_test();
+
+  list_at_test(strings_large, LARGE);
+  list_at_test(strings_small, SMALL);
+
+  list_remove_first_empty_list_test();
+
+  list_remove_first_test(strings_large, LARGE);
+  list_remove_first_test(strings_small, SMALL);
+
+  list_remove_last_empty_list_test();
+
+  list_remove_last_test(strings_large, LARGE);
+  list_remove_last_test(strings_small, SMALL);
+
+  list_remove_at_rand_empty_list_test();
+  list_remove_at_zero_empty_list_test();
+
+  list_remove_at_rand_test(strings_large, LARGE);
+  list_remove_at_rand_test(strings_small, SMALL);
+
+  list_remove_at_zero_test(strings_large, LARGE);
+  list_remove_at_zero_test(strings_small, SMALL);
+
+  list_remove_at_size_test(strings_large, LARGE);
+  list_remove_at_size_test(strings_small, SMALL);
+
+  list_replace_at_empty_list_test();
+
+  list_replace_at_test(strings_large, LARGE);
+
+  list_index_of_test(strings_large, LARGE);
+  list_index_of_test(strings_small, SMALL);
+
+  list_iterator_empty_list_test();
+
+  list_iterator_test(strings_large, LARGE);
+  list_iterator_test(strings_small, SMALL);
 }
