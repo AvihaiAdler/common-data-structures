@@ -12,10 +12,6 @@ target_sources(ds PRIVATE
   src/pair.c
 )
 
-target_include_directories(ds
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
 target_compile_features(ds
   PRIVATE c_std_99
 )
@@ -24,6 +20,19 @@ target_compile_options(ds
   PRIVATE
   $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>: -Wall -Wextra -Wpedantic -g>
   $<$<C_COMPILER_ID:MSVC>: -W4>
+)
+
+target_include_directories(ds
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+find_library(math
+  NAMES m
+  REQUIRED
+)
+
+target_link_libraries(ds
+  PRIVATE ${math}
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

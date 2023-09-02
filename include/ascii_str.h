@@ -17,20 +17,20 @@
  * @param[in] str - a c-string / `NULL` / a char array.
  * @param[in] len - the size of the char array. if one pass `STR_C_STR` as `len` - the function will treat `str` as a
  * c-string reading all chars until the first null terminator
- * @return `struct ascii_str` - the string object initialized with the content of `str`. if `str` is a `NULL` pointer or
+ * @return `struct ascii_str` - a string object initialized with the content of `str`. if `str` is a `NULL` pointer or
  * `len` is `0` an empty string will be returned. if `len < 0` and `len != STR_C_STR` an empty string will be returned
  */
 struct ascii_str ascii_str_create(char const *str, int len);
 
 /**
- * @brief constructs and initializes a string object from a c-string
+ * @brief constructs and initializes a string object from a anbitrary number of elements of arbitrary types
  *
- * @param[in] c_str a c-string or `NULL`
- *
- * @return `struct ascii_str` - the string object initialized with the content of `c_str`. if `c_str` is a `NULL`
- * pointer the object will be an empty string will be returned
+ * @param[in] fmt the format string controlling the conversion between types. the same format as `fsprintf`
+ * @param[in] ... the elements to parse into their string representation
+ * @return `struct ascii_str` - a strign object initialized with the character representation of the elements passed in.
+ * if `fmt `is `NULL` end empty string will be returned
  */
-struct ascii_str ascii_str_from_str(char const *c_str);
+struct ascii_str ascii_str_from_fmt(char const *fmt, ...);
 
 /**
  * @brief constructs a string from an array

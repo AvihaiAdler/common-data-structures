@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <ctype.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,11 +8,13 @@
 #include "ascii_str.h"
 
 #define MIN_SSO_LEN (size_t)12 - 1
+#define SHORT_STR "hello world"
+#define LONG_STR "the quick brown fox jumps over the lazy dog"
 
 static void ascii_str_init_null_test(void) {
   // given
   // when
-  struct ascii_str empty = ascii_str_from_str(NULL);
+  struct ascii_str empty = ascii_str_create(NULL, 0);
 
   // then
   assert(empty.is_sso);
@@ -24,7 +27,7 @@ static void ascii_str_init_null_test(void) {
 static void ascii_str_init_empty_test(void) {
   // given
   // when
-  struct ascii_str empty = ascii_str_from_str("");
+  struct ascii_str empty = ascii_str_create("", STR_C_STR);
 
   // then
   assert(empty.is_sso);
@@ -41,7 +44,7 @@ static void ascii_str_init_sso_test(char const *c_str) {
   assert(len <= MIN_SSO_LEN);
 
   // when
-  struct ascii_str str = ascii_str_from_str(c_str);
+  struct ascii_str str = ascii_str_create(c_str, len);
 
   // then
   assert(str.is_sso);
@@ -59,7 +62,7 @@ static void ascii_str_init_non_sso_test(char const *c_str) {
   assert(len > MIN_SSO_LEN);
 
   // when
-  struct ascii_str str = ascii_str_from_str(c_str);
+  struct ascii_str str = ascii_str_create(c_str, len);
 
   // then
   assert(!str.is_sso);
@@ -70,10 +73,34 @@ static void ascii_str_init_non_sso_test(char const *c_str) {
   ascii_str_destroy(&str);
 }
 
+static void ascii_str_init_from_fmt_test(void) {
+  // given
+  char const *fmt = "%s%d%c";
+  char const *c_str = "hello, world! bluh bluh bluh";
+  int num = INT_MAX;
+  char c = 'a';
+
+  int len = snprintf(NULL, 0, fmt, c_str, num, c);
+  char *buf = malloc(len + 1);
+  assert(buf);
+  sprintf(buf, fmt, c_str, num, c);
+
+  // when
+  struct ascii_str str = ascii_str_from_fmt(fmt, c_str, num, c);
+
+  // then
+  assert(ascii_str_len(&str) == (size_t)len);
+  assert(strcmp(ascii_str_c_str(&str), buf) == 0);
+
+  // cleanup
+  ascii_str_destroy(&str);
+  free(buf);
+}
+
 static void ascii_str_empty_test(void) {
   // given
   // when
-  struct ascii_str empty = ascii_str_from_str("");
+  struct ascii_str empty = ascii_str_create("", STR_C_STR);
 
   // then
   assert(empty.is_sso);
@@ -91,7 +118,7 @@ static void ascii_str_non_empty_test(char const *c_str) {
   assert(len);
 
   // when
-  struct ascii_str empty = ascii_str_from_str(c_str);
+  struct ascii_str empty = ascii_str_create(c_str, len);
 
   // then
   assert(!ascii_str_empty(&empty));
@@ -106,7 +133,7 @@ static void ascii_str_empty_after_clear_test(char const *c_str) {
   assert(c_str);
   size_t len = strlen(c_str);
   assert(len);
-  struct ascii_str str = ascii_str_from_str(c_str);
+  struct ascii_str str = ascii_str_create(c_str, len);
   assert(!ascii_str_empty(&str));
 
   // when
@@ -125,7 +152,7 @@ static void ascii_str_push_test(char const *c_str) {
   assert(len);
 
   // given
-  struct ascii_str str = ascii_str_from_str(c_str);
+  struct ascii_str str = ascii_str_create(c_str, len);
   assert(!ascii_str_empty(&str));
   char c = 'a';
 
@@ -148,7 +175,7 @@ static void ascii_str_push_force_resize_test(char const *c_str) {
   assert(len <= MIN_SSO_LEN);
 
   // given
-  struct ascii_str str = ascii_str_from_str(c_str);
+  struct ascii_str str = ascii_str_create(c_str, len);
 
   // when
   for (int c = 'a'; c < 'z'; c++) {
@@ -166,7 +193,7 @@ static void ascii_str_push_force_resize_test(char const *c_str) {
 
 static void ascii_str_pop_test(char const *str) {
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
   size_t original_len = strlen(str);
 
   // when
@@ -182,7 +209,7 @@ static void ascii_str_pop_test(char const *str) {
 
 static void ascii_str_append_test(char const *str, char const *other) {
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
   char *combined = calloc(strlen(str) + strlen(other) + 1, 1);
   if (!combined) perror("");
 
@@ -202,7 +229,7 @@ static void ascii_str_append_test(char const *str, char const *other) {
 
 static void ascii_str_erase_test(char const *str, size_t from, size_t count) {
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
   struct ascii_str erased = ascii_str_from_arr(str, from);
   if (strlen(str) > from + count) ascii_str_append(&erased, str + from + count);
 
@@ -219,7 +246,7 @@ static void ascii_str_erase_test(char const *str, size_t from, size_t count) {
 
 static void ascii_str_insert_test(char const *str, size_t pos, char const *other) {
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
   struct ascii_str inserted = ascii_str_from_arr(str, pos);
   ascii_str_append(&inserted, other);
   ascii_str_append(&inserted, str + pos);
@@ -238,7 +265,7 @@ static void ascii_str_insert_test(char const *str, size_t pos, char const *other
 
 static void ascii_str_contains_test(char const *str, char const *other) {
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
 
   // when
   bool contains_within_ascii_str = ascii_str_contains(&ascii_str, other);
@@ -255,7 +282,7 @@ static void ascii_str_index_of_existing_char_test(char const *str, char const c)
   assert(strchr(str, (int)c));
 
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
   size_t idx = (size_t)(strchr(str, (int)c) - str);
 
   // when
@@ -320,7 +347,7 @@ static void ascii_str_index_of_non_existing_char_test(char const *str, char cons
   assert(!strchr(str, (int)c));
 
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
 
   // when
   int ret = ascii_str_index_of(&ascii_str, c);
@@ -334,7 +361,7 @@ static void ascii_str_index_of_non_existing_char_test(char const *str, char cons
 
 static void ascii_str_substr_test(char const *str, size_t from, size_t count) {
   // given
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
 
   char const *arr = from >= strlen(str) ? NULL : str + from;
   struct ascii_str slice = ascii_str_from_arr(arr, count);
@@ -358,7 +385,7 @@ static void ascii_str_split_test(char const *str, char const *pattern) {
   assert(str_cpy);
   memcpy(str_cpy, str, len);
 
-  struct ascii_str ascii_str = ascii_str_from_str(str);
+  struct ascii_str ascii_str = ascii_str_create(str, STR_C_STR);
 
   // when
   struct vec splitted = ascii_str_split(&ascii_str, pattern);
@@ -377,9 +404,6 @@ static void ascii_str_split_test(char const *str, char const *pattern) {
   free(str_cpy);
 }
 
-#define SHORT_STR "hello world"
-#define LONG_STR "the quick brown fox jumps over the lazy dog"
-
 int main(void) {
   ascii_str_init_null_test();
 
@@ -388,6 +412,8 @@ int main(void) {
   ascii_str_init_sso_test(SHORT_STR);
 
   ascii_str_init_non_sso_test(LONG_STR);
+
+  ascii_str_init_from_fmt_test();
 
   ascii_str_empty_test();
 
