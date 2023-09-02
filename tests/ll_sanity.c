@@ -244,27 +244,29 @@ static void list_remove_first_empty_list_test(void) {
 }
 
 static void list_remove_first_test(struct ascii_str *strings, size_t size) {
-  assert(size >= 2);
-
+  assert(size);
   // given
   struct list list = before(strings, size);
   size_t pre_size = list_size(&list);
 
   // when
   void *first = list_remove_first(&list);
-  void *second = list_remove_first(&list);
-
   // then
-  assert(pre_size - 2 == list_size(&list));
   assert(cmpr(first, strings) == 0);
-  assert(cmpr(second, strings + 1) == 0);
+
+  if (size > 1) {
+    void *second = list_remove_first(&list);
+
+    assert(pre_size - 2 == list_size(&list));
+    assert(cmpr(second, strings + 1) == 0);
+    ascii_str_destroy(second);
+    free(second);
+  }
 
   // cleanup
   ascii_str_destroy(first);
-  ascii_str_destroy(second);
 
   free(first);
-  free(second);
 
   after(&list);
 }
@@ -559,6 +561,7 @@ int main(void) {
 
   list_remove_first_test(strings_large, LARGE);
   list_remove_first_test(strings_small, SMALL);
+  list_remove_first_test(strings_small, 1);
 
   list_remove_last_empty_list_test();
 
