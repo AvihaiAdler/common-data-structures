@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "vec.h"
 
 static int cmpr(const void *a, const void *b) {
@@ -247,15 +246,17 @@ static void vec_resize_test(void) {
   vec_destroy(&vec);
 }
 
-#define SIZE 20
-
 static void populate_array(int *arr, size_t arr_size) {
-  for (size_t i = arr_size; i > 0; i--) {
-    arr[SIZE - i] = i;
+  for (size_t i = 0; i < arr_size; i++) {
+    arr[arr_size - i - 1] = i;
   }
 }
 
 int main(void) {
+  enum size {
+    SIZE = 200000,
+  };
+
   int arr[SIZE];
   size_t arr_size = sizeof arr / sizeof *arr;
   populate_array(arr, arr_size);
