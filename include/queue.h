@@ -4,6 +4,7 @@
 #include "defines.h"
 
 struct queue {
+  bool _empty;
   size_t _capacity;
   size_t _elements_count;
 
@@ -26,6 +27,6 @@ size_t queue_size(struct queue const *queue);
 
 bool queue_empty(struct queue const *queue);
 
-bool queue_enqueue(struct queue *restrict queue, void const *restrict element);
+enum ds_error queue_enqueue(struct queue *restrict queue, void const *restrict element);
 
 enum ds_error queue_dequeue(struct queue *restrict queue, void *restrict element);
