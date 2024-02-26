@@ -1,7 +1,6 @@
 #pragma once
 
 #define GROWTH_FACTOR 1
-#define VECT_INIT_CAPACITY 16
 
 enum ds_error {
   DS_OK,

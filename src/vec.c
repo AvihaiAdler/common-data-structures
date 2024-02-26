@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define VECT_INIT_CAPACITY 16
+
 struct vec vec_create(size_t data_size, void (*destroy)(void *_element)) {
   // limit check
   if (data_size == 0) goto empty_vec;

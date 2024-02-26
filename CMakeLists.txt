@@ -10,6 +10,7 @@ target_sources(ds PRIVATE
   src/bst.c
   src/ascii_str.c
   src/pair.c
+  src/queue.c
 )
 
 target_compile_features(ds

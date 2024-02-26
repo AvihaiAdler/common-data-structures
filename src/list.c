@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define VECT_INIT_CAPACITY 16
+
 /* node object */
 struct node {
   void *data;
