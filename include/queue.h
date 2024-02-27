@@ -3,6 +3,12 @@
 #include <stddef.h>
 #include "defines.h"
 
+/**
+ * @file queue.h
+ * @brief implementation of an unbounded FIFO queue backed up by a ring buffer
+ *
+ */
+
 struct queue {
   bool _empty;
   size_t _capacity;
