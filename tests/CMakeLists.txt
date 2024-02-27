@@ -5,6 +5,7 @@ set(TESTS
   ll_sanity
   vect_sanity
   pair_sanity
+  queue_sanity
 )
 
 foreach(test ${TESTS})
