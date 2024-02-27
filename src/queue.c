@@ -42,9 +42,11 @@ size_t queue_capacity(struct queue const *queue) {
 }
 
 size_t queue_size(struct queue const *queue) {
-  if (!queue || !queue->_elements_count) { return 0; }
+  if (!queue || !queue->_capacity) { return 0; }
 
-  return queue->_end > queue->_start ? queue->_end - queue->_start : queue->_capacity - queue->_start - queue->_end;
+  if (queue_empty(queue)) { return 0; }
+
+  return queue->_end > queue->_start ? queue->_end - queue->_start : queue->_capacity - (queue->_start - queue->_end);
 }
 
 bool queue_empty(struct queue const *queue) {

@@ -6,7 +6,6 @@
 struct queue {
   bool _empty;
   size_t _capacity;
-  size_t _elements_count;
 
   size_t _start;
   size_t _end;
