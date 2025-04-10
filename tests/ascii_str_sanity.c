@@ -178,9 +178,7 @@ static void ascii_str_push_force_resize_test(char const *c_str) {
   struct ascii_str str = ascii_str_create(c_str, len);
 
   // when
-  for (int c = 'a'; c < 'z'; c++) {
-    ascii_str_push(&str, c);
-  }
+  for (int c = 'a'; c < 'z'; c++) { ascii_str_push(&str, c); }
 
   // then
   assert(!str.is_sso);  // max sso size on x64 is 23 chars

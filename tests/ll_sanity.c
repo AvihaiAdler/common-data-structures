@@ -7,10 +7,8 @@
 #include "ascii_str.h"
 #include "list.h"
 
-#define LOG(file, fmt, ...)                                                       \
-  do {                                                                            \
-    fprintf(file, "%s %s:%d\n\t" fmt, __FILE__, __func__, __LINE__, __VA_ARGS__); \
-  } while (0);
+#define LOG(file, fmt, ...) \
+  do { fprintf(file, "%s %s:%d\n\t" fmt, __FILE__, __func__, __LINE__, __VA_ARGS__); } while (0);
 
 static int generate_random(int min, int max) {
   int range = max - min;
@@ -38,7 +36,6 @@ static struct ascii_str rand_string(size_t len) {
 }
 
 static struct list before(struct ascii_str *strings, size_t size) {
-
   struct list list = list_create(sizeof(struct ascii_str), destroy_string);
   for (size_t i = 0; i < size; i++) {
     int rand_str_len = generate_random(1, 100);

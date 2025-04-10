@@ -137,9 +137,7 @@ static void queue_enqueue_dequeue_portion(int *arr, size_t size) {
 }
 
 static void arr_fill(int *arr, size_t size) {
-  for (size_t i = 0; i < size; i++) {
-    arr[i] = i + 1;
-  }
+  for (size_t i = 0; i < size; i++) { arr[i] = i + 1; }
 }
 
 int main(void) {

@@ -11,9 +11,7 @@ static int cmpr(const void *a, const void *b) {
 
 struct vec before(int *arr, size_t arr_size) {
   struct vec vect = vec_create(sizeof *arr, NULL);
-  for (size_t i = 0; i < arr_size; i++) {
-    assert(vec_push(&vect, arr + i));
-  }
+  for (size_t i = 0; i < arr_size; i++) { assert(vec_push(&vect, arr + i)); }
   return vect;
 }
 
@@ -183,9 +181,7 @@ static void vec_sort_santiy_test(int *arr, size_t arr_size) {
 
   // then
   size_t vect_size = vec_size(&vect);
-  for (size_t i = 0; i < vect_size - 1; i++) {
-    assert(*(int *)vec_at(&vect, i) < *(int *)vec_at(&vect, i + 1));
-  }
+  for (size_t i = 0; i < vect_size - 1; i++) { assert(*(int *)vec_at(&vect, i) < *(int *)vec_at(&vect, i + 1)); }
 
   // cleanup
   after(&vect);
@@ -231,25 +227,19 @@ static void vec_resize_test(void) {
   char *ptr = vec_data(&vec);
   assert(ptr);
 
-  for (size_t i = 0; i < vec_capacity(&vec); i++) {
-    assert(ptr[i] == 0);
-  }
+  for (size_t i = 0; i < vec_capacity(&vec); i++) { assert(ptr[i] == 0); }
 
   size_t old_capacity = vec_capacity(&vec);
   assert(vec_resize(&vec, old_capacity * 2) == old_capacity * 2);
 
   ptr = vec_data(&vec);
-  for (size_t i = 0; i < vec_capacity(&vec); i++) {
-    assert(ptr[i] == 0);
-  }
+  for (size_t i = 0; i < vec_capacity(&vec); i++) { assert(ptr[i] == 0); }
 
   vec_destroy(&vec);
 }
 
 static void populate_array(int *arr, size_t arr_size) {
-  for (size_t i = 0; i < arr_size; i++) {
-    arr[arr_size - i - 1] = i;
-  }
+  for (size_t i = 0; i < arr_size; i++) { arr[arr_size - i - 1] = i; }
 }
 
 int main(void) {

@@ -62,9 +62,7 @@ static void ascii_str_append_internal(struct ascii_str *restrict ascii_str, char
   // not enough room in the buffer for c_str
   if ((ascii_str->is_sso && (size_t)ascii_str->short_.data[SHORT_BUFFER_SIZE] < len) ||
       (!ascii_str->is_sso && ascii_str->long_.capacity - ascii_str->long_.size < len + 1)) {
-    do {
-      ascii_str_resize(ascii_str);
-    } while (ascii_str->long_.capacity - ascii_str->long_.size < len + 1);
+    do { ascii_str_resize(ascii_str); } while (ascii_str->long_.capacity - ascii_str->long_.size < len + 1);
   }
 
   // copy all of the chars in arr
@@ -313,9 +311,7 @@ static inline void ascii_str_destroy_internal(void *ascii_str) {
 struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *restrict pattern) {
   // create a lookup table for all ascii chars
   bool lookup[UCHAR_MAX] = {0};
-  for (; *pattern; pattern++) {
-    lookup[(unsigned char)*pattern] = true;
-  }
+  for (; *pattern; pattern++) { lookup[(unsigned char)*pattern] = true; }
 
   struct vec slices = vec_create(sizeof *ascii_str, ascii_str_destroy_internal);
 
@@ -341,15 +337,11 @@ struct vec ascii_str_split(struct ascii_str *restrict ascii_str, char const *res
 void ascii_str_tolower(struct ascii_str *string) {
   if (!string) return;
 
-  for (char *c_str = ascii_str_c_str_internal(string); *c_str; c_str++) {
-    *c_str = tolower((int)*c_str);
-  }
+  for (char *c_str = ascii_str_c_str_internal(string); *c_str; c_str++) { *c_str = tolower((int)*c_str); }
 }
 
 void ascii_str_toupper(struct ascii_str *string) {
   if (!string) return;
 
-  for (char *c_str = ascii_str_c_str_internal(string); *c_str; c_str++) {
-    *c_str = toupper((int)*c_str);
-  }
+  for (char *c_str = ascii_str_c_str_internal(string); *c_str; c_str++) { *c_str = toupper((int)*c_str); }
 }

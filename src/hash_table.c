@@ -86,9 +86,7 @@ size_t table_capacity(struct hash_table const *table) {
 static inline size_t hash(void const *key, size_t key_size) {
   const unsigned char *k = key;
   size_t hash = 5381;
-  for (size_t i = 0; i < key_size; i++, k++) {
-    hash = hash * 33 + *k;
-  }
+  for (size_t i = 0; i < key_size; i++, k++) { hash = hash * 33 + *k; }
   return hash;
 }
 
@@ -313,9 +311,7 @@ void print_table(struct hash_table *table, void (*print)(void const *, void cons
     struct entry *entry = vec_at(&table->_entries, i);
     if (!entry) { continue; }
 
-    for (struct kv_pair *curr = entry->head; curr; curr = curr->next) {
-      print(curr->key, curr->value, i);
-    }
+    for (struct kv_pair *curr = entry->head; curr; curr = curr->next) { print(curr->key, curr->value, i); }
   }
 }
 

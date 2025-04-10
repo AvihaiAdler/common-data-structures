@@ -8,10 +8,8 @@
 #include "ascii_str.h"
 #include "hash_table.h"
 
-#define LOG(file, fmt, ...)                                                       \
-  do {                                                                            \
-    fprintf(file, "%s %s:%d\n\t" fmt, __FILE__, __func__, __LINE__, __VA_ARGS__); \
-  } while (0);
+#define LOG(file, fmt, ...) \
+  do { fprintf(file, "%s %s:%d\n\t" fmt, __FILE__, __func__, __LINE__, __VA_ARGS__); } while (0);
 
 static int generate_random(int min, int max) {
   int range = max - min;
@@ -26,9 +24,7 @@ static size_t hash(void const *key, size_t size) {
   char const *c_str = ascii_str_c_str(str);
 
   size_t hash = 5381;
-  for (size_t i = 0; i < ascii_str_len(str); i++) {
-    hash = hash * 33 + c_str[i];
-  }
+  for (size_t i = 0; i < ascii_str_len(str); i++) { hash = hash * 33 + c_str[i]; }
   return hash;
 }
 
@@ -196,9 +192,7 @@ static void table_contains_test(void) {
 
   struct hash_table table = before(keys, values, replaced, SIZE);
 
-  for (size_t i = 0; i < (size_t)SIZE; i++) {
-    assert(table_contains(&table, &keys[i]));
-  }
+  for (size_t i = 0; i < (size_t)SIZE; i++) { assert(table_contains(&table, &keys[i])); }
 
   after(&table, keys, replaced, SIZE);
 }

@@ -131,9 +131,7 @@ struct list list_create(size_t data_size, void (*destroy)(void *data)) {
   if (!free_idx._capacity) goto list_invalid;
 
   // populate free_idx
-  for (size_t i = 0; i < free_idx._capacity; i++) {
-    idx_vec_push(&free_idx, (intmax_t)i);
-  }
+  for (size_t i = 0; i < free_idx._capacity; i++) { idx_vec_push(&free_idx, (intmax_t)i); }
 
   struct l_vec nodes = l_vec_create(sizeof(struct node));
   if (!nodes._capacity) {
@@ -162,7 +160,6 @@ void list_destroy(struct list *list) {
 
   for (struct node *tmp = l_vec_at(&list->_nodes, (size_t)list->_head_idx); tmp;
        tmp = l_vec_at(&list->_nodes, (size_t)tmp->next)) {
-
     if (tmp->data) {
       if (list->_destroy) list->_destroy(tmp->data);
       free(tmp->data);
