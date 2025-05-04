@@ -21,11 +21,11 @@ struct ascii_str_short {
 
 struct ascii_str {
   union {
-    struct ascii_str_long long_;
-    struct ascii_str_short short_;
+    struct ascii_str_long _long;
+    struct ascii_str_short _short;
   };
   bool is_sso;
 
   // add padding for systems with alignment requirement of 8. assumes `sizeof(bool) != sizeof(void *)`. ever
-  char padding_[sizeof(void *) - sizeof(bool)];
+  char _padding[sizeof(void *) - sizeof(bool)];
 };

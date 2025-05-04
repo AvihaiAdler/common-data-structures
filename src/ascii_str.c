@@ -15,7 +15,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 static char *ascii_str_c_str_internal(struct ascii_str *ascii_str) {
-  return ascii_str->is_sso ? ascii_str->short_.data : ascii_str->long_.data;
+  return ascii_str->is_sso ? ascii_str->_short.data : ascii_str->_long.data;
 }
 
 static bool ascii_str_resize_internal(struct ascii_str *ascii_str, size_t requested_size) {
@@ -29,53 +29,53 @@ static bool ascii_str_resize_internal(struct ascii_str *ascii_str, size_t reques
     if (!buf) return false;
 
     size_t len = ascii_str_len(ascii_str);
-    memcpy(buf, ascii_str->short_.data, len + 1);
+    memcpy(buf, ascii_str->_short.data, len + 1);
 
     ascii_str->is_sso = false;
-    ascii_str->long_ = (struct ascii_str_long){.capacity = capacity, .size = len, .data = buf};
+    ascii_str->_long = (struct ascii_str_long){.capacity = capacity, .size = len, .data = buf};
 
     return true;
   }
 
-  char *buf = realloc(ascii_str->long_.data, capacity);
+  char *buf = realloc(ascii_str->_long.data, capacity);
   if (!buf) return false;
 
-  ascii_str->long_ = (struct ascii_str_long){.capacity = capacity, .size = ascii_str->long_.size, .data = buf};
+  ascii_str->_long = (struct ascii_str_long){.capacity = capacity, .size = ascii_str->_long.size, .data = buf};
   return true;
 }
 
 static bool ascii_str_resize(struct ascii_str *ascii_str) {
   return ascii_str->is_sso ? ascii_str_resize_internal(ascii_str, INIT_BUFFER_SIZE - 1) :
-                             ascii_str_resize_internal(ascii_str, ascii_str->long_.capacity << 1);
+                             ascii_str_resize_internal(ascii_str, ascii_str->_long.capacity << 1);
 }
 
 static void ascii_str_append_internal(struct ascii_str *restrict ascii_str, char const *restrict arr, size_t len) {
-  if (ascii_str->is_sso && (size_t)ascii_str->short_.data[SHORT_BUFFER_SIZE] >= len) {
+  if (ascii_str->is_sso && (size_t)ascii_str->_short.data[SHORT_BUFFER_SIZE] >= len) {
     size_t ascii_strlen = ascii_str_len(ascii_str);
 
     // there's enough room in the buffer for c_str
-    memcpy(ascii_str->short_.data + ascii_strlen, arr, len);
-    ascii_str->short_.data[SHORT_BUFFER_SIZE] -= len;
+    memcpy(ascii_str->_short.data + ascii_strlen, arr, len);
+    ascii_str->_short.data[SHORT_BUFFER_SIZE] -= len;
     return;
   }
 
   // not enough room in the buffer for c_str
-  if ((ascii_str->is_sso && (size_t)ascii_str->short_.data[SHORT_BUFFER_SIZE] < len) ||
-      (!ascii_str->is_sso && ascii_str->long_.capacity - ascii_str->long_.size < len + 1)) {
-    do { ascii_str_resize(ascii_str); } while (ascii_str->long_.capacity - ascii_str->long_.size < len + 1);
+  if ((ascii_str->is_sso && (size_t)ascii_str->_short.data[SHORT_BUFFER_SIZE] < len) ||
+      (!ascii_str->is_sso && ascii_str->_long.capacity - ascii_str->_long.size < len + 1)) {
+    do { ascii_str_resize(ascii_str); } while (ascii_str->_long.capacity - ascii_str->_long.size < len + 1);
   }
 
   // copy all of the chars in arr
-  memcpy(ascii_str->long_.data + ascii_str->long_.size, arr, len);
-  ascii_str->long_.size += len;
+  memcpy(ascii_str->_long.data + ascii_str->_long.size, arr, len);
+  ascii_str->_long.size += len;
 
   // add a null terminator
-  ascii_str->long_.data[ascii_str->long_.size] = 0;
+  ascii_str->_long.data[ascii_str->_long.size] = 0;
 }
 
 static struct ascii_str ascii_str_init_short_internal(void) {
   struct ascii_str str = {.is_sso = true};  // the rest is empty initialized
-  str.short_.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE;
+  str._short.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE;
   return str;
 }
 
@@ -104,7 +104,7 @@ struct ascii_str ascii_str_from_fmt(char const *fmt, ...) {
 
   if (len < 0) return str;
 
-  if (len > (int)str.short_.data[SHORT_BUFFER_SIZE]) {
+  if (len > (int)str._short.data[SHORT_BUFFER_SIZE]) {
     if (!ascii_str_resize_internal(&str, (size_t)len + 1)) return str;
   }
 
@@ -112,10 +112,10 @@ struct ascii_str ascii_str_from_fmt(char const *fmt, ...) {
   va_end(args);
 
   if (str.is_sso) {
-    str.short_.data[SHORT_BUFFER_SIZE] =
-      str.short_.data[SHORT_BUFFER_SIZE] ? str.short_.data[SHORT_BUFFER_SIZE] - len : 0;
+    str._short.data[SHORT_BUFFER_SIZE] =
+      str._short.data[SHORT_BUFFER_SIZE] ? str._short.data[SHORT_BUFFER_SIZE] - len : 0;
   } else {
-    str.long_.size = len;
+    str._long.size = len;
   }
 
   return str;
@@ -133,21 +133,21 @@ struct ascii_str ascii_str_from_arr(char const *arr, size_t len) {
 void ascii_str_destroy(struct ascii_str *ascii_str) {
   if (!ascii_str || ascii_str->is_sso) return;
 
-  if (ascii_str->long_.data) free(ascii_str->long_.data);
+  if (ascii_str->_long.data) free(ascii_str->_long.data);
 }
 
 bool ascii_str_empty(struct ascii_str const *ascii_str) {
   if (!ascii_str) return true;
 
-  if (ascii_str->is_sso) return ascii_str->short_.data[SHORT_BUFFER_SIZE] == SHORT_BUFFER_SIZE;
+  if (ascii_str->is_sso) return ascii_str->_short.data[SHORT_BUFFER_SIZE] == SHORT_BUFFER_SIZE;
 
-  return ascii_str->long_.size == 0;
+  return ascii_str->_long.size == 0;
 }
 
 size_t ascii_str_len(struct ascii_str const *ascii_str) {
   if (!ascii_str) return 0;
 
-  return ascii_str->is_sso ? SHORT_BUFFER_SIZE - ascii_str->short_.data[SHORT_BUFFER_SIZE] : ascii_str->long_.size;
+  return ascii_str->is_sso ? SHORT_BUFFER_SIZE - ascii_str->_short.data[SHORT_BUFFER_SIZE] : ascii_str->_long.size;
 }
 
 char const *ascii_str_c_str(struct ascii_str *ascii_str) {
@@ -160,33 +160,33 @@ void ascii_str_clear(struct ascii_str *ascii_str) {
   if (!ascii_str) return;
 
   if (ascii_str->is_sso) {
-    ascii_str->short_ = (struct ascii_str_short){.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
+    ascii_str->_short = (struct ascii_str_short){.data[SHORT_BUFFER_SIZE] = SHORT_BUFFER_SIZE};
     return;
   }
 
-  *(ascii_str->long_.data) = 0;
-  ascii_str->long_.size = 0;
+  *(ascii_str->_long.data) = 0;
+  ascii_str->_long.size = 0;
 }
 
 void ascii_str_push(struct ascii_str *ascii_str, char const c) {
   if (!ascii_str) return;
 
   if (ascii_str->is_sso) {
-    size_t available_chars = ascii_str->short_.data[SHORT_BUFFER_SIZE];
+    size_t available_chars = ascii_str->_short.data[SHORT_BUFFER_SIZE];
     if (available_chars) {
-      ascii_str->short_.data[SHORT_BUFFER_SIZE - available_chars] = c;
-      ascii_str->short_.data[SHORT_BUFFER_SIZE]--;
+      ascii_str->_short.data[SHORT_BUFFER_SIZE - available_chars] = c;
+      ascii_str->_short.data[SHORT_BUFFER_SIZE]--;
       return;
     }
 
     // no more available space
     if (!ascii_str_resize(ascii_str)) return;
-  } else if (ascii_str->long_.size == ascii_str->long_.capacity - 1) {
+  } else if (ascii_str->_long.size == ascii_str->_long.capacity - 1) {
     if (!ascii_str_resize(ascii_str)) return;
   }
 
-  ascii_str->long_.data[ascii_str->long_.size] = c;
-  ascii_str->long_.data[++ascii_str->long_.size] = 0;
+  ascii_str->_long.data[ascii_str->_long.size] = c;
+  ascii_str->_long.data[++ascii_str->_long.size] = 0;
 }
 
 char ascii_str_pop(struct ascii_str *ascii_str) {
@@ -198,9 +198,9 @@ char ascii_str_pop(struct ascii_str *ascii_str) {
   buf[ascii_str_len(ascii_str) - 1] = 0;
 
   if (ascii_str->is_sso) {
-    ascii_str->short_.data[SHORT_BUFFER_SIZE]++;
+    ascii_str->_short.data[SHORT_BUFFER_SIZE]++;
   } else {
-    ascii_str->long_.size -= 1;
+    ascii_str->_long.size -= 1;
   }
 
   return ret;
@@ -229,14 +229,14 @@ void ascii_str_erase(struct ascii_str *ascii_str, size_t from_pos, size_t count)
   memmove(buf + from_pos, buf + end_pos, len - end_pos);
 
   if (ascii_str->is_sso) {
-    size_t available_chars = ascii_str->short_.data[SHORT_BUFFER_SIZE] + actual_count;
+    size_t available_chars = ascii_str->_short.data[SHORT_BUFFER_SIZE] + actual_count;
     // restore the property where all availabe chars are null terminators
     memset(buf + from_pos + len - end_pos, 0, available_chars);
 
-    ascii_str->short_.data[SHORT_BUFFER_SIZE] = available_chars;
+    ascii_str->_short.data[SHORT_BUFFER_SIZE] = available_chars;
   } else {
-    ascii_str->long_.data[len - actual_count] = 0;
-    ascii_str->long_.size -= actual_count;
+    ascii_str->_long.data[len - actual_count] = 0;
+    ascii_str->_long.size -= actual_count;
   }
 }
 
@@ -249,7 +249,7 @@ void ascii_str_insert(struct ascii_str *restrict ascii_str, size_t pos, char con
   }
 
   size_t len = strlen(c_str);
-  size_t capacity = ascii_str->is_sso ? SHORT_BUFFER_SIZE : ascii_str->long_.capacity;
+  size_t capacity = ascii_str->is_sso ? SHORT_BUFFER_SIZE : ascii_str->_long.capacity;
 
   // check to ensure the current buffer can hold c_str
   size_t available_chars = capacity - ascii_str_len(ascii_str);
@@ -268,10 +268,10 @@ void ascii_str_insert(struct ascii_str *restrict ascii_str, size_t pos, char con
   memcpy(buf + pos, c_str, len);
 
   if (ascii_str->is_sso) {
-    ascii_str->short_.data[SHORT_BUFFER_SIZE] = available_chars - len;
+    ascii_str->_short.data[SHORT_BUFFER_SIZE] = available_chars - len;
   } else {
-    ascii_str->long_.size += len;
-    ascii_str->long_.data[ascii_str->long_.size] = 0;
+    ascii_str->_long.size += len;
+    ascii_str->_long.data[ascii_str->_long.size] = 0;
   }
 }
 
